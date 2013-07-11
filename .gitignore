@@ -3,3 +3,5 @@
 *.txt
 *.docx
 *.sublime-*
+.DS_Store
+.idea

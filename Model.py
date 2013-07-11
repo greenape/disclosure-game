@@ -37,12 +37,13 @@ class Response:
 
 
 class Game:
-	def __init__(self):
+	def __init__(self, num_rounds=1):
 		""" A multistage game played by two agents.
 		"""
 		self.signal_log = []
 		self.act_log = []
 		self.payoff = [[[[[]]]]]
+		self.num_rounds = num_rounds
 
 	def play_round(self, signaller, receiver):
 		""" Play a round of this game between the
