@@ -5,3 +5,4 @@
 *.sublime-*
 .DS_Store
 .idea
+*.pyc
