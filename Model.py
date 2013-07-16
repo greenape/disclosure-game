@@ -1,6 +1,15 @@
 import random
 import pylab
 
+line_type = {}
+line_type[0] = '+-'
+line_type[1] = 'o-'
+line_type[2] = '1-'
+line_colour = {}
+line_colour[0] = 'r'
+line_colour[1] = 'b'
+line_colour[2] = 'g'
+
 def generate_players():
 	""" Generate players for a game.
 	"""
@@ -12,16 +21,16 @@ def all_played(women, rounds=12):
 			return False
 	return True
 
-def make_random_patients(num=1000):
+def make_random_patients(signaller, num=1000):
 	women = []
 	for i in range(num):
-		women.append(BayesianSignaller(player_type=random.choice([0, 1, 2])))
+		women.append(signaller(player_type=random.choice([0, 1, 2])))
 	return women
 
-def make_random_midwives(num=100):
+def make_random_midwives(responder, num=100):
 	midwives = []
 	for i in range(num):
-		midwives.append(BayesianResponder(player_type=random.choice([0, 1, 2])))
+		midwives.append(responder(player_type=random.choice([0, 1, 2])))
 	return midwives
 
 def signal_choice(women):
@@ -45,13 +54,100 @@ def signal_choice(women):
 				choices[player_type][signal][i] /= float(counts[player_type])
 	return choices
 
+def type_belief(midwives):
+	"""
+	Return a dictionary of signals vs. average belief about what they mean
+	per round.
+	"""
+	beliefs = {}
+	counts = rounds_count(midwives)
+	max_rounds = max(counts.keys())
+	for i in range(3):
+		beliefs[i] = {}
+		for j in range(3):
+			beliefs[i][j] = [0 for x in range(max_rounds)]
+	for midwife in midwives:
+		for i in range(3):
+			for j in range(3):
+				for k in range(midwife.rounds - 1):
+					beliefs[i][j][k] += midwife.signal_belief[i][j][k]
+	for i in range(3):
+		for j in range(3):
+			for k in range(max_rounds):
+				beliefs[i][j][k] /= float(counts[k])
+	return beliefs
+
+def referral_choice(midwives):
+	"""
+	Return the probability of referring over time.
+	"""
+	counts = rounds_count(midwives)
+	max_rounds = max(counts.keys())
+	referral = {'all':[0 for x in range(max_rounds)]}
+	for signal in range(3):
+		referral[signal] = [[0, 0] for x in range(max_rounds)]
+
+	for midwife in midwives:
+		for i in range(midwife.rounds - 1):
+			if midwife.response_log[i] == 1:
+				referral['all'][i] += 1.
+				referral[midwife.signal_log[i]][i][1] += 1.
+			referral[midwife.signal_log[i]][i][0] += 1.
+	for i in range(max_rounds):
+		referral['all'][i] /= float(counts[i])
+		for signal in range(3):
+			if referral[signal][i][0] > 0:
+				referral[signal][i] = referral[signal][i][1] / referral[signal][i][0]
+			else:
+				referral[signal][i] = 0.
+	return referral
+
+def plot_referral_choice(midwives):
+	choices = referral_choice(midwives)
+	for signal, log in choices.items():
+		label = "Signal:", signal
+		pylab.plot(range(len(log)), log, label=label)
+	pylab.legend(loc='upper right')
+	pylab.show()
+
+
+
+def plot_signal_beliefs(midwives):
+	beliefs = type_belief(midwives)
+	for signal, types in beliefs.items():
+		for player_type, log in types.items():
+			label = "Signal: %d, type: %d" % (signal, player_type)
+			line = "%s%s" % (line_colour[player_type], line_type[signal])
+			pylab.plot(range(len(log)), log, line, label=label)
+	pylab.legend(loc='upper right')
+	pylab.show()
+
+
+
+
+def rounds_count(players):
+	"""
+	Return a dictionary mapping number of rounds played
+	to the number of players who played at least that many.
+	"""
+	counts = {}
+	for player in players:
+		for i in range(player.rounds):
+			if i in counts:
+				counts[i] += 1
+			else:
+				counts[i] = 1
+	return counts
+
+
 def plot_signal_choice(women):
 	choices = signal_choice(women)
+
 	for player_type, signals in choices.items():
-		if player_type != 0:
-			for signal, log in signals.items():
-				label = "Type: %d, signal: %d" % (player_type, signal)
-				pylab.plot(range(12), log, label=label)
+		for signal, log in signals.items():
+			label = "Type: %d, signal: %d" % (player_type, signal)
+			line = "%s%s" % (line_colour[signal], line_type[player_type])
+			pylab.plot(range(12), log, line, label=label)
 	pylab.legend(loc='upper right')
 	pylab.show()
 
@@ -99,6 +195,16 @@ def test(women, midwives):
 			women.append(woman)
 		random.shuffle(women)
 	return birthed
+
+def random_expectations():
+	initial = [0.01, 1.01]
+	for i in range(2):
+		initial.append(random.random())
+	initial.sort()
+	results = []
+	for i in range(3):
+		results.append(initial[i + 1] - initial[i])
+	return results
 
 class Agent(object):
 	"""
@@ -160,7 +266,7 @@ class Signaller(Agent):
 		self.payoff_belief = dict([(signal, {}) for signal in signals])
 		super(Signaller, self).__init__(player_type, signals, responses)
 
-	def init_payoffs(self, payoffs):
+	def init_payoffs(self, payoffs, type_weights=[1/3., 1/3., 1/3.]):
 		# Don't set up twice.
 		if self.payoffs is not None:
 			return
@@ -173,11 +279,41 @@ class Signaller(Agent):
 					#Payoff for this signal with this midwife type
 					payoff = self.payoffs[midwife_type][signal_i][i]
 					if payoff in payoff_set:
-						payoff_set[payoff][0] += 1/6.
+						payoff_set[payoff][0] += type_weights[midwife_type] / 2.
 					else:
-						payoff_set[payoff] = [1/6.]
+						payoff_set[payoff] = [type_weights[midwife_type] / 2.]
 
 	def update_beliefs(self, payoff, signaller_type):
+		self.payoff_log.append(payoff)
+		rounds = self.rounds
+
+		for signal_i, payoffs in self.payoff_belief.items():
+			signal_matches = [x == signal_i for x in self.signal_log]
+			payoff_matches = {}
+			for payoff, belief in payoffs.items():
+				payoff_matches[payoff] = [x == payoff for x in self.payoff_log]
+
+			for payoff, belief in payoffs.items():
+				matched_pairs = zip(payoff_matches[payoff], signal_matches)
+
+				# Rounds where we got this payoff having sent the signal count(Signal | Payoff)
+				signal_payoff_matches = [a and b for a, b in matched_pairs]
+				n_k = signal_payoff_matches.count(True)
+
+				# Rounds where we sent this signal
+				n = float(signal_matches.count(True))
+
+				#print "Payoff-Signal matches", signal_payoff_matches
+
+				#P(Payoff) in this state of the world
+				alpha_k = self.payoff_belief[signal_i][payoff][0]
+				alpha_dot = len(payoffs)
+				prob = (alpha_k + n_k) / float(alpha_dot + n)
+				print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
+
+				self.payoff_belief[signal_i][payoff].append(prob)
+
+	def update_beliefs_old(self, payoff, signaller_type):
 		""" Women have belief about the state of the world,
 		and how likely refer or not actions are on the part
 		of the responder, i.e. P(Payoff | Signal) = P(Signal | Payoff)P(Payoff) / P(Signal | Payoff)P(Payoff) + ..
@@ -280,6 +416,7 @@ class BayesianSignaller(Signaller):
 
 	def do_signal(self, own_type):
 		best = (0, 9999999)
+		print "Type %d woman evaluating signals." % self.player_type
 		for signal in self.signals:
 			signal_risk = self.risk(signal, self.rounds)
 			print "Risk for signal %d is %f. Best so far is signal %d at %f." % (signal, signal_risk, best[0], best[1])
@@ -289,6 +426,35 @@ class BayesianSignaller(Signaller):
 		self.rounds += 1
 		return best[0]
 
+class MiniMaxSignaller(Signaller):
+	""" A signaller which uses straight minimax, ignoring the
+	risks.
+	"""
+
+	def get_payoffs(self, signal):
+		"""
+		Return a list of the possible payoffs for a signal.
+		"""
+		payoffs = []
+		for i in self.signals:
+			for j in self.responses:
+				payoffs.append(self.payoffs[i][signal][j])
+		return payoffs
+
+	def do_signal(self, signal):
+		self.rounds += 1
+
+		worst_case = {}
+		for signal in self.signals:
+			worst_case[signal] = min(self.get_payoffs(signal))
+		
+		best = (0, -99999)
+		for signal in self.signals:
+			if best[1] < worst_case[signal]:
+				best = (signal, worst_case[signal])
+
+		self.signal_log.append(best[0])
+		return best[0]
 
 
 
@@ -299,11 +465,42 @@ class Responder(Agent):
 		self.signal_belief = dict([(y, dict([(x, [1/3.]) for x in signals])) for y in signals])
 		super(Responder, self).__init__(player_type, signals, responses)
 
-	def init_payoffs(self, payoffs):
+	def init_payoffs(self, payoffs, type_weights=[1/3., 1/3., 1/3.]):
+		self.type_weights = type_weights
 		#Only interested in payoffs for own type
 		self.payoffs = payoffs
 
 	def update_beliefs(self, payoff, signaller_type):
+		self.type_log.append(signaller_type)
+		self.payoff_log.append(payoff)
+		rounds = self.rounds
+
+		type_matches = []
+		for player_type in self.signals:
+			type_matches.append([x == player_type for x in self.type_log])
+
+		for signal_i, types in self.signal_belief.items():
+			for player_type, belief in types.items():
+				signal_matches = [x == signal_i for x in self.signal_log]
+				print "Updating P(%d|%d).." % (player_type, signal_i)
+				alpha_k = self.type_weights[player_type]
+				print "alpha_k = %f" % alpha_k
+				alpha_dot = len(self.signals)
+				print "Num alternatives = %d" % alpha_dot
+				n = signal_matches.count(True)
+				print "n = %d" % n
+
+				matched_pairs = zip(type_matches[player_type], signal_matches)
+				signal_type_matches = [a and b for a, b in matched_pairs]
+				n_k = signal_type_matches.count(True)
+				print "n_k = %d" % n_k
+				prob = (alpha_k + n_k) / float(alpha_dot + n)
+				print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
+				self.signal_belief[signal_i][player_type].append(prob)
+
+
+
+	def update_beliefs_old(self, payoff, signaller_type):
 		""" Update beliefs about the meaning of signals, essentially the
 		belief that the State of the world is S based on s.
 		i.e. P(Type | signal) = P(signal | Type)P(Type) / P(signal | Type)P(Type) + P(signal | -Type)P(-Type)
@@ -330,11 +527,11 @@ class Responder(Agent):
 					matched_pairs = zip(type_matches[x], signal_matches)
 					signal_type_other_matches[x] = [a and b for a, b in matched_pairs]
 
-				type_matches_count = float(type_matches.count(True))
+				type_matches_count = float(type_matches[player_type].count(True))
 				signal_matches_count = float(signal_matches.count(True))
 
 				#P(Type) Might be wise to assume this is known
-				p_type = self.signal_belief[signal_i][player_type][0]
+				p_type = self.type_weights[player_type]
 				p_signal_type = 0.
 				p_signal_not_type = 0.
 				p_type_signal = self.signal_belief[signal_i][player_type][rounds - 1]
@@ -375,7 +572,7 @@ class BayesianResponder(Responder):
 		"""
 		return abs(payoff)
 
-	def risk(self, act, signal):
+	def risk(self, act, signal, appointment):
 		"""
 		Return the expedted risk of this action given this signal
 		was received.
@@ -384,7 +581,7 @@ class BayesianResponder(Responder):
 
 		print "Assessing risk for action",act,"given signal",signal
 		for player_type, belief in self.signal_belief[signal].items():
-			type_belief = belief[len(belief) - 1]
+			type_belief = belief[appointment]
 			payoff = self.loss(self.payoffs[player_type][act])
 			print "Believe true type is",player_type,"with confidence",type_belief
 			print "Risk is",payoff,"*",type_belief
@@ -392,7 +589,7 @@ class BayesianResponder(Responder):
 		print "R(%d|%d)=%f" % (act, signal, act_risk)
 		return act_risk
 
-	def respond(self, signal, opponent):
+	def respond(self, signal, appointment):
 		"""
 		Make a judgement about somebody based on
 		the signal they sent by minimising bayesian risk.
@@ -401,12 +598,39 @@ class BayesianResponder(Responder):
 		self.signal_log.append(signal)
 		best = (0, 9999999)
 		for response in self.responses:
-			act_risk = self.risk(response, signal)
+			act_risk = self.risk(response, signal, self.rounds)
 			if act_risk < best[1]:
 				best = (response, act_risk)
 		self.response_log.append(best[0])
 		return best[0]
 
+
+class MiniMaxResponder(Responder):
+
+
+	def get_payoffs(self, response):
+		payoffs = []
+		for player_type in self.signals:
+			payoffs.append(self.payoffs[player_type][response])
+		return payoffs
+
+	""" A responder which uses straight minimax, ignoring the
+	risks.
+	"""
+
+	def respond(self, signal, opponent):
+		self.rounds += 1
+		self.signal_log.append(signal)
+
+		worst_case = {}
+		for response in self.responses:
+			worst_case[response] = min(self.get_payoffs(response))
+		best = (0, -99999)
+		for response in self.responses:
+			if best[1] < worst_case[response]:
+				best = (response, worst_case[response])
+		self.response_log.append(best[0])
+		return best[0]
 
 class Game(object):
 	def __init__(self, num_rounds=1, baby_payoff=0, no_baby_payoff=100, mid_baby_payoff=50,referral_cost=50, heavy_cost=3,
@@ -542,7 +766,7 @@ class Game(object):
 		self.disclosure_log.append(signal == signaller.player_type)
 
 	def play_game(self, signaller, receiver):
-		signaller.init_payoffs(self.payoff)
+		signaller.init_payoffs(self.payoff, [1/10., 2/10., 7/10.])
 		receiver.init_payoffs(self.midwife_payoff)
 		for r in range(self.num_rounds):
 			self.play_round(signaller, receiver)
