@@ -1,9 +1,104 @@
 import random
+import pylab
 
 def generate_players():
 	""" Generate players for a game.
 	"""
 	return (Agent(None), Agent(None))
+
+def all_played(women, rounds=12):
+	for woman in women:
+		if(woman.rounds < rounds):
+			return False
+	return True
+
+def make_random_patients(num=1000):
+	women = []
+	for i in range(num):
+		women.append(BayesianSignaller(player_type=random.choice([0, 1, 2])))
+	return women
+
+def make_random_midwives(num=100):
+	midwives = []
+	for i in range(num):
+		midwives.append(BayesianResponder(player_type=random.choice([0, 1, 2])))
+	return midwives
+
+def signal_choice(women):
+	"""
+	Return a dictionary of women type vs. average signal choice per
+	round.
+	"""
+	choices = {}
+	for player_type in range(3):
+		choices[player_type] = {}
+		for signal in range(3):
+			choices[player_type][signal] = [0 for x in range(12)]
+	for player_type, players in by_type(women).items():
+		for i in range(12):
+			for player in players:
+				choices[player_type][player.signal_log[i]][i] += 1
+	counts = count(women)
+	for player_type, signals in choices.items():
+		for signal in signals:
+			for i in range(12):
+				choices[player_type][signal][i] /= float(counts[player_type])
+	return choices
+
+def plot_signal_choice(women):
+	choices = signal_choice(women)
+	for player_type, signals in choices.items():
+		if player_type != 0:
+			for signal, log in signals.items():
+				label = "Type: %d, signal: %d" % (player_type, signal)
+				pylab.plot(range(12), log, label=label)
+	pylab.legend(loc='upper right')
+	pylab.show()
+
+
+
+def frequency(players):
+	""" Return the frequency of each player type.
+	"""
+
+
+def count(players):
+	"""
+	Return the number of each player type.
+	"""
+	types = {}
+	types[0] = 0
+	types[1] = 0
+	types[2] = 0
+	for player in players:
+		types[player.player_type] += 1
+	return types
+
+def by_type(players):
+	""" Return a dictionary mapping player type
+	to a list of players with it.
+	"""
+	types = {}
+	for player_type in range(3):
+		types[player_type] = []
+	for player in players:
+		types[player.player_type].append(player)
+	return types
+
+
+def test(women, midwives):
+	birthed = []
+	game = Game()
+	game.init_payoffs()
+	while not all_played(women):
+		woman = women.pop()
+		game.play_game(woman, random.choice(midwives))
+		if woman.rounds == 12:
+			birthed.append(woman)
+		else:
+			women.append(woman)
+		random.shuffle(women)
+	return birthed
 
 class Agent(object):
 	"""
@@ -140,6 +235,16 @@ class Signaller(Agent):
 					p_payoff_signal = p_signal_payoff*p_payoff / (p_signal_payoff*p_payoff + p_signal_not_payoff)
 				self.payoff_belief[signal_i][payoff].append(p_payoff_signal)
 
+	def current_beliefs(self):
+		""" Return the current beliefs about signals.
+		"""
+		current = {}
+		for signal, payoffs in self.payoff_belief.items():
+			current[signal] = {}
+			for payoff, log in payoffs.items():
+				current[signal][payoff] = log[self.rounds]
+		return current
+
 class LyingSignaller(Signaller):
 
 	def do_signal(own_type):
@@ -156,7 +261,7 @@ class BayesianSignaller(Signaller):
 		"""
 		return abs(payoff)
 
-	def risk(self, signal):
+	def risk(self, signal, appointment):
 		"""
 		Compute the bayes risk of sending this signal.
 		"""
@@ -164,7 +269,7 @@ class BayesianSignaller(Signaller):
 
 		print "Assessing risk for signal",signal
 		for payoff, belief in self.payoff_belief[signal].items():
-			payoff_belief = belief[len(belief) - 1]
+			payoff_belief = belief[appointment]
 			payoff = self.loss(payoff)
 			print "Believe payoff will be",payoff,"with confidence",payoff_belief
 			print "Risk is",payoff,"*",payoff_belief
@@ -176,8 +281,9 @@ class BayesianSignaller(Signaller):
 	def do_signal(self, own_type):
 		best = (0, 9999999)
 		for signal in self.signals:
-			signal_risk = self.risk(signal)
-			if signal_risk < best[0]:
+			signal_risk = self.risk(signal, self.rounds)
+			print "Risk for signal %d is %f. Best so far is signal %d at %f." % (signal, signal_risk, best[0], best[1])
+			if signal_risk < best[1]:
 				best = (signal, signal_risk)
 		self.signal_log.append(best[0])
 		self.rounds += 1
@@ -249,6 +355,16 @@ class Responder(Agent):
 				print "Updating signal ", signal_i, " type ", player_type
 				self.signal_belief[signal_i][player_type].append(p_type_signal)
 
+	def current_beliefs(self):
+		""" Return the current beliefs about signals.
+		"""
+		current = {}
+		for signal, types in self.signal_belief.items():
+			current[signal] = {}
+			for player_type, log in types.items():
+				current[signal][player_type] = log[self.rounds]
+		return current
+
 class BayesianResponder(Responder):
 	""" Responds based on belief, and the bayes action rule.
 	i.e. minimise the expected risk.
@@ -286,7 +402,7 @@ class BayesianResponder(Responder):
 		best = (0, 9999999)
 		for response in self.responses:
 			act_risk = self.risk(response, signal)
-			if act_risk < best[0]:
+			if act_risk < best[1]:
 				best = (response, act_risk)
 		self.response_log.append(best[0])
 		return best[0]
