@@ -5,7 +5,7 @@ def generate_players():
 	"""
 	return (Agent(None), Agent(None))
 
-class Agent:
+class Agent(object):
 	"""
 	An agent who plays a game, according to their
 	type, and some decision rule.
@@ -15,18 +15,19 @@ class Agent:
 	2 = high
 
 	Players have two possible response moves.
-	0 = refer
-	1 = not refer
+	0 = do nothing
+	1 = refer
 	"""
 	def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
 		self.player_type = player_type
-		self.decision_function = decision_function
 		self.signals = signals
 		self.responses = responses
 		self.payoff_log = []
 		self.signal_log = []
 		self.response_log = []
 		self.type_log = []
+		self.rounds = 0
+		self.payoffs = None
 
 
 	def respond(self, signal, opponent):
@@ -34,6 +35,7 @@ class Agent:
 		Make a judgement about somebody based on
 		the signal they sent.
 		"""
+		self.rounds += 1
 		self.signal_log.append(signal)
 		resp = random.choice(self.responses)
 		self.response_log.append(resp)
@@ -43,6 +45,7 @@ class Agent:
 		""" Report own consumption based on
 		decision function.
 		"""
+		self.rounds += 1
 		sig = random.choice(self.signals)
 		self.signal_log.append(sig)
 		return sig
@@ -59,18 +62,21 @@ class Signaller(Agent):
 	def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
 		# Given own type, there are always 6 possible payoffs for a given signal.
 		# 2 for each of the three midwife types, per signal.
-		self.payoff_belief = dict([(signal, {}) for signal in self.signals])
+		self.payoff_belief = dict([(signal, {}) for signal in signals])
 		super(Signaller, self).__init__(player_type, signals, responses)
 
-	def init_payoff_belief(self, payoffs):
+	def init_payoffs(self, payoffs):
+		# Don't set up twice.
+		if self.payoffs is not None:
+			return
 		#Only interested in payoffs for own type
-		payoffs = payoffs[self.player_type]
+		self.payoffs = payoffs[self.player_type]
 		#Interested in payoffs per signal
 		for signal_i, payoff_set in self.payoff_belief.items():
 			for midwife_type in range(3):
 				for i in range(2):
 					#Payoff for this signal with this midwife type
-					payoff = payoffs[midwife_type][signal_i][i]
+					payoff = self.payoffs[midwife_type][signal_i][i]
 					if payoff in payoff_set:
 						payoff_set[payoff][0] += 1/6.
 					else:
@@ -82,7 +88,7 @@ class Signaller(Agent):
 		of the responder, i.e. P(Payoff | Signal) = P(Signal | Payoff)P(Payoff) / P(Signal | Payoff)P(Payoff) + ..
 		"""
 		self.payoff_log.append(payoff)
-		rounds = len(self.type_log)
+		rounds = self.rounds
 		for signal_i, payoffs in self.payoff_belief.items():
 			signal_matches = [x == signal_i for x in self.signal_log]
 			payoff_matches = {}
@@ -140,16 +146,56 @@ class LyingSignaller(Signaller):
 		""" A decision function that always returns a
 		type other than its own as a signal.
 		"""
+		self.rounds += 1
 		types = filter(lambda x: x != own_type, self.signals)
 		return random.choice(types)
+
+class BayesianSignaller(Signaller):
+	def loss(self, payoff):
+		""" Make a loss out of a payoff.
+		"""
+		return abs(payoff)
+
+	def risk(self, signal):
+		"""
+		Compute the bayes risk of sending this signal.
+		"""
+		signal_risk = 0.
+
+		print "Assessing risk for signal",signal
+		for payoff, belief in self.payoff_belief[signal].items():
+			payoff_belief = belief[len(belief) - 1]
+			payoff = self.loss(payoff)
+			print "Believe payoff will be",payoff,"with confidence",payoff_belief
+			print "Risk is",payoff,"*",payoff_belief
+			signal_risk += payoff * payoff_belief
+		print "R(%d|x)=%f" % (signal, signal_risk)
+		return signal_risk
+
+
+	def do_signal(self, own_type):
+		best = (0, 9999999)
+		for signal in self.signals:
+			signal_risk = self.risk(signal)
+			if signal_risk < best[0]:
+				best = (signal, signal_risk)
+		self.signal_log.append(best[0])
+		self.rounds += 1
+		return best[0]
+
+
 
 
 class Responder(Agent):
 
 	def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
 		# Belief that a particular signal means a state
-		self.signal_belief = dict([(y, dict([(x, [1/3.]) for x in self.signals])) for y in self.signals])
+		self.signal_belief = dict([(y, dict([(x, [1/3.]) for x in signals])) for y in signals])
 		super(Responder, self).__init__(player_type, signals, responses)
+
+	def init_payoffs(self, payoffs):
+		#Only interested in payoffs for own type
+		self.payoffs = payoffs
 
 	def update_beliefs(self, payoff, signaller_type):
 		""" Update beliefs about the meaning of signals, essentially the
@@ -157,7 +203,8 @@ class Responder(Agent):
 		i.e. P(Type | signal) = P(signal | Type)P(Type) / P(signal | Type)P(Type) + P(signal | -Type)P(-Type)
 		"""
 		self.type_log.append(signaller_type)
-		rounds = len(self.type_log)
+		self.payoff_log.append(payoff)
+		rounds = self.rounds
 
 		type_matches = []
 		for player_type in self.signals:
@@ -202,10 +249,51 @@ class Responder(Agent):
 				print "Updating signal ", signal_i, " type ", player_type
 				self.signal_belief[signal_i][player_type].append(p_type_signal)
 
+class BayesianResponder(Responder):
+	""" Responds based on belief, and the bayes action rule.
+	i.e. minimise the expected risk.
+	"""
+
+	def loss(self, payoff):
+		""" Transmute a payoff into a loss value.
+		"""
+		return abs(payoff)
+
+	def risk(self, act, signal):
+		"""
+		Return the expedted risk of this action given this signal
+		was received.
+		"""
+		act_risk = 0.
+
+		print "Assessing risk for action",act,"given signal",signal
+		for player_type, belief in self.signal_belief[signal].items():
+			type_belief = belief[len(belief) - 1]
+			payoff = self.loss(self.payoffs[player_type][act])
+			print "Believe true type is",player_type,"with confidence",type_belief
+			print "Risk is",payoff,"*",type_belief
+			act_risk += payoff * type_belief
+		print "R(%d|%d)=%f" % (act, signal, act_risk)
+		return act_risk
+
+	def respond(self, signal, opponent):
+		"""
+		Make a judgement about somebody based on
+		the signal they sent by minimising bayesian risk.
+		"""
+		self.rounds += 1
+		self.signal_log.append(signal)
+		best = (0, 9999999)
+		for response in self.responses:
+			act_risk = self.risk(response, signal)
+			if act_risk < best[0]:
+				best = (response, act_risk)
+		self.response_log.append(best[0])
+		return best[0]
 
 
-class Game:
-	def __init__(self, num_rounds=1, baby_payoff=100, referral_cost=50, heavy_cost=3,
+class Game(object):
+	def __init__(self, num_rounds=1, baby_payoff=0, no_baby_payoff=100, mid_baby_payoff=50,referral_cost=50, heavy_cost=3,
 	 moderate_cost=2, light_cost=1, moderate_judge=1, harsh_judge=2):
 		""" A multistage game played by two agents.
 		"""
@@ -217,8 +305,8 @@ class Game:
 		self.num_rounds = num_rounds
 		#Payoff for a baby
 		self.baby_payoff = baby_payoff
-		self.no_baby_payoff = -baby_payoff
-		self.mid_baby_payoff = baby_payoff / 2
+		self.no_baby_payoff = -no_baby_payoff
+		self.mid_baby_payoff = -mid_baby_payoff
 		#Cost for referring
 		self.referral_cost = referral_cost
 		#Basic social cost of drinking types
@@ -297,11 +385,11 @@ class Game:
 
 		#Heavy drinkers
 		#Non-judgemental midwife
-		self.payoff[2][0][0][0] = - self.light_cost
+		self.payoff[2][0][0][0] = self.no_baby_payoff- self.light_cost
 		self.payoff[2][0][0][1] = self.baby_payoff - self.light_cost
-		self.payoff[2][0][1][0] = - self.moderate_cost
+		self.payoff[2][0][1][0] = self.no_baby_payoff- self.moderate_cost
 		self.payoff[2][0][1][1] = self.baby_payoff - self.moderate_cost
-		self.payoff[2][0][2][0] =  - self.heavy_cost
+		self.payoff[2][0][2][0] =  self.no_baby_payoff - self.heavy_cost
 		self.payoff[2][0][2][1] = self.baby_payoff - self.heavy_cost
 
 		#Moderately judgemental midwife
@@ -339,6 +427,7 @@ class Game:
 
 	def play_game(self, signaller, receiver):
 		signaller.init_payoffs(self.payoff)
+		receiver.init_payoffs(self.midwife_payoff)
 		for r in range(self.num_rounds):
 			self.play_round(signaller, receiver)
 
