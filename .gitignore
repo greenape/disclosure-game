@@ -8,3 +8,7 @@
 *.pyc
 *.csv
 *png
+.Rhistory
+.RData
+*.Rout
+*.bu
