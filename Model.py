@@ -426,9 +426,8 @@ class Game(object):
         self.payoffs["low_low"] = random.randint(self.payoffs["low_mid"], 0)
 
 
-    def init_payoffs(self, type_weights, response_weights):
+    def init_payoffs(self, type_weights=[[10., 2., 1.], [1., 10., 1.], [1., 1., 10.]]):
         self.type_weights = type_weights
-        self.response_weights = response_weights
         #Midwife payoffs
         #Light drinker
         self.midwife_payoff[0][0] = self.payoffs["baby_payoff"]
@@ -483,10 +482,8 @@ class Game(object):
         self.disclosure_log.append(signal == signaller.player_type)
 
     def play_game(self, signaller, receiver):
-        type_weights = random_expectations()
-        response_weights = [random_expectations(breadth=2) for x in range(3)]
-        signaller.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff, type_weights=type_weights, response_weights=response_weights)
-        receiver.init_payoffs(self.midwife_payoff)
+        signaller.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+        receiver.init_payoffs(self.midwife_payoff, self.type_weights)
         for r in range(self.num_rounds):
             self.play_round(signaller, receiver)
 
