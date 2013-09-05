@@ -426,7 +426,7 @@ class Game(object):
         self.payoffs["low_low"] = random.randint(self.payoffs["low_mid"], 0)
 
 
-    def init_payoffs(self, type_weights=[[10., 2., 1.], [1., 10., 1.], [1., 1., 10.]]):
+    def init_payoffs(self, type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]]):
         self.type_weights = type_weights
         #Midwife payoffs
         #Light drinker
@@ -465,6 +465,14 @@ class Game(object):
         self.woman_social_payoff[1][2] = self.payoffs["mid_high"]
         self.woman_social_payoff[2][2] = self.payoffs["harsh_high"]
 
+    def priors(self):
+        priors = {}
+        for i in range(3):
+            for j in range(3):
+                priors["prior_%d_%d" % (i, j)] = self.type_weights[i][j]
+        return priors
+
+
 
     def play_round(self, signaller, receiver):
         """ Play a round of this game between the
@@ -474,16 +482,16 @@ class Game(object):
         act = receiver.respond(signal)
         signal_payoff = self.woman_baby_payoff[signaller.player_type][act] + self.woman_social_payoff[signal][receiver.player_type]
         receive_payoff = self.midwife_payoff[signaller.player_type][act]
-        self.signal_log.append(signal)
-        self.act_log.append(act)
+        #self.signal_log.append(signal)
+        #self.act_log.append(act)
         signaller.update_beliefs(act, receiver.player_type, signal_payoff)
         receiver.update_beliefs(receive_payoff, signaller.player_type)
         # Log honesty of signal
-        self.disclosure_log.append(signal == signaller.player_type)
+        #self.disclosure_log.append(signal == signaller.player_type)
 
     def play_game(self, signaller, receiver):
-        signaller.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
-        receiver.init_payoffs(self.midwife_payoff, self.type_weights)
+        #signaller.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+        #receiver.init_payoffs(self.midwife_payoff, self.type_weights)
         for r in range(self.num_rounds):
             self.play_round(signaller, receiver)
 

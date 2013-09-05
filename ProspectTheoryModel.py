@@ -32,7 +32,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
     def gain_value(self, payoff):
         if self.alpha > 0:
             payoff = pow(payoff, self.alpha)
-        elif alpha < 0:
+        elif self.alpha < 0:
             payoff = math.log(payoff)
         else:
             payoff = 1 - pow(1 + payoff, self.alpha)
@@ -139,7 +139,7 @@ class ProspectTheoryResponder(Model.BayesianResponder):
     def gain_value(self, payoff):
         if self.alpha > 0:
             payoff = pow(payoff, self.alpha)
-        elif alpha < 0:
+        elif self.alpha < 0:
             payoff = math.log(payoff)
         else:
             payoff = 1 - pow(1 + payoff, self.alpha)
