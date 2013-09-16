@@ -17,6 +17,14 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
     return results
 
 
+def shuffled(target):
+    """
+    Return a shuffled version of the argument
+    """
+    a = list(target)
+    random.shuffle(a)
+    return a
+
 class Agent(object):
     """
     An agent who plays a game, according to their
@@ -188,11 +196,11 @@ class BayesianSignaller(Signaller):
 
 
     def do_signal(self, own_type, rounds=None):
-        best = (0, 9999999)
+        best = (random.randint(0, 2), 9999999)
         if rounds is None:
             rounds = self.rounds
        #print "Type %d woman evaluating signals." % self.player_type
-        for signal in self.signals:
+        for signal in shuffled(self.signals):
             signal_risk = self.risk(signal, rounds)
            #print "Risk for signal %d is %f. Best so far is signal %d at %f." % (signal, signal_risk, best[0], best[1])
             if signal_risk < best[1]:
@@ -309,7 +317,7 @@ class BayesianResponder(Responder):
 
     def risk(self, act, signal, appointment):
         """
-        Return the expedted risk of this action given this signal
+        Return the expected risk of this action given this signal
         was received.
         """
         act_risk = 0.
@@ -333,8 +341,8 @@ class BayesianResponder(Responder):
             self.signal_log.append(signal)
             self.signal_matches[signal] += 1.
             rounds = self.rounds
-        best = (0, 9999999)
-        for response in self.responses:
+        best = (random.randint(0, 1), 9999999)
+        for response in shuffled(self.responses):
             act_risk = self.risk(response, signal, rounds)
             if act_risk < best[1]:
                 best = (response, act_risk)

@@ -1,6 +1,6 @@
 import Model
 import math
-
+import random
 
 class ProspectTheorySignaller(Model.BayesianSignaller):
     """
@@ -95,10 +95,10 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         Make a judgement about somebody based on
         the signal they sent based on expe
         """
-        best = (0, -9999999)
+        best = (random.randint(0, 2), -9999999)
         if rounds is None:
             rounds = self.rounds
-        for signal in self.signals:
+        for signal in Model.shuffled(self.signals):
             act_risk = self.cpt_value(self.collect_prospects(signal, rounds))
             if act_risk > best[1]:
                 best = (signal, act_risk)
@@ -202,8 +202,8 @@ class ProspectTheoryResponder(Model.BayesianResponder):
             self.signal_matches[signal] += 1.
             rounds = self.rounds
 
-        best = (0, -9999999)
-        for response in self.responses:
+        best = (random.randint(0, 1), -9999999)
+        for response in Model.shuffled(self.responses):
             act_risk = self.cpt_value(self.collect_prospects(response, signal, rounds))
             if act_risk > best[1]:
                 best = (response, act_risk)

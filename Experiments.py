@@ -5,21 +5,11 @@ import multiprocessing
 import itertools
 from collections import OrderedDict
 
-line_type = {}
-line_type[0] = '+-'
-line_type[1] = 'o-'
-line_type[2] = '1-'
-line_colour = {}
-line_colour[0] = 'r'
-line_colour[1] = 'b'
-line_colour[2] = 'g'
-
 def lhs(iterations, min_val, max_val):
     values = []
     segmentSize = 1. / iterations
     for i in range(iterations):
         segmentMin = i * segmentSize
-        #segmentMax = (i+1) * segmentSize
         point = segmentMin + (random.random() * segmentSize)
         values.append((point * (max_val - min_val)) + min_val)
     random.shuffle(values)
@@ -82,6 +72,23 @@ def make_random_weights(num=1000):
         weights.append((Model.random_expectations(), [Model.random_expectations(breadth=2) for x in range(3)]))
     return weights
 
+def inject_type_belief(weights, num):
+    """
+    Return a function that will modify the type distribution priors of num 
+    random women to be those in weights and restarts faith.
+    """
+    def f(women):
+        target = random.sample(women, num)
+        signals = [0, 1, 2]
+        for agent in target:
+            agent.response_belief = dict([(signal, dict([(response, []) for response in [0, 1]])) for signal in signals])
+            agent.type_distribution = dict([(signal, []) for signal in signals])
+            agent.type_weights = weights
+            agent.update_beliefs(None, None, None)
+    return f
+
+
+
 def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.]):
     midwives = []
     for i in range(num):
@@ -135,6 +142,58 @@ def honesty_by_midwife_type(women):
                 for mw_type in signals:
                     for i in range(women[0].rounds):
                         choices[player_type][mw_type][signal][i] /= float(counts[player_type][mw_type])
+    return choices
+
+def referral_by_midwife_type_woman_type(women):
+    """
+    Return a dictionary of women type vs. frequency of referral per
+    round, broken down by the type of midwife they caseloaded with.
+    """
+    choices = {}
+    #counts = [[[[0 for x in range(women[0].rounds)] * 3] * 3] * 3]
+    for player_type in range(3):
+        choices[player_type] = {}
+        for mw_type in range(3):
+                choices[player_type][mw_type] = {}
+                for signal in range(2):
+                    choices[player_type][mw_type][signal] = [0 for x in range(women[0].rounds)]
+    for player_type, players in by_type(women).items():
+        for i in range(women[0].rounds):
+            for player in players:
+                midwife_type = player.type_log[0]
+                choices[player_type][midwife_type][player.response_log[i]][i] += 1
+    counts = count_by_mw_type(women)
+    for player_type, signals in choices.items():
+        if counts[player_type][mw_type] > 0:
+            for mw_type in signals:
+                for i in range(women[0].rounds):
+                    choices[player_type][mw_type][1][i] /= float(counts[player_type][mw_type])
+    return choices
+
+def referral_by_midwife_type(midwives):
+    """
+    Return a dictionary of frequency of referral per
+    round, broken down by the type of midwife.
+    """
+    choices = {}
+    #counts = [[[[0 for x in range(women[0].rounds)] * 3] * 3] * 3]
+    rounds_counts = rounds_count(midwives)
+    max_rounds = max(rounds_counts.keys())
+    for mw_type in range(3):
+            choices[mw_type] = {}
+            for signal in range(2):
+                choices[mw_type][signal] = [0 for x in range(max_rounds)]
+    counts = [[0, 0, 0] for x in range(max_rounds)]
+    for midwife in midwives:
+        for i in range(midwife.rounds - 1):
+            choices[midwife.player_type][midwife.response_log[i]][i] += 1.
+            counts[i][midwife.player_type] += 1.
+
+    for i in range(max_rounds):
+        for j in range(3):
+            if counts[i][j] > 0:
+                choices[j][0][i] /= counts[i][j]
+                choices[j][1][i] /= counts[i][j]
     return choices
 
 def payoff(women):
@@ -218,6 +277,7 @@ def dump_game_women_pair_breakdown(pair, params, file_name, mode):
     game, women = pair
     sigs = signal_choice(women)
     sigs_by_mw = honesty_by_midwife_type(women)
+    refs_by_mw = referral_by_midwife_type_woman_type(women)
     dist = distribution_belief(women)
     ref = signal_ref_belief(women)
     payoffs = payoff(women)
@@ -229,6 +289,7 @@ def dump_game_women_pair_breakdown(pair, params, file_name, mode):
     header = "appointment,type_0_signal_0,type_0_signal_0_change,type_0_signal_1,type_0_signal_1_change,type_0_signal_2,type_0_signal_2_change,type_1_signal_0,type_1_signal_0_change,type_1_signal_1,type_1_signal_1_change,type_1_signal_2,type_1_signal_2_change,type_2_signal_0,type_2_signal_0_change,type_2_signal_1,type_2_signal_1_change,type_2_signal_2,type_2_signal_2_change, type_2, type_2_change, type_1, type_1_change, type_0, type_0_change, signal_1, signal_1_change, signal_0, signal_0_change, signal_2, signal_2_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2,weight_0_0,weight_0_1,weight_0_2,weight_1_0,weight_1_1,weight_1_2,weight_2_0,weight_2_1,weight_2_2,run,harsh_mid,mid_high,mid_baby_payoff,referral_cost,baby_payoff,harsh_high,low_high,mid_low,low_low,low_mid,no_baby_payoff,harsh_low,mid_mid,payoff_0,payoff_1,payoff_2,payoff_all"
     for i in range(3):
         for j in range(3):
+            header += ", type_%d_mw_%d_ref" % (i, j)
             for k in range(3):
                 header += ", type_%d_mw_%d_sig_%d" % (i, j, k)
     try:
@@ -255,6 +316,7 @@ def dump_game_women_pair_breakdown(pair, params, file_name, mode):
                 line += ", %f" % value[x]
             for i in range(3):
                 for j in range(3):
+                    line += ",%f" % refs_by_mw[i][j][1][x]
                     for k in range(3):
                         line += ",%f" % sigs_by_mw[i][j][k][x]
             lines.append(line)
@@ -298,6 +360,7 @@ def dump_game_mw_pair(pair, params, file_name, mode):
     game, women = pair
     sigs = type_belief(women)
     choices = referral_choice(women)
+    refs = referral_by_midwife_type(women)
     payoffs = payoff(women)
     header = "\n"
     try:
@@ -318,6 +381,7 @@ def dump_game_mw_pair(pair, params, file_name, mode):
                 header += ",type_%d_signal_%d_change" % (i, j)
             header += ",signal_%d_ref" % (i)
             header += ",signal_%d_ref_change" % (i)
+            header += ",type_%d_ref" % i
         header += "\n"
         target.write(header)
         target.close()
@@ -334,6 +398,7 @@ def dump_game_mw_pair(pair, params, file_name, mode):
             for j in range(3):
                 line += ", %f, %f" % (sigs["%d" % i]["%d" % j][x], sigs["%d" % i]["%d" % j][x] - sigs["%d" % i]["%d" % j][0])
             line += ", %f, %f" % (choices["signal_%d_ref" % i][x], choices["signal_%d_ref" % i][x] - choices["signal_%d_ref" % i][0])
+            line += ", %f" % refs[i][1][x]
         lines.append(line)
     #return "\n".join(lines)
     target = open(file_name, 'a')
@@ -385,7 +450,7 @@ def signal_ref_belief(women):
 
 def referral_choice(midwives):
     """
-    Return the probability of referring over time.
+    Return the probability of referring over time broken down by signal.
     """
     counts = rounds_count(midwives)
     max_rounds = max(counts.keys())
@@ -584,7 +649,8 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder, signaller_rule="bayes", 
     responder_rule="bayes", file_name="compare.csv",test_fn=test, num_midwives=100, num_women=1000, runs=1000, caseload="FALSE", game=None, rounds=100,
-    mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], dumper_w=dump_game_women_pair, dumper_mw=dump_game_mw_pair, women_priors=None, seeds=None):
+    mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], dumper_w=dump_game_women_pair_breakdown, dumper_mw=dump_game_mw_pair, women_priors=None, seeds=None,
+    women_modifier=None):
     prospect_women = []
     prospect_midwives = []
     bayes_women = []
@@ -622,6 +688,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                 woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, women_priors[j][0], women_priors[j][1])
             else:
                 woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+        if women_modifier is not None:
+            women_modifier(women)
         print "Set priors."
         mw = make_players(responder_fn, num_midwives, weights=mw_weights)
         print "Made agents."
@@ -644,14 +712,27 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 def caseload_experiment(file_name="monte_carlo_mw.csv"):
     game = Game()
     game.init_payoffs()
-    p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'caseload':"FALSE", 'game':game})
+    p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair, 'dumper_mw':None})
     p.start()
     p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'test_fn':caseload_test, 'caseload':"TRUE", 'game':game, 'dumper_mw':None})
     p.start()
-    p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'test_fn':caseload_test,'caseload':"TRUE", 'game':game, 'dumper_mw':None})
+    p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'test_fn':caseload_test,'caseload':"TRUE", 'game':game})
     p.start()
-    p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'caseload':"FALSE", 'game':game})
+    p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair})
     p.start()
+
+def muddy_caseload_experiment(file_name="monte_carlo_mw.csv"):
+    modifier = inject_type_belief([10., 0., 0.], 100)
+    game = Game()
+    game.init_payoffs()
+    #p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair, 'dumper_mw':None, 'women_modifier':modifier})
+    #p.start()
+    #p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'test_fn':caseload_test, 'caseload':"TRUE", 'game':game, 'dumper_mw':None, 'women_modifier':modifier})
+    #p.start()
+    p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'test_fn':caseload_test,'caseload':"TRUE", 'game':game, 'dumper_mw':None, 'women_modifier':modifier})
+    p.start()
+    #p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair, 'dumper_mw':None, 'women_modifier':modifier})
+    #p.start()
 
 def alspac_caseload_experiment(file_name="monte_carlo_mw.csv"):
     game = Game()
@@ -828,6 +909,7 @@ if __name__ == "__main__":
     #no_harsh_compare("no_harsh_alspac.csv")
     #sensitivity("priors_sensitivity.csv")
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
-    #caseload_experiment("caseloading_compare_breakdown.csv")
+    caseload_experiment("caseloading_compare_breakdown_ref_final.csv")
     #priors_experiment("priors_final.csv")
     #alspac_caseload_experiment("alspac_caseloading_compare.csv")
+    #muddy_caseload_experiment("caseloading_compare_breakdown_ref_muddy.csv")
