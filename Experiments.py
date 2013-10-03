@@ -5,20 +5,24 @@ import multiprocessing
 import itertools
 from collections import OrderedDict
 
-def lhs(iterations, min_val, max_val):
-    values = []
-    segmentSize = 1. / iterations
-    for i in range(iterations):
-        segmentMin = i * segmentSize
-        point = segmentMin + (random.random() * segmentSize)
-        values.append((point * (max_val - min_val)) + min_val)
-    random.shuffle(values)
-    return values
+def write_results_set(file_name, results, sep=","):
+    write_results(file_name, results.pop(), 'w')
+    for result in results:
+        write_result(file_name, 'a', sep)
 
-def generate_players():
-    """ Generate players for a game.
+
+def write_results(file_name, results, mode, sep=","):
     """
-    return (Agent(None), Agent(None))
+    Write a results dictionary to a (csv) file.
+    """
+    if mode == 'w':
+        result = [sep.join(results['fields'])]
+    else:
+        result = []
+    result += map(lambda l: sep.join(map(str, l)), results['results'])
+    file = open(file_name, mode)
+    file.write("\n".join(result))
+    file.close()
 
 def all_played(women, rounds=12):
     for woman in women:
@@ -226,54 +230,37 @@ def payoff(women):
 
     return result
 
-def dump_game_women_pair(pair, params, file_name, mode):
-    file_name = "results/%s_%s_%s" % (params['decision_rule'], params['caseload'], file_name)
+def dump_game_women_pair(pair, params):
+    """
+    Return a results dictionary.
+    """
+    header = "appointment,type_0_signal_0,type_0_signal_0_change,type_0_signal_1,type_0_signal_1_change,type_0_signal_2,type_0_signal_2_change,type_1_signal_0,type_1_signal_0_change,type_1_signal_1,type_1_signal_1_change,type_1_signal_2,type_1_signal_2_change,type_2_signal_0,type_2_signal_0_change,type_2_signal_1,type_2_signal_1_change,type_2_signal_2,type_2_signal_2_change,type_2,type_2_change,type_1,type_1_change,type_0,type_0_change,signal_1,signal_1_change,signal_0,signal_0_change,signal_2,signal_2_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2,weight_0_0,weight_0_1,weight_0_2,weight_1_0,weight_1_1,weight_1_2,weight_2_0,weight_2_1,weight_2_2,run,harsh_mid,mid_high,mid_baby_payoff,referral_cost,baby_payoff,harsh_high,low_high,mid_low,low_low,low_mid,no_baby_payoff,harsh_low,mid_mid,payoff_0,payoff_1,payoff_2,payoff_all"
+    results = {'fields': header.split(","), 'results': []}
     game, women = pair
     sigs = signal_choice(women)
     #sigs_by_mw = honesty_by_midwife_type(women)
     dist = distribution_belief(women)
     ref = signal_ref_belief(women)
     payoffs = payoff(women)
-    param_vals = ""
-    for name, value in params.items():
-        param_vals += ",%s" % value
-    lines = []
-
-    header = "appointment,type_0_signal_0,type_0_signal_0_change,type_0_signal_1,type_0_signal_1_change,type_0_signal_2,type_0_signal_2_change,type_1_signal_0,type_1_signal_0_change,type_1_signal_1,type_1_signal_1_change,type_1_signal_2,type_1_signal_2_change,type_2_signal_0,type_2_signal_0_change,type_2_signal_1,type_2_signal_1_change,type_2_signal_2,type_2_signal_2_change, type_2, type_2_change, type_1, type_1_change, type_0, type_0_change, signal_1, signal_1_change, signal_0, signal_0_change, signal_2, signal_2_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2,weight_0_0,weight_0_1,weight_0_2,weight_1_0,weight_1_1,weight_1_2,weight_2_0,weight_2_1,weight_2_2,run,harsh_mid,mid_high,mid_baby_payoff,referral_cost,baby_payoff,harsh_high,low_high,mid_low,low_low,low_mid,no_baby_payoff,harsh_low,mid_mid,payoff_0,payoff_1,payoff_2,payoff_all"
-    
-    try:
-        with open(file_name): pass
-    except IOError:
-        target = open(file_name, 'w')
-        target.write(header)
-        target.close()
-
 
     for x in range(women[0].rounds - 1):
-            line = "%d" % x
+            line = [x]
             for i in range(3):
                 for j in range(3):
-                    line += ",%f, %f" % (sigs[i][j][x], sigs[i][j][x] - sigs[i][j][0])
+                    line += [sigs[i][j][x], sigs[i][j][x] - sigs[i][j][0]]
             for name, value in dist.items():
-                line += ", %f, %f" % (value[x], value[x] - value[0])
+                line += [value[x], value[x] - value[0]]
             for name, value in ref.items():
-                line += ", %f, %f" % (value[x], value[x] - value[0])
-            line += param_vals
-            for name, value in game.payoffs.items():
-                line += ",%d" % value
+                line += [value[x], value[x] - value[0]]
+            line += params.values()
+            line += game.payoffs.values()
             for name, value in payoffs.items():
-                line += ", %f" % value[x]
+                line += [value[x]]
+            print line
+            results['results'].append(line)
+    return results
 
-            lines.append(line)
-    #return "\n".join(lines)
-    target = open(file_name, 'a')
-    target.write("\n")
-    target.write("\n".join(lines))
-    target.close()
-    return "\n".join(lines)
-
-def dump_game_women_pair_breakdown(pair, params, file_name, mode):
-    file_name = "results/%s_%s_%s" % (params['decision_rule'], params['caseload'], file_name)
+def dump_game_women_pair_breakdown(pair, params):
     game, women = pair
     sigs = signal_choice(women)
     sigs_by_mw = honesty_by_midwife_type(women)
@@ -281,129 +268,86 @@ def dump_game_women_pair_breakdown(pair, params, file_name, mode):
     dist = distribution_belief(women)
     ref = signal_ref_belief(women)
     payoffs = payoff(women)
-    param_vals = ""
-    for name, value in params.items():
-        param_vals += ",%s" % value
-    lines = []
 
     header = "appointment,type_0_signal_0,type_0_signal_0_change,type_0_signal_1,type_0_signal_1_change,type_0_signal_2,type_0_signal_2_change,type_1_signal_0,type_1_signal_0_change,type_1_signal_1,type_1_signal_1_change,type_1_signal_2,type_1_signal_2_change,type_2_signal_0,type_2_signal_0_change,type_2_signal_1,type_2_signal_1_change,type_2_signal_2,type_2_signal_2_change, type_2, type_2_change, type_1, type_1_change, type_0, type_0_change, signal_1, signal_1_change, signal_0, signal_0_change, signal_2, signal_2_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2,weight_0_0,weight_0_1,weight_0_2,weight_1_0,weight_1_1,weight_1_2,weight_2_0,weight_2_1,weight_2_2,run,harsh_mid,mid_high,mid_baby_payoff,referral_cost,baby_payoff,harsh_high,low_high,mid_low,low_low,low_mid,no_baby_payoff,harsh_low,mid_mid,payoff_0,payoff_1,payoff_2,payoff_all"
+    header = header.split(",")
     for i in range(3):
         for j in range(3):
-            header += ", type_%d_mw_%d_ref" % (i, j)
+            header += ["type_%d_mw_%d_ref" % (i, j)]
             for k in range(3):
-                header += ", type_%d_mw_%d_sig_%d" % (i, j, k)
-    try:
-        with open(file_name): pass
-    except IOError:
-        target = open(file_name, 'w')
-        target.write(header)
-        target.close()
-
+                header += ["type_%d_mw_%d_sig_%d" % (i, j, k)]
+    results = {'fields':header, 'results':[]}
 
     for x in range(women[0].rounds - 1):
-            line = "%d" % x
+            line = [x]
             for i in range(3):
                 for j in range(3):
-                    line += ",%f, %f" % (sigs[i][j][x], sigs[i][j][x] - sigs[i][j][0])
+                    line += [sigs[i][j][x], sigs[i][j][x] - sigs[i][j][0]]
             for name, value in dist.items():
-                line += ", %f, %f" % (value[x], value[x] - value[0])
+                line += [value[x], value[x] - value[0]]
             for name, value in ref.items():
-                line += ", %f, %f" % (value[x], value[x] - value[0])
-            line += param_vals
-            for name, value in game.payoffs.items():
-                line += ",%d" % value
+                line += [value[x], value[x] - value[0]]
+            line += params.values()
+            line += game.payoffs.values()
             for name, value in payoffs.items():
-                line += ", %f" % value[x]
+                line += [value[x]]
             for i in range(3):
                 for j in range(3):
-                    line += ",%f" % refs_by_mw[i][j][1][x]
+                    line += [refs_by_mw[i][j][1][x]]
                     for k in range(3):
-                        line += ",%f" % sigs_by_mw[i][j][k][x]
-            lines.append(line)
-    #return "\n".join(lines)
-    target = open(file_name, 'a')
-    target.write("\n")
-    target.write("\n".join(lines))
-    target.close()
-    return "\n".join(lines)
+                        line += [sigs_by_mw[i][j][k][x]]
+            print line
+            results['results'].append(line)
+    return results
 
-def outcome(pair, params, file_name, mode):
-    file_name = "results/%s_%s_%s" % (params['decision_rule'], params['caseload'], file_name)
+def outcome(pair, params):
+    header = "type_2_sig_2,type_1_sig_1,type_2_sig_0,type_1_sig_0,type_2_sig_2_change,type_1_sig_1_change,type_2_sig_0_change,type_1_sig_0_change"
+    header = header.split(",")
+    header += params.keys()
+
+    results = {'fields':header,'results':[]}
     game, women = pair
     sigs = signal_choice(women)
-    param_vals = ""
-    for name, value in params.items():
-        param_vals += ",%s" % value
-    return "%f, %f, %f, %f, %f, %f, %f, %f %s" % (sigs[2][2][0], sigs[1][1][0], sigs[2][0][0], sigs[1][0][0], sigs[2][2][women[0].rounds - 1] - sigs[2][2][0], sigs[1][1][women[0].rounds - 1] - sigs[1][1][0], sigs[2][0][women[0].rounds - 1] - sigs[2][0][0], sigs[1][0][women[0].rounds - 1] - sigs[1][0][0], param_vals)
-    """header = "\n"
-    try:
-        with open(file_name): pass
-    except IOError:
-        mode = 'w'
-        header = "type_2_sig_2, type_1_sig_1, type_2_sig_0, type_1_sig_0, type_2_sig_2_change, type_1_sig_1_change, type_2_sig_0_change, type_1_sig_0_change\n"
-        target = open(file_name, 'w')
-        target.write(header)
-        target.close()
-    if mode == 'a':
-        target = open(file_name, 'a')
-        target.write(header)
-        target.close()
-    target = open(file_name, 'a')
-    target.write(header)
-    line = "%f, %f, %f, %f, %f, %f, %f, %f" % (sigs[2][2][0], sigs[1][1][0], sigs[2][0][0], sigs[1][0][0], sigs[2][2][women[0].rounds - 1] - sigs[2][2][0], sigs[1][1][women[0].rounds - 1] - sigs[1][1][0], sigs[2][0][women[0].rounds - 1] - sigs[2][0][0], sigs[1][0][women[0].rounds - 1] - sigs[1][0][0])
-    target = open(file_name, 'a')
-    target.write(line)
-    target.close()"""
 
-def dump_game_mw_pair(pair, params, file_name, mode):
-    file_name = "results/%s_%s_%s" % (params['decision_rule'], params['caseload'], file_name)
+    line = [sigs[2][2][0], sigs[1][1][0], sigs[2][0][0], sigs[1][0][0], sigs[2][2][women[0].rounds - 1] - sigs[2][2][0], 
+    sigs[1][1][women[0].rounds - 1] - sigs[1][1][0], sigs[2][0][women[0].rounds - 1] - sigs[2][0][0], 
+    sigs[1][0][women[0].rounds - 1] - sigs[1][0][0]]
+    line += params.values()
+    results['results'].append(line)
+
+    return results
+
+def dump_game_mw_pair(pair, params):
     game, women = pair
     sigs = type_belief(women)
     choices = referral_choice(women)
     refs = referral_by_midwife_type(women)
     payoffs = payoff(women)
-    header = "\n"
-    try:
-        with open(file_name): pass
-    except IOError:
-        mode = 'w'
-    if mode == 'a':
-        target = open(file_name, 'a')
-        target.write(header)
-        target.close()
-
-    elif mode == 'w':
-        target = open(file_name, 'w')
-        header = "appointment, payoff, %s, %s" % (",".join(params.keys()), ",".join(game.payoffs.keys()))
-        for i in range(3):
-            for j in range(3):
-                header += ",type_%d_signal_%d" % (i, j)
-                header += ",type_%d_signal_%d_change" % (i, j)
-            header += ",signal_%d_ref" % (i)
-            header += ",signal_%d_ref_change" % (i)
-            header += ",type_%d_ref" % i
-        header += "\n"
-        target.write(header)
-        target.close()
-    param_vals = ""
-    game_string = ""
-    for name, value in params.items():
-        param_vals += ",%s" % value
-    for name, value in game.payoffs.items():
-        game_string += ",%d" % value
-    lines = []
+    
+    header = ["appointment","payoff"]
+    header += params.keys()
+    header += game.payoffs.keys()
+    for i in range(3):
+        for j in range(3):
+            header += ["type_%d_signal_%d" % (i, j)]
+            header += ["type_%d_signal_%d_change" % (i, j)]
+        header += ["signal_%d_ref" % (i)]
+        header += ["signal_%d_ref_change" % (i)]
+        header += ["type_%d_ref" % i]
+    results = {'fields':header, 'results':[]}
+    param_vals = params.values()
+    game_string = game.payoffs.values()
     for x in range(len(sigs["0"]["0"])):
-        line = "%d, %f %s %s" % (x, payoffs['payoff_all'][x], param_vals, game_string)
+        line = [x, payoffs['payoff_all'][x]]
+        line += param_vals
+        line += game_string
         for i in range(3):
             for j in range(3):
-                line += ", %f, %f" % (sigs["%d" % i]["%d" % j][x], sigs["%d" % i]["%d" % j][x] - sigs["%d" % i]["%d" % j][0])
-            line += ", %f, %f" % (choices["signal_%d_ref" % i][x], choices["signal_%d_ref" % i][x] - choices["signal_%d_ref" % i][0])
-            line += ", %f" % refs[i][1][x]
-        lines.append(line)
-    #return "\n".join(lines)
-    target = open(file_name, 'a')
-    target.write("\n".join(lines))
-    target.close()
+                line += [sigs["%d" % i]["%d" % j][x], sigs["%d" % i]["%d" % j][x] - sigs["%d" % i]["%d" % j][0]]
+            line += [choices["signal_%d_ref" % i][x], choices["signal_%d_ref" % i][x] - choices["signal_%d_ref" % i][0]]
+            line += [refs[i][1][x]]
+        results['results'].append(line)
+    return results
 
 
 def type_belief(midwives):
@@ -446,8 +390,6 @@ def signal_ref_belief(women):
                 beliefs["signal_%d" % signal][i] += belief / len(women)
     return beliefs
 
-
-
 def referral_choice(midwives):
     """
     Return the probability of referring over time broken down by signal.
@@ -473,29 +415,6 @@ def referral_choice(midwives):
                 referral["signal_%d_ref" % signal][i] = 0.
     return referral
 
-def plot_referral_choice(midwives):
-    choices = referral_choice(midwives)
-    for signal, log in choices.items():
-        label = "Signal:", signal
-        pylab.plot(range(len(log)), log, label=label)
-    pylab.legend(loc='upper right')
-    pylab.show()
-
-
-
-def plot_signal_beliefs(midwives):
-    beliefs = type_belief(midwives)
-    for signal, types in beliefs.items():
-        for player_type, log in types.items():
-            label = "Signal: %d, type: %d" % (signal, player_type)
-            line = "%s%s" % (line_colour[player_type], line_type[signal])
-            pylab.plot(range(len(log)), log, line, label=label)
-    pylab.legend(loc='upper right')
-    pylab.show()
-
-
-
-
 def rounds_count(players):
     """
     Return a dictionary mapping number of rounds played
@@ -509,28 +428,6 @@ def rounds_count(players):
             else:
                 counts[i] = 1
     return counts
-
-
-def plot_average_signal_choice(women):
-    choices = signal_choice(women)
-
-    for player_type, signals in choices.items():
-        for signal, log in signals.items():
-            label = "Type: %d, signal: %d" % (player_type, signal)
-            line = "%s%s" % (line_colour[signal], line_type[player_type])
-            pylab.plot(range(women[0].rounds), log, line, label=label)
-    pylab.legend(loc='upper right')
-    pylab.show()
-
-def plot_signal_choice(women):
-    for player_type, signals in choices.items():
-        for signal, log in signals.items():
-            label = "Type: %d, signal: %d" % (player_type, signal)
-            line = "%s%s" % (line_colour[signal], line_type[player_type])
-            pylab.scatter(range(12), log, line, label=label)
-    pylab.legend(loc='upper right')
-    pylab.show()
-
 
 def count(players, rounds=None):
     """
@@ -648,31 +545,32 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
 
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder, signaller_rule="bayes", 
-    responder_rule="bayes", file_name="compare.csv",test_fn=test, num_midwives=100, num_women=1000, runs=1000, caseload="FALSE", game=None, rounds=100,
+    responder_rule="bayes", file_name="compare.csv",test_fn=test, num_midwives=100, num_women=1000, runs=100, caseload="FALSE", game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], dumper_w=dump_game_women_pair_breakdown, dumper_mw=dump_game_mw_pair, women_priors=None, seeds=None,
     women_modifier=None):
-    prospect_women = []
-    prospect_midwives = []
-    bayes_women = []
-    bayes_midwives = []
-    output_w = []
-    output_mw = []
+
+    output_w = {'fields':[], 'results':[]}
+    output_mw = {'fields':[], 'results':[]}
     if game is None:
         game = Game()
+
     params = OrderedDict()
     params['decision_rule'] = responder_rule
     params['caseload'] = caseload
     params['mw_0'] = mw_weights[0]
     params['mw_1'] = mw_weights[1]
-    params['mw_2'] = mw_weights[2],
+    params['mw_2'] = mw_weights[2]
     params['women_0'] = women_weights[0]
     params['women_1'] = women_weights[1]
     params['women_2'] = women_weights[2]
+
     for i in range(3):
         for j in range(3):
             params['weight_%d_%d' % (i, j)] = game.type_weights[i][j]
+
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
+
     for i in range(runs):
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
@@ -702,14 +600,22 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         #dump_women(pair, params, file_name, 'a')
         #dump_midwives((game, mw), params, "mw_"+file_name, 'a')
         if dumper_w is not None:
-            output_w.append(dumper_w(pair, params, "summary_"+file_name, 'a'))
+            results = dumper_w(pair, params)
+            output_w['fields'] = results['fields']
+            output_w['results'] += results['results']
+            print output_w['results']
         #dump_game_women_pair_change(pair, params, "change_summary_"+file_name, 'a')
         if dumper_mw is not None:
-            output_mw.append(dumper_mw((game, mw), params, "mw_summary_"+file_name, 'a'))
+            results = dumper_mw((game, mw), params)
+            output_mw['fields'] = results['fields']
+            output_mw['results'] += results['results']
         #print "Dumped results."
+    if file_name is not None:
+        write_results("women_"+file_name, output_w, 'w')
+        write_results("mw_"+file_name, output_mw, 'w')
     return (output_w, output_mw)
 
-def caseload_experiment(file_name="monte_carlo_mw.csv"):
+def caseload_experiment(file_name="caseload.csv"):
     game = Game()
     game.init_payoffs()
     p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair, 'dumper_mw':None})
@@ -721,7 +627,7 @@ def caseload_experiment(file_name="monte_carlo_mw.csv"):
     p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair})
     p.start()
 
-def muddy_caseload_experiment(file_name="monte_carlo_mw.csv"):
+def muddy_caseload_experiment(file_name="muddy_caseload.csv"):
     modifier = inject_type_belief([10., 0., 0.], 100)
     game = Game()
     game.init_payoffs()
@@ -734,7 +640,7 @@ def muddy_caseload_experiment(file_name="monte_carlo_mw.csv"):
     #p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair, 'dumper_mw':None, 'women_modifier':modifier})
     #p.start()
 
-def alspac_caseload_experiment(file_name="monte_carlo_mw.csv"):
+def alspac_caseload_experiment(file_name="alspac_caseload.csv"):
     game = Game()
     game.init_payoffs()
     p = multiprocessing.Process(target=decision_fn_compare, args=(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name,), kwargs={'caseload':"FALSE", 'game':game, 'women_weights':[.85, .10, .5]})
@@ -745,19 +651,6 @@ def alspac_caseload_experiment(file_name="monte_carlo_mw.csv"):
     p.start()
     p = multiprocessing.Process(target=decision_fn_compare, kwargs={'file_name':file_name, 'caseload':"FALSE", 'game':game, 'women_weights':[.85, .10, .5]})
     p.start()
-
-def sampling(file_name):
-    game = Game()
-    for i in range(1000):
-        print "Param set %d" % i
-        mw_types = random_expectations(depth=1, high=10)
-        game.init_payoffs(type_weights=mw_types)
-        mw_numbers = random_expectations(high=1)
-        women_numbers = random_expectations(high=1)
-        decision_fn_compare(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, caseload="FALSE", game=game, mw_weights=mw_numbers, women_weights=women_numbers)
-        decision_fn_compare(ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, test_fn=caseload_test, caseload="TRUE", game=game, mw_weights=mw_numbers, women_weights=women_numbers)
-        decision_fn_compare(file_name=file_name, test_fn=caseload_test, caseload="TRUE", game=game, mw_weights=mw_numbers, women_weights=women_numbers)
-        decision_fn_compare(file_name=file_name, caseload="FALSE", game=game, mw_weights=mw_numbers, women_weights=women_numbers)
 
 def priors_experiment(file_name):
     proportions = []#list(itertools.permutations([80/100., 15/100., 5/100.]))
@@ -777,20 +670,17 @@ def priors_experiment(file_name):
         priors.append([[i + 1., 1., 1.], [1., i + 1., 1.], [1., 1., i + 1.]])
     #women_priors = make_random_weights(1000)
     run_params = []
-    target = open(file_name, 'w')
-    header = "type_2_sig_2, type_1_sig_1, type_2_sig_0, type_1_sig_0, type_2_sig_2_change, type_1_sig_1_change, type_2_sig_0_change, type_1_sig_0_change, decision_rule, caseload, mw_0, mw_1, mw_2, women_0, women_1, women_2"
+    header = "type_2_sig_2,type_1_sig_1,type_2_sig_0,type_1_sig_0,type_2_sig_2_change,type_1_sig_1_change,type_2_sig_0_change,type_1_sig_0_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2"
+    header = header.split(",")
     for i in range(3):
         for j in range(3):
-            header += ',weight_%d_%d' % (i, j)
-    target.write(header + ", run\n")
-    target.close()
-    i = 0
+            header += ['weight_%d_%d'] % (i, j)
+    header += ["run"]
     total = len(prop_women)*len(proportions)*len(priors)*100
     pool = Pool(processes=2)
     for woman_prop in prop_women:
         for mw_prop in proportions:
             for prior in priors:
-                i += 100
                 #game = Game()
                 #game.init_payoffs(type_weights=prior)
                 #run_params.append([ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, False, game, mw_prop, woman_prop, outcome, None, None, None, 100])
@@ -799,49 +689,15 @@ def priors_experiment(file_name):
                 #run_params.append([ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, True, game, mw_prop, woman_prop, outcome, None, None])
                 game = Game()
                 game.init_payoffs(type_weights=prior)
-                run_params.append([BayesianSignaller, BayesianResponder, "Bayesian", "Bayesian", file_name, False, game, mw_prop, woman_prop, outcome, None, None, range(100), 100])
+                run_params.append([BayesianSignaller, BayesianResponder, "Bayesian", "Bayesian", None, False, game, mw_prop, woman_prop, outcome, None, None, range(100), 100])
                 #game = Game()
                 #game.init_payoffs(type_weights=prior)
                 #run_params.append([BayesianSignaller, BayesianResponder, "Bayesian", "Bayesian", file_name, True, game, mw_prop, woman_prop, outcome, None, None])
-                if i % 200 == 0:
-                    results = pool.map(run_game, run_params)
-                    for res in results:
-                        target = open(file_name, 'a')
-                        target.write("\n".join(res[0]) + "\n")
-                        target.close()
-                        target = open("mw_"+file_name, 'a')
-                        target.write("\n".join(res[1]) + "\n")
-                        target.close()
-                    print "Done %d/%d" % (i, total)
-                    run_params = []
-    results = pool.map(run_game, run_params)
-    for res in results:
-        target = open(file_name, 'a')
-        target.write("\n".join(res[0]) + "\n")
-        target.close()
-        target = open("mw_"+file_name, 'a')
-        target.write("\n".join(res[1]) + "\n")
-        target.close()
-        print "Done %d/%d" % (i, total)
-
-
-
-def make_prior_params():
-    iterations = 1000
-    return [lhs(iterations, 1, 100) for x in range(9)]
-
-def make_type_params():
-    iterations = 1000
-    return [lhs(iterations, 0, 100) for x in range(6)]
+    results = zip(*pool.map(run_game, run_params))
+    write_results_set("mw_"+file_name, results[1])
+    write_results_set("women_"+file_name, results[0])
 
 def lhs_sampling(file_name, samples):
-    target = open(file_name, 'w')
-    header = "type_2_sig_2, type_1_sig_1, type_2_sig_0, type_1_sig_0, type_2_sig_2_change, type_1_sig_1_change, type_2_sig_0_change, type_1_sig_0_change, decision_rule, caseload, mw_0, mw_1, mw_2, women_0, women_1, women_2"
-    for i in range(3):
-        for j in range(3):
-            header += ',weight_%d_%d' % (i, j)
-    target.write(header + ", run\n")
-    target.close()
     i = 0
     run_params = []
     seeds = []
@@ -873,27 +729,9 @@ def lhs_sampling(file_name, samples):
         game.init_payoffs(type_weights=mw_priors)
         run_params.append([BayesianSignaller, BayesianResponder, "bayes", "bayes", file_name, False, game, mw_numbers, women_numbers, outcome, None, None, None, 1])
         #random.setstate(random_state)
-        if i % 4 == 0:
-            results = pool.map(run_game, run_params)
-            for res in results:
-                target = open(file_name, 'a')
-                target.write("\n".join(res[0]) + "\n")
-                target.close()
-                target = open("mw_"+file_name, 'a')
-                target.write("\n".join(res[1]) + "\n")
-                target.close()
-            run_params = []
-            print "Done %d/%d." % (i + 1, total)
-    results = pool.map(run_game, run_params)
-    for res in results:
-        target = open(file_name, 'a')
-        target.write("\n".join(res[0]) + "\n")
-        target.close()
-        target = open("mw_"+file_name, 'a')
-        target.write("\n".join(res[1]) + "\n")
-        target.close()
-        run_params = []
-        print "Done %d/%d." % ((i + 1), total)
+    results = zip(*pool.map(run_game, run_params))
+    write_results_set("mw_"+file_name, results[1])
+    write_results_set("women_"+file_name, results[0])
 
 
 def run_game(args):
@@ -905,9 +743,6 @@ def run_game(args):
         mw_weights=mw_weights, women_weights=women_weights, dumper_w=dumper_w, dumper_mw=dumper_mw, women_priors=women_priors, seeds=seeds, runs=runs)
 
 if __name__ == "__main__":
-    #sampling("summary_sobol_2.csv", "test.samples")
-    #no_harsh_compare("no_harsh_alspac.csv")
-    #sensitivity("priors_sensitivity.csv")
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
     caseload_experiment("caseloading_compare_breakdown_ref_final.csv")
     #priors_experiment("priors_final.csv")

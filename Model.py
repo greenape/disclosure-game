@@ -1,6 +1,5 @@
 import random
 import math
-#import pylab
 import time
 
 def random_expectations(depth=0, breadth=3, low=0, high=10):
