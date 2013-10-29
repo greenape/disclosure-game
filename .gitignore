@@ -34,3 +34,15 @@ sensitivity/*
 *.tsv
 *.Prj
 *.eps
+
+python/Information.py
+
+*.svg
+
+*.samples
+
+*.bak
+
+*.pptx
+
+*.ps
