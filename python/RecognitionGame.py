@@ -24,11 +24,9 @@ class RecognitionGame(Game):
                 #Signaller learns something about the type
                 social = self.woman_social_payoff[signal][receiver.player_type]
 
-                target = copy(receiver)
-
                 possible_types = []
 
-                for i in len(self.woman_social_payoff[signal]):
+                for i in range(len(self.woman_social_payoff[signal])):
                         if social == self.woman_social_payoff[signal][i]:
                                 possible_types.append(i)
                 #True type is known
@@ -41,3 +39,6 @@ class RecognitionGame(Game):
                 receiver.rounds -= 1
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller)
+                        self.is_finished = True
+                else:
+                	signaller.finished += 1

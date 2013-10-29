@@ -1,6 +1,7 @@
 from Model import *
 from ProspectTheoryModel import *
 from ReferralGame import *
+from RecognitionGame import *
 from RecognitionAgents import *
 from multiprocessing import Pool
 import multiprocessing
@@ -30,7 +31,7 @@ def write_results(file_name, results, mode, sep=","):
 
 def all_played(women, rounds=12):
     for woman in women:
-        if(woman.rounds < rounds):
+        if(woman.rounds < rounds) and not woman.is_finished:
             return False
     return True
 
@@ -109,391 +110,116 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
     return midwives
 
 
-def signal_choice(women):
+def appointment(roundnum, women, game):
     """
-    Return a dictionary of women type vs. average signal choice per
-    round.
+    Return the value passed as roundnum.
     """
-    choices = {}
-    for player_type in range(3):
-        choices[player_type] = {}
-        for signal in range(3):
-            choices[player_type][signal] = [0 for x in range(women[0].rounds)]
-    for player_type, players in by_type(women).items():
-        for i in range(women[0].rounds):
-            for player in players:
-                choices[player_type][player.signal_log[i]][i] += 1
-    counts = count(women)
-    for player_type, signals in choices.items():
-        if counts[player_type] > 0:
-            for signal in signals:
-                for i in range(women[0].rounds):
-                    choices[player_type][signal][i] /= float(counts[player_type])
-    return choices
+    return roundnum
 
 
-def honesty_by_midwife_type(women):
+def finished(roundnum, women, game):
     """
-    Return a dictionary of women type vs. average signal choice per
-    round, broken down by the type of midwife they caseloaded with.
+    Return the fraction of the women finished by this round
     """
-    choices = {}
-    #counts = [[[[0 for x in range(women[0].rounds)] * 3] * 3] * 3]
-    for player_type in range(3):
-        choices[player_type] = {}
-        for mw_type in range(3):
-                choices[player_type][mw_type] = {}
-                for signal in range(3):
-                    choices[player_type][mw_type][signal] = [0 for x in range(women[0].rounds)]
-    for player_type, players in by_type(women).items():
-        for i in range(women[0].rounds):
-            for player in players:
-                midwife_type = player.type_log[0]
-                choices[player_type][midwife_type][player.signal_log[i]][i] += 1
-    counts = count_by_mw_type(women)
-    for player_type, signals in choices.items():
-        if counts[player_type][mw_type] > 0:
-            for signal in signals:
-                for mw_type in signals:
-                    for i in range(women[0].rounds):
-                        choices[player_type][mw_type][signal][i] /= float(counts[player_type][mw_type])
-    return choices
+    num_women = float(len(women))
+    num_finished = sum(map(lambda x: 1 if x.finished < roundnum else 0, women))
+    if num_women == 0:
+            return 0
+    return num_finished / num_women
 
 
-def referral_by_midwife_type_woman_type(women):
+def type_signal(player_type, signal):
     """
-    Return a dictionary of women type vs. frequency of referral per
-    round, broken down by the type of midwife they caseloaded with.
+    Return a function that yields the fraction of that type
+    who signalled so in that round.
     """
-    choices = {}
-    #counts = [[[[0 for x in range(women[0].rounds)] * 3] * 3] * 3]
-    for player_type in range(3):
-        choices[player_type] = {}
-        for mw_type in range(3):
-                choices[player_type][mw_type] = {}
-                for signal in range(2):
-                    choices[player_type][mw_type][signal] = [0 for x in range(women[0].rounds)]
-    for player_type, players in by_type(women).items():
-        for i in range(women[0].rounds):
-            for player in players:
-                midwife_type = player.type_log[0]
-                choices[player_type][midwife_type][player.response_log[i]][i] += 1
-    counts = count_by_mw_type(women)
-    for player_type, signals in choices.items():
-        if counts[player_type][mw_type] > 0:
-            for mw_type in signals:
-                for i in range(women[0].rounds):
-                    choices[player_type][mw_type][1][i] /= float(counts[player_type][mw_type])
-    return choices
+    def f(roundnum, women, game):
+        women = filter(lambda x: x.player_type == player_type, women)
+        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        num_women = len(women)
+        women = filter(lambda x: x.signal_log[roundnum] == signal, women)
+        signalled = len(women)
+        if num_women == 0:
+            return 0
+        return signalled / float(num_women)
+    return f
 
 
-def referral_by_midwife_type(midwives):
+def type_signal_breakdown(player_type, signal, midwife_type):
     """
-    Return a dictionary of frequency of referral per
-    round, broken down by the type of midwife.
+    Return a function that yields the fraction of women of some type signalling
+    a particular way who had a midwife of a particular type.
     """
-    choices = {}
-    #counts = [[[[0 for x in range(women[0].rounds)] * 3] * 3] * 3]
-    rounds_counts = rounds_count(midwives)
-    max_rounds = max(rounds_counts.keys())
-    for mw_type in range(3):
-            choices[mw_type] = {}
-            for signal in range(2):
-                choices[mw_type][signal] = [0 for x in range(max_rounds)]
-    counts = [[0, 0, 0] for x in range(max_rounds)]
-    for midwife in midwives:
-        for i in range(midwife.rounds - 1):
-            choices[midwife.player_type][midwife.response_log[i]][i] += 1.
-            counts[i][midwife.player_type] += 1.
-
-    for i in range(max_rounds):
-        for j in range(3):
-            if counts[i][j] > 0:
-                choices[j][0][i] /= counts[i][j]
-                choices[j][1][i] /= counts[i][j]
-    return choices
+    def f(roundnum, women, game):
+        women = filter(lambda x: x.player_type == player_type, women)
+        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        women = filter(lambda x: x.type_log[roundnum] == midwife_type, women)
+        num_women = len(women)
+        women = filter(lambda x: x.signal_log[roundnum] == signal, women)
+        signalled = len(women)
+        if num_women == 0:
+            return 0
+        return signalled / float(num_women)
+    return f
 
 
-def payoff(women):
+def type_referral_breakdown(player_type, signal, midwife_type):
     """
-    Return a dictionary of women type vs. average payoff per
-    round.
+    Return a function that yields the fraction of women of some type signalling
+    a particular way who had a midwife of a particular type and got referred.
+    If signal is None, then this is for all signals.
+    If midwife_type is None, then this is for all midwife types.
     """
-    choices = {}
-    rounds_counts = rounds_count(women)
-    max_rounds = max(rounds_counts.keys())
-    result = {}
-    for player_type in range(3):
-        choices[player_type] = {}
-        for signal in range(3):
-            choices[player_type] = [0. for x in range(max_rounds)]
-            result["payoff_%d" % player_type] = [0. for x in range(max_rounds)]
-    choices['all'] = [0. for x in range(max_rounds)]
-    result['payoff_all'] = [0. for x in range(max_rounds)]
-    for player_type, players in by_type(women).items():
-        for i in range(max_rounds):
-            for player in players:
-                if len(player.payoff_log) > i:
-                    choices[player_type][i] += player.payoff_log[i]
-                    choices['all'][i] += player.payoff_log[i]
-    for i in range(max_rounds):
-        counts = count(women, i)
-        for player_type, signals in choices.items():
-            if counts[player_type] > 0:
-                result["payoff_" + str(player_type)][i] = choices[player_type][i] / float(counts[player_type])
-
-    return result
+    def f(roundnum, women, game):
+        women = filter(lambda x: x.player_type == player_type, women)
+        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        if midwife_type is not None:
+            women = filter(lambda x: x.type_log[roundnum] == midwife_type, women)
+        num_women = len(women)
+        if signal is not None:
+            women = filter(lambda x: x.signal_log[roundnum] == signal, women)
+        women = filter(lambda x: x.response_log[roundnum] == 1, women)
+        signalled = len(women)
+        if num_women == 0:
+            return 0
+        return signalled / float(num_women)
+    return f
 
 
-def dump_game_women_pair(pair, params):
+def payoff_type(player_type=None):
     """
-    Return a results dictionary.
+    Return a function that gives the average payoff in that
+    round for a given type. If type is None, then the average
+    for all types is returned.
     """
-    header = "appointment,type_0_signal_0,type_0_signal_0_change,type_0_signal_1,type_0_signal_1_change,type_0_signal_2,type_0_signal_2_change,type_1_signal_0,type_1_signal_0_change,type_1_signal_1,type_1_signal_1_change,type_1_signal_2,type_1_signal_2_change,type_2_signal_0,type_2_signal_0_change,type_2_signal_1,type_2_signal_1_change,type_2_signal_2,type_2_signal_2_change,type_2,type_2_change,type_1,type_1_change,type_0,type_0_change,signal_1,signal_1_change,signal_0,signal_0_change,signal_2,signal_2_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2,weight_0_0,weight_0_1,weight_0_2,weight_1_0,weight_1_1,weight_1_2,weight_2_0,weight_2_1,weight_2_2,run,harsh_mid,mid_high,mid_baby_payoff,referral_cost,baby_payoff,harsh_high,low_high,mid_low,low_low,low_mid,no_baby_payoff,harsh_low,mid_mid,payoff_0,payoff_1,payoff_2,payoff_all"
-    results = {'fields': header.split(","), 'results': []}
+    def f(roundnum, women, game):
+        if player_type is not None:
+            women = filter(lambda x: x.player_type == player_type, women)
+        women = filter(lambda x: len(x.payoff_log) > roundnum, women)
+        return mean(map(lambda x: x.payoff_log[roundnum], women))
+    return f
+
+
+def dump(pair, measures, params, results=None):
+    """
+    A results dumper. Takes a tuple of a game and players, and two dictionaries.
+    Measures should contain a mapping from a field name to method for getting a result
+    given an appointment, set of players, and a game. Params should contain mappings
+    from parameter names to values.
+    Optionally takes an exist results object to add records to. This should have the same
+    measures and params.
+    Returns a results object for writing to csv.
+    """
     game, women = pair
-    sigs = signal_choice(women)
-    #sigs_by_mw = honesty_by_midwife_type(women)
-    dist = distribution_belief(women)
-    ref = signal_ref_belief(women)
-    payoffs = payoff(women)
-
-    for x in range(women[0].rounds - 1):
-            line = [x]
-            for i in range(3):
-                for j in range(3):
-                    line += [sigs[i][j][x], sigs[i][j][x] - sigs[i][j][0]]
-            for name, value in dist.items():
-                line += [value[x], value[x] - value[0]]
-            for name, value in ref.items():
-                line += [value[x], value[x] - value[0]]
-            line += params.values()
-            line += game.payoffs.values()
-            for name, value in payoffs.items():
-                line += [value[x]]
-            print line
-            results['results'].append(line)
-    return results
-
-
-def dump_game_women_pair_breakdown(pair, params):
-    game, women = pair
-    sigs = signal_choice(women)
-    sigs_by_mw = honesty_by_midwife_type(women)
-    refs_by_mw = referral_by_midwife_type_woman_type(women)
-    dist = distribution_belief(women)
-    ref = signal_ref_belief(women)
-    payoffs = payoff(women)
-
-    header = "appointment,type_0_signal_0,type_0_signal_0_change,type_0_signal_1,type_0_signal_1_change,type_0_signal_2,type_0_signal_2_change,type_1_signal_0,type_1_signal_0_change,type_1_signal_1,type_1_signal_1_change,type_1_signal_2,type_1_signal_2_change,type_2_signal_0,type_2_signal_0_change,type_2_signal_1,type_2_signal_1_change,type_2_signal_2,type_2_signal_2_change, type_2, type_2_change, type_1, type_1_change, type_0, type_0_change, signal_1, signal_1_change, signal_0, signal_0_change, signal_2, signal_2_change,decision_rule_responder,decision_rule_signaller,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2,weight_0_0,weight_0_1,weight_0_2,weight_1_0,weight_1_1,weight_1_2,weight_2_0,weight_2_1,weight_2_2,run,harsh_mid,mid_high,mid_baby_payoff,referral_cost,baby_payoff,harsh_high,low_high,mid_low,low_low,low_mid,no_baby_payoff,harsh_low,mid_mid,payoff_0,payoff_1,payoff_2,payoff_all"
-    header = header.split(",")
-    for i in range(3):
-        for j in range(3):
-            header += ["type_%d_mw_%d_ref" % (i, j)]
-            for k in range(3):
-                header += ["type_%d_mw_%d_sig_%d" % (i, j, k)]
-    results = {'fields':header, 'results':[]}
-
-    for x in range(women[0].rounds - 1):
-            line = [x]
-            for i in range(3):
-                for j in range(3):
-                    line += [sigs[i][j][x], sigs[i][j][x] - sigs[i][j][0]]
-            for name, value in dist.items():
-                line += [value[x], value[x] - value[0]]
-            for name, value in ref.items():
-                line += [value[x], value[x] - value[0]]
-            line += params.values()
-            line += game.payoffs.values()
-            for name, value in payoffs.items():
-                line += [value[x]]
-            for i in range(3):
-                for j in range(3):
-                    line += [refs_by_mw[i][j][1][x]]
-                    for k in range(3):
-                        line += [sigs_by_mw[i][j][k][x]]
-            print line
-            results['results'].append(line)
-    return results
-
-
-def outcome(pair, params):
-    header = "type_2_sig_2,type_1_sig_1,type_2_sig_0,type_1_sig_0,type_2_sig_2_change,type_1_sig_1_change,type_2_sig_0_change,type_1_sig_0_change"
-    header = header.split(",")
-    header += params.keys()
-
-    results = {'fields':header,'results':[]}
-    game, women = pair
-    sigs = signal_choice(women)
-
-    line = [sigs[2][2][0], sigs[1][1][0], sigs[2][0][0], sigs[1][0][0], sigs[2][2][women[0].rounds - 1] - sigs[2][2][0], 
-    sigs[1][1][women[0].rounds - 1] - sigs[1][1][0], sigs[2][0][women[0].rounds - 1] - sigs[2][0][0], 
-    sigs[1][0][women[0].rounds - 1] - sigs[1][0][0]]
-    line += params.values()
-    results['results'].append(line)
-
-    return results
-
-
-def dump_game_mw_pair(pair, params):
-    game, women = pair
-    sigs = type_belief(women)
-    choices = referral_choice(women)
-    refs = referral_by_midwife_type(women)
-    payoffs = payoff(women)
-
-    header = ["appointment","payoff"]
-    header += params.keys()
-    header += game.payoffs.keys()
-    for i in range(3):
-        for j in range(3):
-            header += ["type_%d_signal_%d" % (i, j)]
-            header += ["type_%d_signal_%d_change" % (i, j)]
-        header += ["signal_%d_ref" % (i)]
-        header += ["signal_%d_ref_change" % (i)]
-        header += ["type_%d_ref" % i]
-    results = {'fields':header, 'results':[]}
-    param_vals = params.values()
-    game_string = game.payoffs.values()
-    for x in range(len(sigs["0"]["0"])):
-        line = [x, payoffs['payoff_all'][x]]
-        line += param_vals
-        line += game_string
-        for i in range(3):
-            for j in range(3):
-                line += [sigs["%d" % i]["%d" % j][x], sigs["%d" % i]["%d" % j][x] - sigs["%d" % i]["%d" % j][0]]
-            line += [choices["signal_%d_ref" % i][x], choices["signal_%d_ref" % i][x] - choices["signal_%d_ref" % i][0]]
-            line += [refs[i][1][x]]
+    if results is None:
+        results = {'fields':measures.keys() + params.keys(), 'results':[]}
+    for i in range(params['max_rounds']):
+        line = []
+        for measure in measures.values():
+            line.append(measure(i, women, game))
+        line.append(params.values())
         results['results'].append(line)
     return results
-
-
-def type_belief(midwives):
-    """
-    Return a dictionary of signals vs. average belief about what they mean
-    per round.
-    """
-    beliefs = {}
-    counts = rounds_count(midwives)
-    max_rounds = max(counts.keys())
-    for i in range(3):
-        beliefs["%d" % i] = {}
-        for j in range(3):
-            beliefs["%d" % i]["%d" % j] = [0 for x in range(max_rounds)]
-    for midwife in midwives:
-        for i in range(3):
-            for j in range(3):
-                for k in range(midwife.rounds - 1):
-                    beliefs["%d" % i]["%d" % j][k] += midwife.signal_belief[i][j][k]
-    for i in range(3):
-        for j in range(3):
-            for k in range(max_rounds - 1):
-                beliefs["%d" % i]["%d" % j][k] /= float(counts[k])
-    return beliefs
-
-
-def distribution_belief(women):
-    beliefs = {"type_0": [0.]*(women[0].rounds - 1), "type_1": [0.]*(women[0].rounds - 1), "type_2": [0.]*(women[0].rounds - 1)}
-    for i in range(women[0].rounds - 1):
-        for woman in women:
-            for player_type, belief in woman.type_distribution.items():
-                beliefs["type_%d" % player_type][i] += belief[i] / len(women)
-    return beliefs
-
-
-def signal_ref_belief(women):
-    beliefs = {"signal_0": [0.]*(women[0].rounds - 1), "signal_1": [0.]*(women[0].rounds - 1), "signal_2": [0.]*(women[0].rounds - 1)}
-    for i in range(women[0].rounds - 1):
-        for woman in women:
-            for signal, responses in woman.response_belief.items():
-                belief = responses[1][i]
-                beliefs["signal_%d" % signal][i] += belief / len(women)
-    return beliefs
-
-
-def referral_choice(midwives):
-    """
-    Return the probability of referring over time broken down by signal.
-    """
-    counts = rounds_count(midwives)
-    max_rounds = max(counts.keys())
-    referral = {'all':[0 for x in range(max_rounds)]}
-    for signal in range(3):
-        referral["signal_%d_ref" % signal] = [[0, 0] for x in range(max_rounds)]
-
-    for midwife in midwives:
-        for i in range(midwife.rounds - 1):
-            if midwife.response_log[i] == 1:
-                referral['all'][i] += 1.
-                referral["signal_%d_ref" % midwife.signal_log[i]][i][1] += 1.
-            referral["signal_%d_ref" % midwife.signal_log[i]][i][0] += 1.
-    for i in range(max_rounds):
-        referral['all'][i] /= float(counts[i])
-        for signal in range(3):
-            if referral["signal_%d_ref" % signal][i][0] > 0:
-                referral["signal_%d_ref" % signal][i] = referral["signal_%d_ref" % signal][i][1] / referral["signal_%d_ref" % signal][i][0]
-            else:
-                referral["signal_%d_ref" % signal][i] = 0.
-    return referral
-
-
-def rounds_count(players):
-    """
-    Return a dictionary mapping number of rounds played
-    to the number of players who played at least that many.
-    """
-    counts = {}
-    for player in players:
-        for i in range(player.rounds):
-            if i in counts:
-                counts[i] += 1
-            else:
-                counts[i] = 1
-    return counts
-
-
-def count(players, rounds=None):
-    """
-    Return the number of each player type.
-    """
-    types = {}
-    types[0] = 0
-    types[1] = 0
-    types[2] = 0
-    types['all'] = 0
-    for player in players:
-        if rounds is None or player.rounds > rounds:
-            types[player.player_type] += 1.
-            types['all'] += 1.
-    return types
-
-
-def count_by_mw_type(players, rounds=None):
-    """
-    Return the number of each player type, broken down by their midwife type.
-    """
-    types = {}
-    types[0] = [0, 0, 0]
-    types[1] = [0, 0, 0]
-    types[2] = [0, 0, 0]
-    types['all'] = [0, 0, 0]
-    for player in players:
-        if rounds is None or player.rounds > rounds:
-            types[player.player_type][player.type_log[0]] += 1.
-            types['all'][player.type_log[0]] += 1.
-    return types
-
-
-def by_type(players):
-    """ Return a dictionary mapping player type
-    to a list of players with it.
-    """
-    types = {}
-    for player_type in range(3):
-        types[player_type] = []
-    for player in players:
-        types[player.player_type].append(player)
-    return types
 
 
 def test(game, women, midwives, rounds=12):
@@ -502,7 +228,7 @@ def test(game, women, midwives, rounds=12):
     while not all_played(women, rounds):
         woman = women.pop()
         game.play_game(woman, random.choice(midwives))
-        if woman.rounds == rounds:
+        if all_played([woman], rounds):
             birthed.append(woman)
         else:
             women.append(woman)
@@ -538,23 +264,11 @@ def caseload_test(game, women, midwives, rounds=12):
             if not all_played(cases, rounds):
                 woman = cases.pop()
                 game.play_game(woman, midwife)
-                if woman.rounds == rounds:
+                if all_played([woman], rounds):
                     birthed.append(woman)
                 else:
                     cases.append(woman)
     return (game, birthed)
-
-
-def equal_rounds(game, women, midwives, rounds=100):
-    game.init_payoffs()
-
-    for i in range(rounds):
-        random.shuffle(women)
-        random.shuffle(midwives)
-
-        for j in range(len(women)):
-            game.play_game(women[j], midwives[j])
-    return (game, women)
 
 
 def random_expectations(depth=0, breadth=3, low=0, high=10):
@@ -571,16 +285,7 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
     return results
 
 
-def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder, signaller_rule="bayes", 
-    responder_rule="bayes", file_name="compare.csv",test_fn=test, num_midwives=100, num_women=1000, runs=10, caseload="FALSE", game=None, rounds=100,
-    mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], dumper_w=dump_game_women_pair_breakdown, dumper_mw=dump_game_mw_pair, women_priors=None, seeds=None,
-    women_modifier=None):
-
-    output_w = {'fields': [], 'results': []}
-    output_mw = {'fields': [], 'results': []}
-    if game is None:
-        game = Game()
-
+def params_dict(responder_rule, signaller_rule, caseload, mw_weights, women_weights, game, rounds):
     params = OrderedDict()
     params['decision_rule_responder'] = responder_rule
     params['decision_rule_signaller'] = signaller_rule
@@ -591,10 +296,37 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     params['women_0'] = women_weights[0]
     params['women_1'] = women_weights[1]
     params['women_2'] = women_weights[2]
+    params['max_rounds'] = rounds
 
     for i in range(3):
         for j in range(3):
             params['weight_%d_%d' % (i, j)] = game.type_weights[i][j]
+    return params
+
+measures = OrderedDict()
+measures['appointment'] = appointment
+measures['finished'] = finished
+for i in range(3):
+    for j in range(3):
+        measures["type_%d_signal_%d" % (i, j)] = type_signal(i, j)
+        measures["type_%d_mw_%d_ref" % (i, j)] = type_referral_breakdown(i, None, j)
+        measures["type_%d_sig_%d_ref" % (i, j)] = type_referral_breakdown(i, j, None)
+        for k in range(3):
+            measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = type_signal_breakdown(i, k, j)
+
+
+def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
+    file_name="compare.csv",test_fn=test, num_midwives=100, num_women=1000, 
+    runs=10, caseload="FALSE", game=None, rounds=100,
+    mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
+    women_modifier=None, measures_women=measures, measures_midwives=measures):
+
+    output_w = {'fields': [], 'results': []}
+    output_mw = {'fields': [], 'results': []}
+    if game is None:
+        game = Game()
+
+    params = params_dict(str(responder_fn), str(signaller_fn), caseload, mw_weights, women_weights, game, rounds)
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
@@ -627,14 +359,14 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         #print "Ran trial."
         #dump_women(pair, params, file_name, 'a')
         #dump_midwives((game, mw), params, "mw_"+file_name, 'a')
-        if dumper_w is not None:
-            results = dumper_w(pair, params)
+        if measures_women is not None:
+            results = dump(pair, measures_women, params)
             output_w['fields'] = results['fields']
             output_w['results'] += results['results']
             print output_w['results']
         #dump_game_women_pair_change(pair, params, "change_summary_"+file_name, 'a')
-        if dumper_mw is not None:
-            results = dumper_mw((game, mw), params)
+        if measures_midwives is not None:
+            results = dump((game, mw), measures_midwives, params)
             output_mw['fields'] = results['fields']
             output_mw['results'] += results['results']
         #print "Dumped results."
@@ -645,13 +377,18 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
 
 def caseload_experiment(file_name="caseload.csv", game_fn=Game, 
-    agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)]):
+    agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
+    measures_women=measures, measures_midwives=measures):
     game = game_fn()
     game.init_payoffs()
     for pair in agents:
-        p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], str(pair[0]), str(pair[1]), file_name,), kwargs={'caseload':"FALSE", 'game':game, 'dumper_w':dump_game_women_pair, 'dumper_mw':None})
+        p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], file_name,), 
+                                    kwargs={'caseload': "FALSE", 'game': game,
+                                    'measures_midwives': None, 'measures_women': measures})
         p.start()
-        p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], str(pair[0]), str(pair[1]), "caseload_%s" % file_name,), kwargs={'test_fn':caseload_test, 'caseload':"TRUE", 'game':game, 'dumper_mw':None})
+        p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1],
+            "caseload_%s" % file_name,), kwargs={'test_fn':caseload_test, 'caseload':"TRUE", 
+        'game':game, 'measures_midwives':None, 'measures_women':measures})
         p.start()
 
 
@@ -744,11 +481,13 @@ def run_game(args):
     if caseload:
         test_fn = caseload_test
     return decision_fn_compare(signaller, responder, junk, junk2, file_name, test_fn=test_fn, caseload=caseload, game=game, 
-        mw_weights=mw_weights, women_weights=women_weights, dumper_w=dumper_w, dumper_mw=dumper_mw, women_priors=women_priors, seeds=seeds, runs=runs)
+        mw_weights=mw_weights, women_weights=women_weights, measures_women=dumper_w, measures_midwives=dumper_mw, women_priors=women_priors, seeds=seeds, runs=runs)
+
+
 
 if __name__ == "__main__":
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
-    caseload_experiment("referral_test.csv", ReferralGame, [(RecognitionSignaller, BayesianResponder)])
+    caseload_experiment("recog_test.csv", RecognitionGame, [(RecognitionSignaller, BayesianResponder)])
     #priors_experiment("priors_final.csv")
     #alspac_caseload_experiment("alspac_caseloading_compare.csv")
     #muddy_caseload_experiment("caseloading_compare_breakdown_ref_muddy.csv")

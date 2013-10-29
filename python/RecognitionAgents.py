@@ -85,20 +85,26 @@ class RecognitionSignaller(BayesianSignaller):
 
                 belief.append(prob)
 
-    def fuzzy_update_beliefs(response, midwife, payoff, possible_types):
+    def fuzzy_update_beliefs(self, response, midwife, payoff, possible_types):
         """
         A fuzzy update of type beliefs. Updates based on the possible types
         for this payoff.
         """
         # If we've already learned the true type, then this is moot
-        if opponent in self.type_memory:
+        if midwife in self.type_memory:
             self.update_beliefs(response, midwife, payoff)
             return
         else:
+            super(RecognitionSignaller, self).update_beliefs(response, midwife, payoff)
             current = self.current_type_distribution()
+            if not midwife in self.individual_type_matches:
+                self.individual_type_matches[midwife] = dict([(signal, 0.) for signal in self.signals])
+                self.individual_type_distribution[midwife] = dict([(signal, []) for signal in self.signals])
+
             # Update type beliefs
             if midwife is not None:
-                self.type_log.append(midwife_type)
+                self.type_log.append(midwife.player_type)
+
                 for midwife_type in possible_types:
                     self.type_matches[midwife_type] += 1
                     self.individual_type_matches[midwife][midwife_type] += 1
@@ -106,7 +112,7 @@ class RecognitionSignaller(BayesianSignaller):
             for player_type, estimate in self.individual_type_distribution[midwife].items():
                 alpha_k = current[player_type]
                 n_k = self.type_matches[player_type]
-                n = sum(self.individual_type_matches.values())
+                n = sum(self.individual_type_matches[midwife].values())
                 alpha_dot = sum(current.values())
                 estimate.append((alpha_k + n_k) / float(alpha_dot + n))
 
@@ -147,7 +153,7 @@ class RecognitionSignaller(BayesianSignaller):
         Risk for an unknown type individual encountered before.
         """
         signal_risk = 0.
-        for player_type, log in self.individual_type_distribution.items():
+        for player_type, log in self.individual_type_distribution[opponent].items():
                 type_belief = log[len(log) - 1]
                 for response, belief in self.individual_response_belief[opponent][signal].items():
                     response_belief = belief[len(belief) - 1]

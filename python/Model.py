@@ -50,6 +50,8 @@ class Agent(object):
         self.social_payoffs = None
         self.baby_payoffs = None
         self.signal_matches = dict([(y, 0.) for y in signals])
+        self.finished = 0
+        self.is_finished = False
 
 
 class Signaller(Agent):

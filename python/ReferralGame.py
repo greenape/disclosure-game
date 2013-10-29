@@ -22,3 +22,5 @@ class ReferralGame(Game):
                 receiver.rounds -= 1
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller)
+                else:
+                        signaller.finished += 1
