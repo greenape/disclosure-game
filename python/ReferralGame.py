@@ -6,6 +6,8 @@ class ReferralGame(Game):
         Similar to the standard disclosure game, but the true drinking type
         is only revealed after a referral, which ends the game.
         """
+        def name(self):
+                return "referral"
 
         def play_round(self, signaller, receiver):
                 """ Play a round of this game between the
@@ -22,5 +24,12 @@ class ReferralGame(Game):
                 receiver.rounds -= 1
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller)
+                        signaller.is_finished = True
                 else:
                         signaller.finished += 1
+
+class CaseloadReferralGame(CaseloadGame, ReferralGame):
+        """
+        Identical with the regular referral game, but uses caseloading to assign
+        women to midwives.
+        """

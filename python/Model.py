@@ -472,6 +472,12 @@ class Game(object):
                 priors["prior_%d_%d" % (i, j)] = self.type_weights[i][j]
         return priors
 
+    def all_played(self, women, rounds=12):
+        for woman in women:
+            if(woman.rounds < rounds) and not woman.is_finished:
+                return False
+        return True
+
     def play_round(self, signaller, receiver):
         """ Play a round of this game between the
         two players.
@@ -487,8 +493,76 @@ class Game(object):
         # Log honesty of signal
         #self.disclosure_log.append(signal == signaller.player_type)
 
-    def play_game(self, signaller, receiver):
-        #signaller.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
-        #receiver.init_payoffs(self.midwife_payoff, self.type_weights)
-        for r in range(self.num_rounds):
-            self.play_round(signaller, receiver)
+    def play_game(self, women, midwives, rounds):
+        birthed = []
+        random.shuffle(women)
+        while not self.all_played(women, rounds):
+            woman = women.pop()
+            self.play_round(woman, random.choice(midwives))
+            if self.all_played([woman], rounds):
+                birthed.append(woman)
+                woman.is_finished = True
+            else:
+                women.append(woman)
+                woman.finished += 1
+        return (self, birthed)
+
+    def is_caseloaded(self):
+        return False
+
+    def name(self):
+        return "standard"
+
+    def __str__(self):
+        return self.__unicode__()
+
+    def __unicode__(self):
+        rep = "%s" % self.name()
+        rep = "%s_caseload" % rep if self.is_caseloaded() else rep
+        return rep
+
+
+class CaseloadGame(Game):
+    """
+    Just like the standard game, but operates a caseloading system. Women
+    are assigned a midwife who they then have all appointments with.
+    """
+
+    def all_played_caseload(self, caseload, rounds=12):
+        for midwife, cases in caseload.items():
+            if not self.all_played(cases, rounds):
+                return False
+        return True
+
+    def play_game(self, women, midwives, rounds):
+        birthed = []
+        #Assign women to midwives
+        caseloads = {}
+        num_women = len(women)
+        num_midwives = len(midwives)
+        load = num_women / num_midwives
+        random.shuffle(women)
+        for midwife in midwives:
+            caseloads[midwife] = []
+            for i in range(load):
+                caseloads[midwife].append(women.pop())
+
+        # Assign leftovers at random
+        while len(women) > 0:
+            caseloads[random.choice(midwives)].append(women.pop())
+
+        while not self.all_played_caseload(caseloads, rounds):
+            for midwife, cases in caseloads.items():
+                if not self.all_played(cases, rounds):
+                    woman = cases.pop()
+                    self.play_round(woman, midwife)
+                if self.all_played([woman], rounds):
+                    birthed.append(woman)
+                    woman.is_finished = True
+                else:
+                    cases.append(woman)
+                    woman.finished += 1
+        return (self, birthed)
+
+    def is_caseloaded(self):
+        return True

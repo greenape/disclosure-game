@@ -12,6 +12,9 @@ class RecognitionGame(Game):
         Observing a unique response constitutes a type revelation.
         """
 
+        def name(self):
+            return "recognition"
+
         def play_round(self, signaller, receiver):
                 """ Play a round of this game between the
                 two players.
@@ -31,14 +34,21 @@ class RecognitionGame(Game):
                                 possible_types.append(i)
                 #True type is known
                 if len(possible_types) == 1:
-                	signaller.update_beliefs(act, receiver, signal_payoff)
+                    signaller.update_beliefs(act, receiver, signal_payoff)
                 else:
-                	signaller.fuzzy_update_beliefs(act, receiver, signal_payoff, possible_types)
+                    signaller.fuzzy_update_beliefs(act, receiver, signal_payoff, possible_types)
 
                 #But the responder doesn't unless they referred
                 receiver.rounds -= 1
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller)
-                        self.is_finished = True
+                        signaller.is_finished = True
                 else:
-                	signaller.finished += 1
+                    signaller.finished += 1
+
+
+class CaseloadRecognitionGame(CaseloadGame, RecognitionGame):
+    """
+    Identical with the regular recognition game, but uses caseloading to assign
+    women to midwives.
+    """

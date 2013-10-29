@@ -29,27 +29,6 @@ def write_results(file_name, results, mode, sep=","):
     file.close()
 
 
-def all_played(women, rounds=12):
-    for woman in women:
-        if(woman.rounds < rounds) and not woman.is_finished:
-            return False
-    return True
-
-
-def weighted_choice(choices):
-    """
-    Return a weighted random choice amongst player types,
-    given a list of tuples of form (type, weight)
-    """
-    total = sum(weight for player_type, weight in choices)
-    r = random.uniform(0, total)
-    upto = 0
-    for player_type, weight in choices:
-        if upto + weight > r:
-            return player_type
-        upto += weight
-
-
 def scale_weights(weights, top):
     scaling = top / float(sum(weights))
     for i in range(len(weights)):
@@ -109,6 +88,7 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
         midwives.append(responder(player_type=weighted_choice(zip([0, 1, 2], weights))))
     return midwives
 
+# Measures
 
 def appointment(roundnum, women, game):
     """
@@ -196,7 +176,7 @@ def payoff_type(player_type=None):
         if player_type is not None:
             women = filter(lambda x: x.player_type == player_type, women)
         women = filter(lambda x: len(x.payoff_log) > roundnum, women)
-        return mean(map(lambda x: x.payoff_log[roundnum], women))
+        return sum(map(lambda x: x.payoff_log[roundnum], women)) / float(len(women))
     return f
 
 
@@ -214,61 +194,10 @@ def dump(pair, measures, params, results=None):
     if results is None:
         results = {'fields':measures.keys() + params.keys(), 'results':[]}
     for i in range(params['max_rounds']):
-        line = []
-        for measure in measures.values():
-            line.append(measure(i, women, game))
+        line = map(lambda x: x(i, women, game), measures.values())
         line.append(params.values())
         results['results'].append(line)
     return results
-
-
-def test(game, women, midwives, rounds=12):
-    birthed = []
-    random.shuffle(women)
-    while not all_played(women, rounds):
-        woman = women.pop()
-        game.play_game(woman, random.choice(midwives))
-        if all_played([woman], rounds):
-            birthed.append(woman)
-        else:
-            women.append(woman)
-    return (game, birthed)
-
-
-def all_played_caseload(caseload, rounds=12):
-    for midwife, cases in caseload.items():
-        if not all_played(cases, rounds):
-            return False
-    return True
-
-
-def caseload_test(game, women, midwives, rounds=12):
-    birthed = []
-    #Assign women to midwives
-    caseloads = {}
-    num_women = len(women)
-    num_midwives = len(midwives)
-    load = num_women / num_midwives
-    random.shuffle(women)
-    for midwife in midwives:
-        caseloads[midwife] = []
-        for i in range(load):
-            caseloads[midwife].append(women.pop())
-
-    # Assign leftovers at random
-    while len(women) > 0:
-        caseloads[random.choice(midwives)].append(women.pop())
-
-    while not all_played_caseload(caseloads, rounds):
-        for midwife, cases in caseloads.items():
-            if not all_played(cases, rounds):
-                woman = cases.pop()
-                game.play_game(woman, midwife)
-                if all_played([woman], rounds):
-                    birthed.append(woman)
-                else:
-                    cases.append(woman)
-    return (game, birthed)
 
 
 def random_expectations(depth=0, breadth=3, low=0, high=10):
@@ -285,11 +214,11 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
     return results
 
 
-def params_dict(responder_rule, signaller_rule, caseload, mw_weights, women_weights, game, rounds):
+def params_dict(responder_rule, signaller_rule, mw_weights, women_weights, game, rounds):
     params = OrderedDict()
     params['decision_rule_responder'] = responder_rule
     params['decision_rule_signaller'] = signaller_rule
-    params['caseload'] = caseload
+    params['caseload'] = game.is_caseloaded()
     params['mw_0'] = mw_weights[0]
     params['mw_1'] = mw_weights[1]
     params['mw_2'] = mw_weights[2]
@@ -316,8 +245,8 @@ for i in range(3):
 
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
-    file_name="compare.csv",test_fn=test, num_midwives=100, num_women=1000, 
-    runs=10, caseload="FALSE", game=None, rounds=100,
+    file_name="compare.csv", num_midwives=100, num_women=1000, 
+    runs=10, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
     women_modifier=None, measures_women=measures, measures_midwives=measures):
 
@@ -326,7 +255,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if game is None:
         game = Game()
 
-    params = params_dict(str(responder_fn), str(signaller_fn), caseload, mw_weights, women_weights, game, rounds)
+    params = params_dict(str(responder_fn), str(signaller_fn), mw_weights, women_weights, game, rounds)
+
+    #Unique filename by gametype
+    if file_name is not None:
+        file_name = "%s_%s" % (game, file_name)
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
@@ -355,7 +288,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
         print "Set priors."
 
-        pair = test_fn(game, women, mw, rounds=rounds)
+        pair = game.play_game(women, mw, rounds=rounds)
         #print "Ran trial."
         #dump_women(pair, params, file_name, 'a')
         #dump_midwives((game, mw), params, "mw_"+file_name, 'a')
@@ -376,20 +309,17 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     return (output_w, output_mw)
 
 
-def caseload_experiment(file_name="caseload.csv", game_fn=Game, 
+def caseload_experiment(file_name="caseload.csv", game_fns=[Game, CaseloadGame], 
     agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
     measures_women=measures, measures_midwives=measures):
-    game = game_fn()
-    game.init_payoffs()
     for pair in agents:
-        p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], file_name,), 
-                                    kwargs={'caseload': "FALSE", 'game': game,
+        for game_fn in game_fns:
+            game = game_fn()
+            game.init_payoffs()
+            p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], file_name,), 
+                                    kwargs={'game': game,
                                     'measures_midwives': None, 'measures_women': measures})
-        p.start()
-        p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1],
-            "caseload_%s" % file_name,), kwargs={'test_fn':caseload_test, 'caseload':"TRUE", 
-        'game':game, 'measures_midwives':None, 'measures_women':measures})
-        p.start()
+            p.start()
 
 
 def priors_experiment(file_name):
@@ -487,7 +417,7 @@ def run_game(args):
 
 if __name__ == "__main__":
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
-    caseload_experiment("recog_test.csv", RecognitionGame, [(RecognitionSignaller, BayesianResponder)])
+    caseload_experiment("recog_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(RecognitionSignaller, BayesianResponder)])
     #priors_experiment("priors_final.csv")
     #alspac_caseload_experiment("alspac_caseloading_compare.csv")
     #muddy_caseload_experiment("caseloading_compare_breakdown_ref_muddy.csv")
