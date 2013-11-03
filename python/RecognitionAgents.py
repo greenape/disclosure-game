@@ -33,6 +33,7 @@ class RecognitionSignaller(BayesianSignaller):
         New information about an opponent updates the beliefs about both
         that player, and all opponents.
         """
+        print "Updating beliefs with known type."
         #Update general beliefs first
         super(RecognitionSignaller, self).update_beliefs(response, midwife, payoff)
 
@@ -58,10 +59,6 @@ class RecognitionSignaller(BayesianSignaller):
 
 
         self.individual_response_signal_matches[midwife][self.signal_log[self.rounds - 1]][response] += 1.
-
-        #response_matches = {}
-        #for response in self.responses:
-        #    response_matches[response] = [x == response for x in self.response_log]
 
         for signal, responses in self.individual_response_belief[midwife].items():
             #signal_matches = [x == signal for x in self.signal_log]
@@ -90,12 +87,16 @@ class RecognitionSignaller(BayesianSignaller):
         A fuzzy update of type beliefs. Updates based on the possible types
         for this payoff.
         """
+        print "Called with possible types", possible_types
         # If we've already learned the true type, then this is moot
         if midwife in self.type_memory:
             self.update_beliefs(response, midwife, payoff)
             return
         else:
-            super(RecognitionSignaller, self).update_beliefs(response, midwife, payoff)
+            # Update general response beliefs
+            super(RecognitionSignaller, self).update_beliefs(response, None, payoff)
+            self.update_type_distribution(possible_types)
+            # Update individual type distribution
             current = self.current_type_distribution()
             if not midwife in self.individual_type_matches:
                 self.individual_type_matches[midwife] = dict([(signal, 0.) for signal in self.signals])
@@ -106,18 +107,29 @@ class RecognitionSignaller(BayesianSignaller):
                 self.type_log.append(midwife.player_type)
 
                 for midwife_type in possible_types:
-                    self.type_matches[midwife_type] += 1
-                    self.individual_type_matches[midwife][midwife_type] += 1
+                    #self.type_matches[midwife_type] += 1. / len(possible_types)
+                    self.individual_type_matches[midwife][midwife_type] += 1. / len(possible_types)
 
             for player_type, estimate in self.individual_type_distribution[midwife].items():
                 alpha_k = current[player_type]
-                n_k = self.type_matches[player_type]
+                n_k = self.individual_type_matches[midwife][player_type]
                 n = sum(self.individual_type_matches[midwife].values())
                 alpha_dot = sum(current.values())
                 estimate.append((alpha_k + n_k) / float(alpha_dot + n))
 
-
+        # Update individual response beliefs
         self.update_signal_response_beliefs(midwife, response)
+
+    def update_type_distribution(self, possible_types):
+        for midwife_type in possible_types:
+            self.type_matches[midwife_type] += 1. / len(possible_types)
+
+        for player_type, estimate in self.type_distribution.items():
+            alpha_k = self.type_weights[player_type]
+            n_k = self.type_matches[player_type]
+            n = sum(self.type_matches.values())
+            alpha_dot = sum(self.type_weights)
+            estimate.append((alpha_k + n_k) / float(alpha_dot + n))
 
     def risk(self, signal, appointment, opponent):
         """
@@ -170,3 +182,73 @@ class RecognitionSignaller(BayesianSignaller):
         if not opponent in self.individual_signal_matches:
             self.individual_signal_matches[opponent] = dict([(y, 0.) for y in self.signals])
         self.individual_signal_matches[opponent][signal] += 1
+
+class RecognitionResponder(BayesianResponder):
+    """
+    Class of responder which remembers the actions of opponents and then retrospectively
+    updates beliefs based on that when true information is available.
+    """
+    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
+        # Memory of a particular agent's signals.
+        self.signal_memory = {}
+        self.type_memory = {}
+
+        super(RecognitionResponder, self).__init__(player_type, signals, responses)
+
+    def respond(self, signal, rounds=None, opponent=None):
+        """
+        Make a judgement about somebody based on
+        the signal they sent by minimising bayesian risk.
+        """
+        self.fuzzy_update_beliefs(opponent, signal)
+        return super(RecognitionResponder, self).respond(signal, rounds, opponent)
+
+    def fuzzy_update_beliefs(self, signaller, signal):
+        # Nothing to do if we know the type already
+        if signaller in self.type_memory:
+            return super(RecognitionResponder, self).update_beliefs(None, signaller)
+        if not signaller in self.signal_memory:
+            self.signal_memory[signaller] = [signal]
+            return
+        self.signal_memory[signaller].append(signal)
+
+    def update_beliefs(self, payoff, signaller):
+        if signaller is None:
+            return super(RecognitionResponder, self).update_beliefs(payoff, signaller)
+        self.type_memory[signaller] = signaller.player_type
+
+        rounds = self.rounds
+        signaller_type = signaller.player_type
+        self.type_log.append(signaller_type)
+        
+        for signal in self.signals:
+            sent = len(filter(lambda x: x == signal, self.signal_memory[signaller]))
+            self.signal_type_matches[signal][signaller_type] += sent
+        self.signal_memory[signaller] = []
+        
+        if payoff is not None:
+            self.payoff_log.append(payoff)
+
+        #type_matches = {}
+        #for player_type in self.signals:
+        #    type_matches[player_type] = [x == player_type for x in self.type_log]
+
+        for signal_i, types in self.signal_belief.items():
+            for player_type, belief in types.items():
+                #signal_matches = [x == signal_i for x in self.signal_log]
+                print "Updating P(%d|%d).." % (player_type, signal_i)
+                alpha_k = self.type_weights[signal_i][player_type]
+                print "alpha_k = %f" % alpha_k
+                alpha_dot = sum(self.type_weights[signal_i])
+                print "Num alternatives = %d" % alpha_dot
+                #n = self.signal_matches[signal_i]
+                n = sum(self.signal_type_matches[signal_i].values())
+                print "n = %d" % n
+
+                #matched_pairs = zip(type_matches[player_type], signal_matches)
+                #signal_type_matches = [a and b for a, b in matched_pairs]
+                n_k = self.signal_type_matches[signal_i][player_type]
+                print "n_k = %d" % n_k
+                prob = (alpha_k + n_k) / float(alpha_dot + n)
+                print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
+                self.signal_belief[signal_i][player_type].append(prob)

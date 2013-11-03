@@ -228,7 +228,7 @@ class MiniMaxSignaller(Signaller):
         for signal in self.signals:
             worst_case[signal] = min(self.get_payoffs(signal))
 
-        best = (0, -99999)
+        best = (0, 99999)
         for signal in self.signals:
             if best[1] < worst_case[signal]:
                 best = (signal, worst_case[signal])
@@ -293,7 +293,7 @@ class Responder(Agent):
         for signal, types in self.signal_belief.items():
             current[signal] = {}
             for player_type, log in types.items():
-                current[signal][player_type] = log[self.rounds]
+                current[signal][player_type] = log[len(log) - 1]
         return current
 
 
@@ -378,7 +378,7 @@ class MiniMaxResponder(Responder):
 
 
 class Game(object):
-    def __init__(self, num_rounds=1, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
+    def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False):
         """ A multistage game played by two agents.
         """
@@ -388,7 +388,6 @@ class Game(object):
         self.woman_baby_payoff = [[0, 0] for x in range(3)]
         self.woman_social_payoff = [[0, 0, 0] for x in range(3)]
         self.midwife_payoff = [[0, 0] for x in range(3)]
-        self.num_rounds = num_rounds
         self.payoffs = {}
 
         if randomise_payoffs:
@@ -426,7 +425,7 @@ class Game(object):
         self.payoffs["low_mid"] = random.randint(self.payoffs["low_high"], 0)
         self.payoffs["low_low"] = random.randint(self.payoffs["low_mid"], 0)
 
-    def init_payoffs(self, type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]]):
+    def init_payoffs(self, type_weights=[[20., 1., 1.], [1., 10., 1.], [1., 1., 10.]]):
         self.type_weights = type_weights
         #Midwife payoffs
         #Light drinker
@@ -503,7 +502,7 @@ class Game(object):
                 birthed.append(woman)
                 woman.is_finished = True
             else:
-                women.append(woman)
+                women.insert(0, woman)
                 woman.finished += 1
         return (self, birthed)
 
@@ -560,7 +559,7 @@ class CaseloadGame(Game):
                     birthed.append(woman)
                     woman.is_finished = True
                 else:
-                    cases.append(woman)
+                    cases.insert(0, woman)
                     woman.finished += 1
         return (self, birthed)
 

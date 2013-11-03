@@ -21,12 +21,12 @@ class ReferralGame(Game):
                 #Signaller learns the true type
                 signaller.update_beliefs(act, receiver, signal_payoff)
                 #But the responder doesn't unless they referred
-                receiver.rounds -= 1
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller)
                         signaller.is_finished = True
                 else:
-                        signaller.finished += 1
+                        receiver.rounds -= 1
+
 
 class CaseloadReferralGame(CaseloadGame, ReferralGame):
         """
