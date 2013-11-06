@@ -26,16 +26,28 @@ class RecognitionSignaller(BayesianSignaller):
 
         super(RecognitionSignaller, self).__init__(player_type, signals, responses)
 
-    def update_beliefs(self, response, midwife, payoff):
+    def individual_current_type_distribution(self, midwife):
+        """
+        Return the most current believed type distribution
+        for a midwife.
+        """
+        if midwife not in self.individual_type_distribution:
+            return self.current_type_distribution()
+        result = {}
+        for signal, record in self.individual_type_distribution[midwife].items():
+            result[signal] = record[len(record) - 1]
+        return result
+
+    def update_beliefs(self, response, midwife, payoff, midwife_type=None):
         """
         This class of agent maintains two sets of beliefs. Beliefs about
         the general world, and about particular opponents.
         New information about an opponent updates the beliefs about both
-        that player, and all opponents.
+        that player, and the general class of opponents.
         """
-        print "Updating beliefs with known type."
+        #print "Updating beliefs with known type."
         #Update general beliefs first
-        super(RecognitionSignaller, self).update_beliefs(response, midwife, payoff)
+        super(RecognitionSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
 
         #Exit early if there's no midwife
         if midwife is None:
@@ -43,7 +55,8 @@ class RecognitionSignaller(BayesianSignaller):
 
         #Then update beliefs about *this* opponent
         #Known type
-        self.type_memory[midwife] = midwife.player_type
+        if midwife_type is None:
+            self.type_memory[midwife] = midwife.player_type
         # Individual specific reponse beliefs
         # Update signal-response beliefs
         self.update_signal_response_beliefs(midwife, response)
@@ -87,7 +100,7 @@ class RecognitionSignaller(BayesianSignaller):
         A fuzzy update of type beliefs. Updates based on the possible types
         for this payoff.
         """
-        print "Called with possible types", possible_types
+        #print "Called with possible types", possible_types
         # If we've already learned the true type, then this is moot
         if midwife in self.type_memory:
             self.update_beliefs(response, midwife, payoff)
@@ -108,7 +121,7 @@ class RecognitionSignaller(BayesianSignaller):
 
                 for midwife_type in possible_types:
                     #self.type_matches[midwife_type] += 1. / len(possible_types)
-                    self.individual_type_matches[midwife][midwife_type] += 1. / len(possible_types)
+                    self.individual_type_matches[midwife][midwife_type] += 1.
 
             for player_type, estimate in self.individual_type_distribution[midwife].items():
                 alpha_k = current[player_type]
@@ -121,8 +134,12 @@ class RecognitionSignaller(BayesianSignaller):
         self.update_signal_response_beliefs(midwife, response)
 
     def update_type_distribution(self, possible_types):
+        """
+        Update beliefs on distributions for a number of possible
+        types.
+        """
         for midwife_type in possible_types:
-            self.type_matches[midwife_type] += 1. / len(possible_types)
+            self.type_matches[midwife_type] += 1.
 
         for player_type, estimate in self.type_distribution.items():
             alpha_k = self.type_weights[player_type]
@@ -131,18 +148,18 @@ class RecognitionSignaller(BayesianSignaller):
             alpha_dot = sum(self.type_weights)
             estimate.append((alpha_k + n_k) / float(alpha_dot + n))
 
-    def risk(self, signal, appointment, opponent):
+    def risk(self, signal, opponent):
         """
         Risk here is based on the belief about a specific opponent rather
         than the general case. If the opponent has not been encountered
         before, then the decision is based on the general beliefs.
         """
-        if opponent in self.type_memory:
-            signal_risk = self.known_type_risk(signal, opponent)
-        elif opponent in self.individual_type_distribution:
+        #if opponent in self.type_memory:
+        #    signal_risk = self.known_type_risk(signal, opponent)
+        if opponent in self.individual_type_distribution:
             signal_risk = self.type_risk(signal, opponent)
         else:
-            signal_risk = super(RecognitionSignaller, self).risk(signal, appointment, opponent)
+            signal_risk = super(RecognitionSignaller, self).risk(signal, opponent)
        #print "R(%d|x)=%f" % (signal, signal_risk)
         return signal_risk
 
@@ -165,8 +182,8 @@ class RecognitionSignaller(BayesianSignaller):
         Risk for an unknown type individual encountered before.
         """
         signal_risk = 0.
-        for player_type, log in self.individual_type_distribution[opponent].items():
-                type_belief = log[len(log) - 1]
+        for player_type, type_belief in self.individual_current_type_distribution(opponent).items():
+                #type_belief = log[len(log) - 1]
                 for response, belief in self.individual_response_belief[opponent][signal].items():
                     response_belief = belief[len(belief) - 1]
                     payoff = self.baby_payoffs[response] + self.social_payoffs[player_type][signal]
@@ -176,12 +193,12 @@ class RecognitionSignaller(BayesianSignaller):
                     signal_risk += payoff * response_belief * type_belief
         return signal_risk
 
-
     def log_signal(self, signal, opponent):
         super(RecognitionSignaller, self).log_signal(signal, opponent)
         if not opponent in self.individual_signal_matches:
             self.individual_signal_matches[opponent] = dict([(y, 0.) for y in self.signals])
         self.individual_signal_matches[opponent][signal] += 1
+
 
 class RecognitionResponder(BayesianResponder):
     """
@@ -195,13 +212,13 @@ class RecognitionResponder(BayesianResponder):
 
         super(RecognitionResponder, self).__init__(player_type, signals, responses)
 
-    def respond(self, signal, rounds=None, opponent=None):
+    def respond(self, signal, opponent=None):
         """
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
         self.fuzzy_update_beliefs(opponent, signal)
-        return super(RecognitionResponder, self).respond(signal, rounds, opponent)
+        return super(RecognitionResponder, self).respond(signal, opponent)
 
     def fuzzy_update_beliefs(self, signaller, signal):
         # Nothing to do if we know the type already
@@ -236,19 +253,19 @@ class RecognitionResponder(BayesianResponder):
         for signal_i, types in self.signal_belief.items():
             for player_type, belief in types.items():
                 #signal_matches = [x == signal_i for x in self.signal_log]
-                print "Updating P(%d|%d).." % (player_type, signal_i)
+                #print "Updating P(%d|%d).." % (player_type, signal_i)
                 alpha_k = self.type_weights[signal_i][player_type]
-                print "alpha_k = %f" % alpha_k
+                #print "alpha_k = %f" % alpha_k
                 alpha_dot = sum(self.type_weights[signal_i])
-                print "Num alternatives = %d" % alpha_dot
+                #print "Num alternatives = %d" % alpha_dot
                 #n = self.signal_matches[signal_i]
                 n = sum(self.signal_type_matches[signal_i].values())
-                print "n = %d" % n
+                #print "n = %d" % n
 
                 #matched_pairs = zip(type_matches[player_type], signal_matches)
                 #signal_type_matches = [a and b for a, b in matched_pairs]
                 n_k = self.signal_type_matches[signal_i][player_type]
-                print "n_k = %d" % n_k
+                #print "n_k = %d" % n_k
                 prob = (alpha_k + n_k) / float(alpha_dot + n)
-                print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
+                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
                 self.signal_belief[signal_i][player_type].append(prob)

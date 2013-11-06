@@ -3,6 +3,7 @@ from ProspectTheoryModel import *
 from ReferralGame import *
 from RecognitionGame import *
 from RecognitionAgents import *
+from AmbiguityAgents import *
 from multiprocessing import Pool
 import multiprocessing
 import itertools
@@ -10,9 +11,10 @@ from collections import OrderedDict
 
 
 def write_results_set(file_name, results, sep=","):
+    results = list(results)
     write_results(file_name, results.pop(), 'w')
     for result in results:
-        write_result(file_name, 'a', sep)
+        write_results(file_name, 'a', sep)
 
 
 def write_results(file_name, results, mode, sep=","):
@@ -129,9 +131,9 @@ def type_signal(player_type, signal):
     """
     def f(roundnum, women, game):
         women = filter(lambda x: x.player_type == player_type, women)
-        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        #women = filter(lambda x: len(x.signal_log) > roundnum, women)
         num_women = len(women)
-        women = filter(lambda x: x.signal_log[roundnum] == signal, women)
+        women = filter(lambda x: x.round_signal(roundnum) == signal, women)
         signalled = len(women)
         if num_women == 0:
             return 0
@@ -232,8 +234,8 @@ def signal_implies_referral(player_type, signal, midwife_type):
         if midwife_type is not None:
             women = filter(lambda x: len(x.type_log) > roundnum, women)
             women = filter(lambda x: x.type_log[roundnum] == midwife_type, women)
-        women = filter(lambda x: len(x.response_belief[signal][1]) > roundnum, women)
-        belief = sum(map(lambda x: x.response_belief[signal][1][roundnum], women))
+        #women = filter(lambda x: len(x.response_belief[signal][1]) > roundnum, women)
+        belief = sum(map(lambda x: x.round_response_belief(roundnum)[signal][1], women))
         if len(women) == 0:
             return 0
         return belief / len(women)
@@ -246,17 +248,34 @@ def signal_risk(player_type, signal, midwife_type):
     midwife type on a round.
     """
     def f(roundnum, women, game):
-        women = filter(lambda x: len(x.type_log) > roundnum, women)
+        #women = filter(lambda x: len(x.type_log) > roundnum, women)
         if player_type is not None:
             women = filter(lambda x: x.player_type == player_type, women)
         if midwife_type is not None:
+            women = filter(lambda x: len(x.type_log) > roundnum, women)
             women = filter(lambda x: x.type_log[roundnum] == midwife_type, women)
-        total = sum(map(lambda x: x.risk(signal, roundnum, None), women))
+        total = sum(map(lambda x: x.round_signal_risk(roundnum)[signal], women))
         if len(women) == 0:
             return 0.
         return total / float(len(women))
     return f
 
+def distribution_belief(player_type, midwife_type):
+    """
+    Return a function that gives the average believed prevalence
+    of this midwife type by this type of player. Or for all players
+    where player_type is None.
+    """
+    def f(roundnum, women, game):
+        if player_type is not None:
+            women = filter(lambda x: x.player_type == player_type, women)
+        #women = filter(lambda x: len(x.type_distribution[midwife_type]) > roundnum, women)
+        num_women = len(women)
+        belief = sum(map(lambda x: x.round_type_distribution(roundnum)[midwife_type], women))
+        if num_women == 0:
+            return 0.
+        return belief / num_women
+    return f
 
 def signal_meaning(player_type, signal):
     """
@@ -282,9 +301,11 @@ def dump(pair, measures, params, results=None):
     measures and params.
     Returns a results object for writing to csv.
     """
-    game, women = pair
     if results is None:
         results = {'fields':measures.keys() + params.keys(), 'results':[]}
+    if pair is None:
+        return results
+    game, women = pair
     for i in range(params['max_rounds']):
         line = map(lambda x: x(i, women, game), measures.values())
         line += params.values()
@@ -308,6 +329,7 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
 
 def params_dict(responder_rule, signaller_rule, mw_weights, women_weights, game, rounds):
     params = OrderedDict()
+    params['game'] = str(game)
     params['decision_rule_responder'] = responder_rule
     params['decision_rule_signaller'] = signaller_rule
     params['caseload'] = game.is_caseloaded()
@@ -324,36 +346,43 @@ def params_dict(responder_rule, signaller_rule, mw_weights, women_weights, game,
             params['weight_%d_%d' % (i, j)] = game.type_weights[i][j]
     return params
 
-measures = OrderedDict()
-measures['appointment'] = appointment
-measures['finished'] = finished
-for i in range(3):
-    measures["type_%d_ref" % i] = type_referral_breakdown(i, None, None)
-    measures["type_%d_finished" % i] = type_finished(i)
-    measures["type_%d_signal_change" % i] = signal_change(i)
-    for j in range(3):
-        measures["type_%d_signal_%d" % (i, j)] = type_signal(i, j)
-        measures["type_%d_mw_%d_ref" % (i, j)] = type_referral_breakdown(i, None, j)
-        measures["type_%d_sig_%d_ref" % (i, j)] = type_referral_breakdown(i, j, None)
-        measures["type_%d_signal_%d_means_referral" % (i, j)] = signal_implies_referral(i, j, None)
-        measures["type_%d_sig_%d_risk" % (i, j)] = signal_risk(i, j, None)
-        for k in range(3):
-            measures["type_%d_sig_%d_mw_%d_risk" % (i, j, k)] = signal_risk(i, j, k)
-            measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = type_signal_breakdown(i, k, j)
-            measures["type_%d_signal_%d_with_mw_type_%d_means_referral" % (i, j, k)] = signal_implies_referral(i, j, k)
 
-measures_mw = OrderedDict()
-measures_mw['appointment'] = appointment
-for i in range(3):
-    for j in range(3):
-        measures_mw["signal_%d_means_%d" % (i, j)] = signal_meaning(j, i)
+def measures_women():
+    measures = OrderedDict()
+    measures['appointment'] = appointment
+    measures['finished'] = finished
+    for i in range(3):
+        measures["type_%d_ref" % i] = type_referral_breakdown(i, None, None)
+        measures["type_%d_finished" % i] = type_finished(i)
+        measures["type_%d_signal_change" % i] = signal_change(i)
+        measures["global_type_frequency_%d" % i] = distribution_belief(None, i)
+        for j in range(3):
+            measures["type_%d_signal_%d" % (i, j)] = type_signal(i, j)
+            measures["type_%d_mw_%d_ref" % (i, j)] = type_referral_breakdown(i, None, j)
+            measures["type_%d_sig_%d_ref" % (i, j)] = type_referral_breakdown(i, j, None)
+            measures["type_%d_signal_%d_means_referral" % (i, j)] = signal_implies_referral(i, j, None)
+            measures["type_%d_sig_%d_risk" % (i, j)] = signal_risk(i, j, None)
+            measures["player_type_%d_frequency_%d" % (i, j)] = distribution_belief(i, j)
+            for k in range(3):
+                measures["type_%d_sig_%d_mw_%d_risk" % (i, j, k)] = signal_risk(i, j, k)
+                measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = type_signal_breakdown(i, k, j)
+                measures["type_%d_signal_%d_with_mw_type_%d_means_referral" % (i, j, k)] = signal_implies_referral(i, j, k)
+    return measures
+
+def measures_midwives():
+    measures_mw = OrderedDict()
+    measures_mw['appointment'] = appointment
+    for i in range(3):
+        for j in range(3):
+            measures_mw["signal_%d_means_%d" % (i, j)] = signal_meaning(j, i)
+    return measures_mw
 
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
     file_name="compare.csv", num_midwives=100, num_women=1000, 
     runs=5, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
-    women_modifier=None, measures_women=measures, measures_midwives=measures_mw):
+    women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives()):
 
     output_w = {'fields': [], 'results': []}
     output_mw = {'fields': [], 'results': []}
@@ -368,12 +397,12 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
-
+    player_pairs = []
     for i in range(runs):
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
         params['run'] = i
-        print "Starting run %d/%d on %s" % (i + 1, runs, file_name)
+        print "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
         women = make_players(signaller_fn, num=num_women,weights=women_weights)
@@ -392,52 +421,35 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
         print "Set priors."
+        player_pairs.append((women, mw))
 
-        pair = game.play_game(women, mw, rounds=rounds)
-        #print "Ran trial."
-        #dump_women(pair, params, file_name, 'a')
-        #dump_midwives((game, mw), params, "mw_"+file_name, 'a')
-        if measures_women is not None:
-            results = dump(pair, measures_women, params)
-            output_w['fields'] = results['fields']
-            output_w['results'] += results['results']
-            #print output_w['results']
-        #dump_game_women_pair_change(pair, params, "change_summary_"+file_name, 'a')
-        if measures_midwives is not None:
-            results = dump((game, mw), measures_midwives, params)
-            output_mw['fields'] = results['fields']
-            output_mw['results'] += results['results']
-        #print "Dumped results."
+        #pair = game.play_game(women, mw, rounds=rounds)
+    played = map(lambda x: game.play_game(x), player_pairs)
+    if measures_women is not None:
+        output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x), played, dump(None, measures_women, params))
+    if measures_midwives is not None:
+        output_mw = reduce(lambda x, y: dump((y[0], y[2]), measures_mw, params, x), played, dump(None, measures_mw, params))
     if file_name is not None:
         write_results("women_"+file_name, output_w, 'w')
         write_results("mw_"+file_name, output_mw, 'w')
     return (output_w, output_mw)
 
 
-def caseload_experiment(file_name="caseload.csv", game_fns=[Game, CaseloadGame], 
+def experiment(file_name="caseload.csv", game_fns=[Game, CaseloadGame], 
     agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
-    measures_women=measures, measures_midwives=measures):
+    measures_women=measures_women(), measures_midwives=measures_midwives(), kwargs=[{}]):
+    run_params = []
     for pair in agents:
         for game_fn in game_fns:
-            game = game_fn()
-            game.init_payoffs()
-            p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], file_name,), 
-                                    kwargs={'game': game,
-                                    'measures_midwives': measures_mw, 'measures_women': measures})
-            p.start()
-
-def alspac_caseload_experiment(file_name="caseload.csv", game_fns=[Game, CaseloadGame], 
-    agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
-    measures_women=measures, measures_midwives=measures):
-    for pair in agents:
-        for game_fn in game_fns:
-            game = game_fn()
-            game.init_payoffs()
-            p = multiprocessing.Process(target=decision_fn_compare, args=(pair[0], pair[1], file_name,), 
-                                    kwargs={'game': game,
-                                    'measures_midwives': measures_mw, 'measures_women': measures,
-                                    'women_weights':[85./100, 10./100, 15./100]})
-            p.start()
+            for kwarg in kwargs:
+                game = game_fn()
+                kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
+                kwarg['game'] = game
+                args = (pair[0], pair[1], file_name,)
+                run_params.append((args, kwarg.copy()))
+    pool = Pool()
+    print run_params
+    pool.map(run, run_params)
 
 
 def priors_experiment(file_name):
@@ -475,8 +487,7 @@ def priors_experiment(file_name):
                 #game = Game()
                 #game.init_payoffs(type_weights=prior)
                 #run_params.append([ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, True, game, mw_prop, woman_prop, outcome, None, None])
-                game = Game()
-                game.init_payoffs(type_weights=prior)
+                game = Game(type_weights=prior)
                 run_params.append([BayesianSignaller, BayesianResponder, "Bayesian", "Bayesian", None, False, game, mw_prop, woman_prop, outcome, None, None, range(100), 100])
                 #game = Game()
                 #game.init_payoffs(type_weights=prior)
@@ -514,8 +525,7 @@ def lhs_sampling(file_name, samples):
         women_numbers = scale_weights([float(types[i][x]) for x in range(3)], 1.)
         seed = [5]
 
-        game = Game()
-        game.init_payoffs(type_weights=mw_priors)
+        game = Game(type_weights=mw_priors)
         run_params.append([BayesianSignaller, BayesianResponder, "bayes", "bayes", file_name, False, game, mw_numbers, women_numbers, outcome, None, None, None, 1])
         #random.setstate(random_state)
     results = zip(*pool.map(run_game, run_params))
@@ -530,11 +540,16 @@ def run_game(args):
     return decision_fn_compare(signaller, responder, junk, junk2, file_name, test_fn=test_fn, caseload=caseload, game=game, 
         mw_weights=mw_weights, women_weights=women_weights, measures_women=dumper_w, measures_midwives=dumper_mw, women_priors=women_priors, seeds=seeds, runs=runs)
 
+def run(args):
+    args, kwargs = args
+    return decision_fn_compare(*args, **kwargs)
+
 
 
 if __name__ == "__main__":
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
-    caseload_experiment("recog_test.csv", [RecognitionGame, CaseloadRecognitionGame, ReferralGame, CaseloadReferralGame], [(RecognitionSignaller, RecognitionResponder)])
+    #caseload_experiment("recog_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(RecognitionSignaller, RecognitionResponder)])
+    experiment("ambiguity_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(AmbiguitySignaller, RecognitionResponder)])
     #alspac_caseload_experiment("alspac.csv", [RecognitionGame, CaseloadRecognitionGame, ReferralGame, CaseloadReferralGame], [(RecognitionSignaller, RecognitionResponder)])
     #caseload_experiment("rerun.csv", [Game, CaseloadGame], [(BayesianSignaller, BayesianResponder)])
     #priors_experiment("priors_final.csv")
