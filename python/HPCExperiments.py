@@ -33,7 +33,7 @@ def experiment(game_fns=[Game, CaseloadGame],
 
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
-                        file_name="compare.csv", num_midwives=100, num_women=1000,
+                        num_midwives=100, num_women=1000,
                         runs=1, game=None, rounds=100,
                         mw_weights=[80/100., 15/100., 5/100.],
                         women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
@@ -49,10 +49,6 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
     params = params_dict(str(responder_fn), str(signaller_fn),
                          mw_weights, women_weights, game, rounds)
-
-    #Unique filename by gametype
-    if file_name is not None:
-        file_name = "%s_%s" % (game, file_name)
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
