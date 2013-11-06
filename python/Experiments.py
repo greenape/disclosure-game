@@ -14,7 +14,7 @@ def write_results_set(file_name, results, sep=","):
     results = list(results)
     write_results(file_name, results.pop(), 'w')
     for result in results:
-        write_results(file_name, results, 'a', sep)
+        write_results(file_name, result, 'a', sep)
 
 
 def write_results(file_name, results, mode, sep=","):
