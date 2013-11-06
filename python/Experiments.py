@@ -24,7 +24,7 @@ def write_results(file_name, results, mode, sep=","):
     if mode == 'w':
         result = [sep.join(results['fields'])]
     else:
-        result = []
+        result = ["\n"]
     result += map(lambda l: sep.join(map(str, l)), results['results'])
     file = open(file_name, mode)
     file.write("\n".join(result))
@@ -379,8 +379,8 @@ def measures_midwives():
 
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
-    file_name="compare.csv", num_midwives=100, num_women=1000, 
-    runs=5, game=None, rounds=100,
+    num_midwives=100, num_women=1000, 
+    runs=1, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
     women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives()):
 
@@ -391,10 +391,6 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
     params = params_dict(str(responder_fn), str(signaller_fn), mw_weights, women_weights, game, rounds)
 
-    #Unique filename by gametype
-    if file_name is not None:
-        file_name = "%s_%s" % (game, file_name)
-
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
     player_pairs = []
@@ -402,7 +398,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
         params['run'] = i
-        print "Making run %d/%d on %s" % (i + 1, runs, file_name)
+        #print "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
         women = make_players(signaller_fn, num=num_women,weights=women_weights)
@@ -428,14 +424,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if measures_women is not None:
         output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x), played, dump(None, measures_women, params))
     if measures_midwives is not None:
-        output_mw = reduce(lambda x, y: dump((y[0], y[2]), measures_mw, params, x), played, dump(None, measures_mw, params))
-    if file_name is not None:
-        write_results("women_"+file_name, output_w, 'w')
-        write_results("mw_"+file_name, output_mw, 'w')
+        output_mw = reduce(lambda x, y: dump((y[0], y[2]), measures_midwives, params, x), played, dump(None, measures_midwives, params))
     return (output_w, output_mw)
 
 
-def experiment(file_name="caseload.csv", game_fns=[Game, CaseloadGame], 
+def experiment(game_fns=[Game, CaseloadGame], 
     agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
     measures_women=measures_women(), measures_midwives=measures_midwives(), kwargs=[{}]):
     run_params = []
@@ -445,11 +438,10 @@ def experiment(file_name="caseload.csv", game_fns=[Game, CaseloadGame],
                 game = game_fn()
                 kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
                 kwarg['game'] = game
-                args = (pair[0], pair[1], file_name,)
+                args = (pair[0], pair[1],)
                 run_params.append((args, kwarg.copy()))
     pool = Pool()
-    print run_params
-    pool.map(run, run_params)
+    return pool.map(run, run_params)
 
 
 def priors_experiment(file_name):
@@ -549,7 +541,10 @@ def run(args):
 if __name__ == "__main__":
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
     #caseload_experiment("recog_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(RecognitionSignaller, RecognitionResponder)])
-    experiment("ambiguity_test.csv", [Game, CaseloadGame], [(AmbiguitySignaller, RecognitionResponder)])
+    results = experiment([Game, CaseloadGame], [(AmbiguitySignaller, RecognitionResponder)])
+    women, mw = zip(*results)
+    write_results_set("mw.csv", mw)
+    write_results_set("women.csv", women)
     #alspac_caseload_experiment("alspac.csv", [RecognitionGame, CaseloadRecognitionGame, ReferralGame, CaseloadReferralGame], [(RecognitionSignaller, RecognitionResponder)])
     #caseload_experiment("rerun.csv", [Game, CaseloadGame], [(BayesianSignaller, BayesianResponder)])
     #priors_experiment("priors_final.csv")
