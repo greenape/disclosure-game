@@ -549,7 +549,7 @@ def run(args):
 if __name__ == "__main__":
     #lhs_sampling("lhs_final.csv", "sa_final.txt")
     #caseload_experiment("recog_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(RecognitionSignaller, RecognitionResponder)])
-    experiment("ambiguity_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(AmbiguitySignaller, RecognitionResponder)])
+    experiment("ambiguity_test.csv", [Game, CaseloadGame], [(AmbiguitySignaller, RecognitionResponder)])
     #alspac_caseload_experiment("alspac.csv", [RecognitionGame, CaseloadRecognitionGame, ReferralGame, CaseloadReferralGame], [(RecognitionSignaller, RecognitionResponder)])
     #caseload_experiment("rerun.csv", [Game, CaseloadGame], [(BayesianSignaller, BayesianResponder)])
     #priors_experiment("priors_final.csv")

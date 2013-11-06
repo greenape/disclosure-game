@@ -34,7 +34,7 @@ def experiment(game_fns=[Game, CaseloadGame],
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
                         num_midwives=100, num_women=1000,
-                        runs=1, game=None, rounds=100,
+                        runs=1000, game=None, rounds=100,
                         mw_weights=[80/100., 15/100., 5/100.],
                         women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
                         women_modifier=None, measures_women=measures_women(),
@@ -96,7 +96,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
 if __name__ == "__main__":
     games = [RecognitionGame, CaseloadRecognitionGame, ReferralGame, CaseloadReferralGame]
-    players = [(AmbiguitySignaller, RecognitionResponder)]
+    players = [(AmbiguitySignaller, RecognitionResponder), (RecognitionSignaller, RecognitionResponder),
+    (AmbiguitySignaller, BayesianResponder), (RecognitionSignaller, BayesianResponder)]
     #kwargs = [{'measures_midwives': measures_midwives(), 'measures_women': measures_women()}]
     women, mw = zip(*experiment(games, players))
     write_results_set("mw.csv", mw)
