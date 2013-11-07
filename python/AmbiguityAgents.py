@@ -5,6 +5,9 @@ class AmbiguitySignaller(RecognitionSignaller):
     """
     A class of signaller that uses the Fryer model for resolving ambiguity
     in observations.
+
+    Fryer Jr., R.G., Harms, P. & Jackson, M., 2013. 
+    Updating Beliefs with Ambiguous Evidence: Implications for Polarization., 02138(July), pp.1-22.
     """
 
     def fuzzy_update_beliefs(self, response, midwife, payoff, possible_types):

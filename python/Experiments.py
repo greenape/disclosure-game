@@ -40,7 +40,7 @@ def arguments():
     games = map(eval, args.games)
     players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     kwargs = [{'runs':args.runs, 'rounds':args.rounds}]
-    return games, players, kwargs, args.runs, args.test_only
+    return games, players, kwargs, args.runs, args.test_only, args.file_name
 
 
 def write_results_set(file_name, results, sep=","):
@@ -471,13 +471,22 @@ def experiment(game_fns=[Game, CaseloadGame],
                 game = game_fn()
                 #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
                 kwarg['game'] = game
-                args = (pair[0], pair[1],)
-                run_params.append((args, kwarg.copy()))
+                kwarg['signaller_fn'] = pair[0]
+                kwarg['responder_fn'] = pair[1]
+                run_params.append(kwarg.copy())
+    return kw_experiment(run_params)
+
+def kw_experiment(kwargs):
+    """
+    Run a bunch of experiments in parallel. Experiments are
+    defined by a list of keyword argument dictionaries.
+    """
     pool = Pool()
-    return pool.map(run, run_params)
+    return pool.map(run, kwargs)
 
 
-def priors_experiment(file_name):
+
+def priors_experiment():
     proportions = []#list(itertools.permutations([80/100., 15/100., 5/100.]))
     proportions.append([1/3.]*3)
     prop_women = proportions
@@ -495,34 +504,18 @@ def priors_experiment(file_name):
         priors.append([[i + 1., 1., 1.], [1., i + 1., 1.], [1., 1., i + 1.]])
     #women_priors = make_random_weights(1000)
     run_params = []
-    header = "type_2_sig_2,type_1_sig_1,type_2_sig_0,type_1_sig_0,type_2_sig_2_change,type_1_sig_1_change,type_2_sig_0_change,type_1_sig_0_change,decision_rule,caseload,mw_0,mw_1,mw_2,women_0,women_1,women_2"
-    header = header.split(",")
-    for i in range(3):
-        for j in range(3):
-            header += ['weight_%d_%d'] % (i, j)
-    header += ["run"]
     total = len(prop_women)*len(proportions)*len(priors)*100
-    pool = Pool(processes=2)
     for woman_prop in prop_women:
         for mw_prop in proportions:
             for prior in priors:
-                #game = Game()
-                #game.init_payoffs(type_weights=prior)
-                #run_params.append([ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, False, game, mw_prop, woman_prop, outcome, None, None, None, 100])
-                #game = Game()
-                #game.init_payoffs(type_weights=prior)
-                #run_params.append([ProspectTheorySignaller, ProspectTheoryResponder, "prospect", "prospect", file_name, True, game, mw_prop, woman_prop, outcome, None, None])
                 game = Game(type_weights=prior)
-                run_params.append([BayesianSignaller, BayesianResponder, "Bayesian", "Bayesian", None, False, game, mw_prop, woman_prop, outcome, None, None, range(100), 100])
-                #game = Game()
-                #game.init_payoffs(type_weights=prior)
-                #run_params.append([BayesianSignaller, BayesianResponder, "Bayesian", "Bayesian", file_name, True, game, mw_prop, woman_prop, outcome, None, None])
-    results = zip(*pool.map(run_game, run_params))
-    write_results_set("mw_"+file_name, results[1])
-    write_results_set("women_"+file_name, results[0])
+                args = {'game':game, 'seeds':range(100), 'signaller_fn':BayesianSignaller, 'responder_fn':BayesianResponder,
+                'runs':100}
+                run_params.append(args)
+    return kw_experiment(run_params)
 
 
-def lhs_sampling(file_name, samples):
+def lhs_sampling(samples):
     i = 0
     run_params = []
     seeds = []
@@ -542,7 +535,6 @@ def lhs_sampling(file_name, samples):
         types.append(vals[12:15])
         seeds.append(5)
     total = len(content)
-    pool = Pool(processes=2)
     for i in range(total):
         mw_priors = [float(priors[i][x]) for x in range(9)]
         mw_priors = [mw_priors[x:x+3] for x in xrange(0, len(mw_priors), 3)]
@@ -551,26 +543,17 @@ def lhs_sampling(file_name, samples):
         seed = [5]
 
         game = Game(type_weights=mw_priors)
-        run_params.append([BayesianSignaller, BayesianResponder, "bayes", "bayes", file_name, False, game, mw_numbers, women_numbers, outcome, None, None, None, 1])
+        args = {'game':game, 'seeds':seed, 'signaller_fn':BayesianSignaller, 'responder_fn':BayesianResponder,
+                'runs':100, 'mw_weights':mw_numbers, 'women_weights':women_numbers}
+        run_params.append(args)
         #random.setstate(random_state)
-    results = zip(*pool.map(run_game, run_params))
-    write_results_set("mw_"+file_name, results[1])
-    write_results_set("women_"+file_name, results[0])
+    return kw_experiment(run_params)
 
-def run_game(args):
-    signaller, responder, junk, junk2, file_name, caseload, game, mw_weights, women_weights, dumper_w, dumper_mw, women_priors, seeds, runs = args
-    test_fn = test
-    if caseload:
-        test_fn = caseload_test
-    return decision_fn_compare(signaller, responder, junk, junk2, file_name, test_fn=test_fn, caseload=caseload, game=game, 
-        mw_weights=mw_weights, women_weights=women_weights, measures_women=dumper_w, measures_midwives=dumper_mw, women_priors=women_priors, seeds=seeds, runs=runs)
-
-def run(args):
-    args, kwargs = args
-    return decision_fn_compare(*args, **kwargs)
+def run(kwargs):
+    return decision_fn_compare(**kwargs)
 
 if __name__ == "__main__":
-    games, players, kwargs, runs, test = arguments()
+    games, players, kwargs, runs, test, file_name = arguments()
     print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
     print "Total simulations runs is %d" % (len(games) * len(players) * runs)
@@ -578,5 +561,5 @@ if __name__ == "__main__":
         print "This is a test of the emergency broadcast system. This is only a test."
     else:
         women, mw = zip(*experiment(games, players, kwargs=kwargs))
-        write_results_set("%smw.csv" % args.file_name, mw)
-        write_results_set("%swomen.csv" % args.file_name, women)
+        write_results_set("%smw.csv" % file_name, mw)
+        write_results_set("%swomen.csv" % file_name, women)

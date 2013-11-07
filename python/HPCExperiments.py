@@ -7,30 +7,35 @@ from AmbiguityAgents import *
 from Experiments import *
 import random
 
-def run(args):
-    args, kwargs = args
-    return decision_fn_compare(*args, **kwargs)
+def run(kwargs):
+    return decision_fn_compare(**kwargs)
 
 def play_game(config):
     game, women, midwives = config
     return game.play_game((women, midwives))
 
-def experiment(game_fns=[Game, CaseloadGame],
-               agents=[(BayesianSignaller, BayesianResponder)],
-            kwargs=[{}]):
+def experiment(game_fns=[Game, CaseloadGame], 
+    agents=[(BayesianSignaller, BayesianResponder)],
+    kwargs=[{}]):
     run_params = []
     for pair in agents:
         for game_fn in game_fns:
             for kwarg in kwargs:
                 game = game_fn()
+                #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
                 kwarg['game'] = game
-                args = (pair[0], pair[1],)
-                run_params.append((args, kwarg.copy()))
-    #pool = Pool()
-    #print run_params
-    return list(futures.map(run, run_params))
-    #pool.map(run, run_params)
+                kwarg['signaller_fn'] = pair[0]
+                kwarg['responder_fn'] = pair[1]
+                run_params.append(kwarg.copy())
+    return kw_experiment(run_params)
 
+def kw_experiment(kwargs):
+    """
+    Run a bunch of experiments in parallel. Experiments are
+    defined by a list of keyword argument dictionaries.
+    """
+    return list(futures.map(run, kwargs))
+    
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
                         num_midwives=100, num_women=1000,
@@ -94,7 +99,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     return (output_w, output_mw)
 
 if __name__ == "__main__":
-    games, players, kwargs, runs, test = arguments()
+    games, players, kwargs, runs, test, file_name = arguments()
     print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
     print "Total simulations runs is %d" % (len(games) * len(players) * runs)
@@ -102,6 +107,6 @@ if __name__ == "__main__":
         print "This is a test of the emergency broadcast system. This is only a test."
     else:
         women, mw = zip(*experiment(games, players, kwargs=kwargs))
-        write_results_set("%smw.csv" % args.file_name, mw)
-        write_results_set("%swomen.csv" % args.file_name, women)
+        write_results_set("%smw.csv" % file_name, mw)
+        write_results_set("%swomen.csv" % file_name, women)
 
