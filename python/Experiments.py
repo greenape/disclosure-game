@@ -8,6 +8,29 @@ from multiprocessing import Pool
 import multiprocessing
 import itertools
 from collections import OrderedDict
+import argparse
+
+
+def arguments():
+    parser = argparse.ArgumentParser(description='Run some variations of the disclosure game.')
+    parser.add_argument('-g', '--games', type=str, nargs='*',
+                   help='A game type to play.', default=['Game', 'CaseloadGame'],
+                   choices=['Game', 'CaseloadGame', 'RecognitionGame', 'ReferralGame',
+                   'CaseloadRecognitionGame', 'CaseloadReferralGame'],
+                   dest="games")
+    parser.add_argument('-s','--signallers', type=str, nargs='*',
+        help='A signaller type.', default=["BayesianSignaller"],
+        choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller'],
+        dest="signallers")
+    parser.add_argument('-r','--responders', type=str, nargs='*',
+        help='A responder type.', default=["BayesianResponder"],
+        choices=['BayesianResponder', 'RecognitionResponder'], dest="responders")
+    parser.add_argument('-R','--runs', dest='runs', type=int,
+        help="Number of runs for each combination of players and games.",
+        default=100)
+    parser.add_argument('-f','--file', dest='file_name', default="", type=str,
+        help="File name prefix for csv output.")
+    return parser
 
 
 def write_results_set(file_name, results, sep=","):
@@ -430,13 +453,13 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
 def experiment(game_fns=[Game, CaseloadGame], 
     agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
-    measures_women=measures_women(), measures_midwives=measures_midwives(), kwargs=[{}]):
+    kwargs=[{}]):
     run_params = []
     for pair in agents:
         for game_fn in game_fns:
             for kwarg in kwargs:
                 game = game_fn()
-                kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
+                #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
                 kwarg['game'] = game
                 args = (pair[0], pair[1],)
                 run_params.append((args, kwarg.copy()))
@@ -536,17 +559,15 @@ def run(args):
     args, kwargs = args
     return decision_fn_compare(*args, **kwargs)
 
-
-
 if __name__ == "__main__":
-    #lhs_sampling("lhs_final.csv", "sa_final.txt")
-    #caseload_experiment("recog_test.csv", [RecognitionGame, CaseloadRecognitionGame], [(RecognitionSignaller, RecognitionResponder)])
-    results = experiment([Game, CaseloadGame], [(AmbiguitySignaller, RecognitionResponder)])
-    women, mw = zip(*results)
-    write_results_set("mw.csv", mw)
-    write_results_set("women.csv", women)
-    #alspac_caseload_experiment("alspac.csv", [RecognitionGame, CaseloadRecognitionGame, ReferralGame, CaseloadReferralGame], [(RecognitionSignaller, RecognitionResponder)])
-    #caseload_experiment("rerun.csv", [Game, CaseloadGame], [(BayesianSignaller, BayesianResponder)])
-    #priors_experiment("priors_final.csv")
-    #alspac_caseload_experiment("alspac_caseloading_compare.csv")
-    #muddy_caseload_experiment("caseloading_compare_breakdown_ref_muddy.csv")
+    parser = arguments()
+    args = parser.parse_args()
+    games = map(eval, args.games)
+    players = zip(map(eval, args.signallers), map(eval, args.responders))
+    kwargs = [{'runs':args.runs}]
+    print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], args.runs, "s"[args.runs==1:])
+    print "Total simulations runs is %d" % (len(games) * len(players) * args.runs)
+    women, mw = zip(*experiment(games, players, kwargs=kwargs))
+    write_results_set("%smw.csv" % args.file_name, mw)
+    write_results_set("%swomen.csv" % args.file_name, women)
