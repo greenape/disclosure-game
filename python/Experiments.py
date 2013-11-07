@@ -29,6 +29,9 @@ def arguments():
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
+    parser.add_argument('-i','--rounds', dest='rounds', type=int,
+        help="Number of rounds each woman plays for.",
+        default=100)
     parser.add_argument('-f','--file', dest='file_name', default="", type=str,
         help="File name prefix for csv output.")
     parser.add_argument('-t', '--test', dest='test_only', action="store_true", 
@@ -36,7 +39,7 @@ def arguments():
     args = parser.parse_args()
     games = map(eval, args.games)
     players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
-    kwargs = [{'runs':args.runs}]
+    kwargs = [{'runs':args.runs, 'rounds':args.rounds}]
     return games, players, kwargs, args.runs, args.test_only
 
 
