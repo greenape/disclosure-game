@@ -280,44 +280,6 @@ class BayesianSignaller(Signaller):
         return best[0]
 
 
-class BayesianWealthSignaller(BayesianSignaller):
-    def loss(self, payoff):
-        """ Make a loss out of a payoff including earnings so far.
-        """
-        return -(payoff + sum(self.payoff_log))
-
-
-class MiniMaxSignaller(Signaller):
-    """ A signaller which uses straight minimax, ignoring the
-    risks.
-    """
-
-    def get_payoffs(self, signal):
-        """
-        Return a list of the possible payoffs for a signal.
-        """
-        payoffs = []
-        for i in self.signals:
-            for j in self.responses:
-                payoffs.append(self.baby_payoffs[signal][j] + self.social_payoffs[i])
-        return payoffs
-
-    def do_signal(self, signal):
-
-        worst_case = {}
-        for signal in self.signals:
-            worst_case[signal] = min(self.get_payoffs(signal))
-
-        best = (0, 99999)
-        for signal in self.signals:
-            if best[1] < worst_case[signal]:
-                best = (signal, worst_case[signal])
-
-        self.rounds += 1
-        self.log_signal(best[0])
-        return best[0]
-
-
 class Responder(Agent):
 
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
@@ -417,40 +379,6 @@ class BayesianResponder(Responder):
                 best = (response, act_risk)
         self.response_log.append(best[0])
         self.rounds += 1
-        return best[0]
-
-
-class BayesianWealthResponder(BayesianResponder):
-    def loss(self, payoff):
-        """ Make a loss out of a payoff including earnings so far.
-        """
-        return -(payoff + sum(self.payoff_log))
-
-
-class MiniMaxResponder(Responder):
-
-    def get_payoffs(self, response):
-        payoffs = []
-        for player_type in self.signals:
-            payoffs.append(self.payoffs[player_type][response])
-        return payoffs
-
-    """ A responder which uses straight minimax, ignoring the
-    risks.
-    """
-
-    def respond(self, signal, opponent):
-        self.rounds += 1
-        self.signal_log.append(signal)
-
-        worst_case = {}
-        for response in self.responses:
-            worst_case[response] = min(self.get_payoffs(response))
-        best = (0, -99999)
-        for response in self.responses:
-            if best[1] < worst_case[response]:
-                best = (response, worst_case[response])
-        self.response_log.append(best[0])
         return best[0]
 
 

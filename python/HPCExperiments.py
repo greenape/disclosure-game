@@ -94,15 +94,14 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     return (output_w, output_mw)
 
 if __name__ == "__main__":
-    parser = arguments()
-    args = parser.parse_args()
-    games = map(eval, args.games)
-    players = zip(map(eval, args.signallers), map(eval, args.responders))
-    kwargs = [{'runs':args.runs}]
+    games, players, kwargs, runs, test = arguments()
     print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], args.runs, "s"[args.runs==1:])
-    print "Total simulations runs is %d" % (len(games) * len(players) * args.runs)
-    women, mw = zip(*experiment(games, players, kwargs=kwargs))
-    write_results_set("%smw.csv" % args.file_name, mw)
-    write_results_set("%swomen.csv" % args.file_name, women)
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
+    print "Total simulations runs is %d" % (len(games) * len(players) * runs)
+    if test:
+        print "This is a test of the emergency broadcast system. This is only a test."
+    else:
+        women, mw = zip(*experiment(games, players, kwargs=kwargs))
+        write_results_set("%smw.csv" % args.file_name, mw)
+        write_results_set("%swomen.csv" % args.file_name, women)
 
