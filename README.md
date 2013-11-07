@@ -15,6 +15,11 @@ Suggested runtime if not using a supercomputer is PyPy, and a default experiment
 
 Experiments.py also accepts several arguments to determine combinations of game, signaller, and responder types to simulate and so on.
 
+For example, to run 100 runs of the Recognition game, with all combinations of Ambiguity and Recognition signallers, with Bayesian and Recognition responders:
+        
+    cd python
+    pypy Experiments.py --runs 100 --games RecognitionGame --signallers AmbiguitySignaller RecognitionSignaller --responders BayesianResponder RecognitionResponder
+
 Game Types
 ===============
 Several game types are available, Game is the simplest, where women play some number of rounds against a randomly allocated midwife. CaseloadGame is similar, but the midwife is selected at the start and played against consistently.
