@@ -10,6 +10,9 @@ class AmbiguitySignaller(RecognitionSignaller):
     Updating Beliefs with Ambiguous Evidence: Implications for Polarization., 02138(July), pp.1-22.
     """
 
+    def __str__(self):
+        return "ambiguity"
+
     def fuzzy_update_beliefs(self, response, midwife, payoff, possible_types):
         """
         This class of agent uses their existing beliefs to resolve

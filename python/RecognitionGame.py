@@ -36,7 +36,11 @@ class RecognitionGame(Game):
                 if len(possible_types) == 1:
                     signaller.update_beliefs(act, receiver, signal_payoff)
                 else:
-                    signaller.fuzzy_update_beliefs(act, receiver, signal_payoff, possible_types)
+                    try:
+                        signaller.fuzzy_update_beliefs(act, receiver, signal_payoff, possible_types)
+                    except AttributeError:
+                        signaller.rounds -= 1
+                        pass
                 #But the responder doesn't unless they referred
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller)

@@ -6,6 +6,7 @@ from RecognitionAgents import *
 from AmbiguityAgents import *
 from Experiments import *
 import random
+import sys
 
 def run(kwargs):
     return decision_fn_compare(**kwargs)
@@ -44,6 +45,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
                         women_modifier=None, measures_women=measures_women(),
                         measures_midwives=measures_midwives()):
+
+    sys.setrecursionlimit(1000)
 
     output_w = {'fields': [], 'results': []}
     output_mw = {'fields': [], 'results': []}

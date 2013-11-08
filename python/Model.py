@@ -245,6 +245,10 @@ class Signaller(Agent):
 
 
 class BayesianSignaller(Signaller):
+
+    def __str__(self):
+        return "bayes"
+
     def loss(self, payoff):
         """ Make a loss out of a payoff.
         """
@@ -343,6 +347,9 @@ class BayesianResponder(Responder):
     """ Responds based on belief, and the bayes action rule.
     i.e. minimise the expected risk.
     """
+
+    def __str__(self):
+        return "bayes"
 
     def loss(self, payoff):
         """ Transmute a payoff into a loss value.

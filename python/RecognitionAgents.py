@@ -26,6 +26,9 @@ class RecognitionSignaller(BayesianSignaller):
 
         super(RecognitionSignaller, self).__init__(player_type, signals, responses)
 
+    def __str__(self):
+        return "recognition"
+
     def individual_current_type_distribution(self, midwife):
         """
         Return the most current believed type distribution
@@ -211,6 +214,9 @@ class RecognitionResponder(BayesianResponder):
         self.type_memory = {}
 
         super(RecognitionResponder, self).__init__(player_type, signals, responses)
+
+    def __str__(self):
+        return "recognition"
 
     def respond(self, signal, opponent=None):
         """

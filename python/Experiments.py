@@ -21,11 +21,12 @@ def arguments():
                    dest="games")
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
-        choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller'],
+        choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
+        'ProspectTheorySignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
-        choices=['BayesianResponder', 'RecognitionResponder'], dest="responders")
+        choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
@@ -422,7 +423,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if game is None:
         game = Game()
 
-    params = params_dict(str(responder_fn), str(signaller_fn), mw_weights, women_weights, game, rounds)
+    params = params_dict(str(responder_fn()), str(signaller_fn()), mw_weights, women_weights, game, rounds)
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
