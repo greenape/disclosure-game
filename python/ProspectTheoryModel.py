@@ -47,16 +47,14 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
             payoff = -math.log(-payoff)
         return payoff
 
-    def collect_prospects(self, signal, appointment):
+    def collect_prospects(self, signal):
         """
         Compute the cumulative prospect theory value of this signal
         based on the estimated probalities at this appointment.
         """
         prospects = []
-        for player_type, log in self.type_distribution.items():
-            type_belief = log[appointment]
-            for response, belief in self.response_belief[signal].items():
-                response_belief = belief[appointment]
+        for player_type, type_belief in self.current_type_distribution().items():
+            for response, response_belief in self.current_response_belief()[signal].items():
                 total_belief = response_belief*type_belief
                 payoff = self.baby_payoffs[response] + self.social_payoffs[player_type][signal]
                 prospects.append((payoff, total_belief))
@@ -90,21 +88,24 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
             signal_risk += self.value(payoff) * weight
         return signal_risk
 
-    def do_signal(self, own_type, rounds=None):
+    def do_signal(self, opponent=None):
         """
         Make a judgement about somebody based on
         the signal they sent based on expe
         """
         best = (random.randint(0, 2), -9999999)
-        if rounds is None:
-            rounds = self.rounds
         for signal in Model.shuffled(self.signals):
-            act_risk = self.cpt_value(self.collect_prospects(signal, rounds))
+            act_risk = self.cpt_value(self.collect_prospects(signal))
+            self.risk_log[signal].append(act_risk)
+            self.risk_log_general[signal].append(act_risk)
             if act_risk > best[1]:
                 best = (signal, act_risk)
         self.rounds += 1
         self.log_signal(best[0])
         return best[0]
+
+    def __str__(self):
+        return "prospect"
 
 class ProspectTheoryResponder(Model.BayesianResponder):
     """
@@ -154,14 +155,13 @@ class ProspectTheoryResponder(Model.BayesianResponder):
             payoff = -math.log(-payoff)
         return payoff
 
-    def collect_prospects(self, response, signal, appointment):
+    def collect_prospects(self, response, signal):
         """
         Collate the prospects for this response given the signal,
         and sort them in descending order of payoff.
         """
         prospects = []
-        for player_type, belief in self.signal_belief[signal].items():
-            type_belief = belief[appointment]
+        for player_type, type_belief in self.current_beliefs()[signal].items():
             payoff = self.payoffs[player_type][response]
             prospects.append((payoff, type_belief))
         prospects.sort()
@@ -192,21 +192,22 @@ class ProspectTheoryResponder(Model.BayesianResponder):
        #print "U(%d|x)=%f" % (signal, signal_risk)
         return signal_risk
 
-    def respond(self, signal, rounds=None):
+    def respond(self, signal, opponent=None):
         """
         Make a judgement about somebody based on
         the signal they sent based on expe
         """
-        if rounds is None:
-            self.signal_log.append(signal)
-            self.signal_matches[signal] += 1.
-            rounds = self.rounds
+        self.signal_log.append(signal)
+        self.signal_matches[signal] += 1.
 
         best = (random.randint(0, 1), -9999999)
         for response in Model.shuffled(self.responses):
-            act_risk = self.cpt_value(self.collect_prospects(response, signal, rounds))
+            act_risk = self.cpt_value(self.collect_prospects(response, signal))
             if act_risk > best[1]:
                 best = (response, act_risk)
         self.response_log.append(best[0])
         self.rounds += 1
         return best[0]
+
+    def __str__(self):
+        return "prospect"

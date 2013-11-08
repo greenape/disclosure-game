@@ -23,6 +23,7 @@ class RecognitionSignaller(BayesianSignaller):
         # Individual type distributions
         self.individual_type_distribution = {}
         self.individual_type_matches = {}
+        self.individual_alphas = {}
 
         super(RecognitionSignaller, self).__init__(player_type, signals, responses)
 
@@ -70,11 +71,18 @@ class RecognitionSignaller(BayesianSignaller):
         """
         current = self.current_response_belief()
         if not midwife in self.individual_response_signal_matches:
+            # Make matches & belief dictionary
             self.individual_response_signal_matches[midwife] = self.response_signal_dict(self.signals, self.responses)
             self.individual_response_belief[midwife] = self.response_belief_dict(self.signals, self.responses)
-
-
-        self.individual_response_signal_matches[midwife][self.signal_log[self.rounds - 1]][response] += 1.
+            # Make individual alpha dictionary based on observations up to now + general alphas
+            self.individual_alphas[midwife] = self.response_signal_dict(self.signals, self.responses)
+            for signal, responses in self.individual_alphas[midwife].items():
+                for response, count in responses.items():
+                    count += self.response_weights[signal][response]
+                    count += self.response_signal_matches[signal][response]
+        # Incorporate a new observation if already known
+        else:
+            self.individual_response_signal_matches[midwife][self.signal_log[self.rounds - 1]][response] += 1.
 
         for signal, responses in self.individual_response_belief[midwife].items():
             #signal_matches = [x == signal for x in self.signal_log]
@@ -91,8 +99,8 @@ class RecognitionSignaller(BayesianSignaller):
                 #print "Payoff-Signal matches", signal_payoff_matches
 
                 #P(response) in this state of the world
-                alpha_k = current[signal][response]
-                alpha_dot = sum(current[signal])
+                alpha_k = self.individual_alphas[midwife][signal][response]
+                alpha_dot = sum(self.individual_alphas[midwife][signal])
                 prob = (alpha_k + n_k) / float(alpha_dot + n)
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
 
@@ -157,9 +165,10 @@ class RecognitionSignaller(BayesianSignaller):
         than the general case. If the opponent has not been encountered
         before, then the decision is based on the general beliefs.
         """
-        #if opponent in self.type_memory:
-        #    signal_risk = self.known_type_risk(signal, opponent)
-        if opponent in self.individual_type_distribution:
+        if opponent in self.type_memory:
+            #print "Known type."
+            signal_risk = self.known_type_risk(signal, opponent)
+        elif opponent in self.individual_type_distribution:
             signal_risk = self.type_risk(signal, opponent)
         else:
             signal_risk = super(RecognitionSignaller, self).risk(signal, opponent)
