@@ -78,8 +78,8 @@ class RecognitionSignaller(BayesianSignaller):
             self.individual_alphas[midwife] = self.response_signal_dict(self.signals, self.responses)
             for signal, responses in self.individual_alphas[midwife].items():
                 for response, count in responses.items():
-                    count += self.response_weights[signal][response]
-                    count += self.response_signal_matches[signal][response]
+                    responses[response] += self.response_weights[signal][response]
+                    responses[response] += self.response_signal_matches[signal][response]
         # Incorporate a new observation if already known
         else:
             self.individual_response_signal_matches[midwife][self.signal_log[self.rounds - 1]][response] += 1.
