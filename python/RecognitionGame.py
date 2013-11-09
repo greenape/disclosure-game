@@ -39,7 +39,6 @@ class RecognitionGame(Game):
                     try:
                         signaller.fuzzy_update_beliefs(act, receiver, signal_payoff, possible_types)
                     except AttributeError:
-                        signaller.rounds -= 1
                         pass
                 #But the responder doesn't unless they referred
                 if act == 1:

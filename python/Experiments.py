@@ -454,6 +454,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         player_pairs.append((women, mw))
 
         #pair = game.play_game(women, mw, rounds=rounds)
+        
     played = map(lambda x: game.play_game(x), player_pairs)
     if measures_women is not None:
         output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x), played, dump(None, measures_women, params))
