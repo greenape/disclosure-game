@@ -4,6 +4,8 @@ from ReferralGame import *
 from RecognitionGame import *
 from RecognitionAgents import *
 from AmbiguityAgents import *
+from HeuristicAgents import *
+from PayoffAgents import *
 from multiprocessing import Pool
 import multiprocessing
 import itertools
@@ -22,11 +24,12 @@ def arguments():
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
         choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
-        'ProspectTheorySignaller'],
+        'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
-        choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder'], dest="responders")
+        choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
+        'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
@@ -454,7 +457,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         player_pairs.append((women, mw))
 
         #pair = game.play_game(women, mw, rounds=rounds)
-        
+
     played = map(lambda x: game.play_game(x), player_pairs)
     if measures_women is not None:
         output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x), played, dump(None, measures_women, params))
@@ -484,7 +487,7 @@ def kw_experiment(kwargs):
     defined by a list of keyword argument dictionaries.
     """
     pool = Pool()
-    return pool.map(run, kwargs)
+    return map(run, kwargs)
 
 
 

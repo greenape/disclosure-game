@@ -297,15 +297,15 @@ class Responder(Agent):
         self.type_weights = type_weights
         #Only interested in payoffs for own type
         self.payoffs = payoffs
-        self.update_beliefs(None, None)
+        self.update_beliefs(None, None, None)
 
-    def update_beliefs(self, payoff, signaller):
+    def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
         rounds = self.rounds
         if signaller is not None:
             signaller_type = signaller.player_type
             self.type_log.append(signaller_type)
             #self.type_matches[signaller_type] += 1
-            self.signal_type_matches[self.signal_log[rounds - 1]][signaller_type] += 1
+            self.signal_type_matches[signal][signaller_type] += 1
         if payoff is not None:
             self.payoff_log.append(payoff)
 
@@ -503,7 +503,7 @@ class Game(object):
         #self.signal_log.append(signal)
         #self.act_log.append(act)
         signaller.update_beliefs(act, receiver, signal_payoff)
-        receiver.update_beliefs(receive_payoff, signaller)
+        receiver.update_beliefs(receive_payoff, signaller, signal)
         # Log honesty of signal
         #self.disclosure_log.append(signal == signaller.player_type)
 

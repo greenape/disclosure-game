@@ -243,21 +243,22 @@ class RecognitionResponder(BayesianResponder):
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
+        response = super(RecognitionResponder, self).respond(signal, opponent)
         self.fuzzy_update_beliefs(opponent, signal)
-        return super(RecognitionResponder, self).respond(signal, opponent)
+        return response
 
     def fuzzy_update_beliefs(self, signaller, signal):
         # Nothing to do if we know the type already
         if signaller in self.type_memory:
-            return super(RecognitionResponder, self).update_beliefs(None, signaller)
+            return super(RecognitionResponder, self).update_beliefs(None, signaller, signal)
         if not signaller in self.signal_memory:
             self.signal_memory[signaller] = [signal]
             return
         self.signal_memory[signaller].append(signal)
 
-    def update_beliefs(self, payoff, signaller):
+    def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
         if signaller is None:
-            return super(RecognitionResponder, self).update_beliefs(payoff, signaller)
+            return super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
         self.type_memory[signaller] = signaller.player_type
 
         rounds = self.rounds

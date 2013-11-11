@@ -22,7 +22,7 @@ class ReferralGame(Game):
                 signaller.update_beliefs(act, receiver, signal_payoff)
                 #But the responder doesn't unless they referred
                 if act == 1:
-                        receiver.update_beliefs(receive_payoff, signaller)
+                        receiver.update_beliefs(receive_payoff, signaller, signal)
                         signaller.is_finished = True
                 else:
                         receiver.rounds -= 1
