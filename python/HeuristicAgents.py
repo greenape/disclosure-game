@@ -6,8 +6,6 @@ class LexicographicSignaller(BayesianSignaller):
     """
     A signaller that uses the Lexicographic heuristic to make decisions.
     """
-    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
-        super(LexicographicSignaller, self).__init__(player_type, signals, responses)
 
     def __str__(self):
         return "lexicographic"
@@ -127,16 +125,16 @@ class LexicographicResponder(BayesianResponder):
             for response in self.responses:
                 payoff = self.frequent(signal, response, n, opponent)
                 mappings[response] = payoff
-                n += 1
-                sorted_mappings = sorted(mappings.items(), key=operator.itemgetter(1), reverse=True)
+            sorted_mappings = sorted(mappings.items(), key=operator.itemgetter(1), reverse=True)
                 # Is there a best option?
-                best = sorted_mappings[0][0]
-                try:
-                    if sorted_mappings[0][1] > sorted_mappings[1][1]:
-                        break
-                except IndexError:
+            best = sorted_mappings[0][0]
+            try:
+                if sorted_mappings[0][1] > sorted_mappings[1][1]:
+                    break
+            except IndexError:
                     #Only one payoff
-                    pass
+                pass
+            n += 1
         self.rounds += 1
         self.response_log.append(best)
         return best

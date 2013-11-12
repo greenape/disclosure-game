@@ -211,7 +211,8 @@ class Signaller(Agent):
         if response is not None:
             self.response_log.append(response)
             #self.response_matches[response] += 1.
-            self.response_signal_matches[self.signal_log[rounds - 1]][response] += 1.
+            signal = self.signal_log[len(self.signal_log) - 1]
+            self.response_signal_matches[signal][response] += 1.
 
         #response_matches = {}
         #for response in self.responses:
@@ -496,8 +497,12 @@ class Game(object):
         """ Play a round of this game between the
         two players.
         """
+        #print "Playing between", signaller, "and", receiver
         signal = signaller.do_signal(receiver)
+        #print "Signal is %d" % signal
+        #print "Signaller played %d rounds" % signaller.rounds
         act = receiver.respond(signal, opponent=signaller)
+        #print "Response was %d" % act
         signal_payoff = self.woman_baby_payoff[signaller.player_type][act] + self.woman_social_payoff[signal][receiver.player_type]
         receive_payoff = self.midwife_payoff[signaller.player_type][act]
         #self.signal_log.append(signal)
@@ -509,6 +514,7 @@ class Game(object):
 
     def play_game(self, players):
         women, midwives = players
+
         rounds = self.rounds
         birthed = []
         random.shuffle(women)

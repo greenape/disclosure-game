@@ -44,7 +44,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         mw_weights=[80/100., 15/100., 5/100.],
                         women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
                         women_modifier=None, measures_women=measures_women(),
-                        measures_midwives=measures_midwives()):
+                        measures_midwives=measures_midwives(), nested=False):
 
     sys.setrecursionlimit(1000)
 
@@ -55,20 +55,16 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         game = Game()
     game.rounds = rounds
 
-    params = params_dict(str(responder_fn), str(signaller_fn),
-                         mw_weights, women_weights, game, rounds)
-
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
     player_pairs = []
     for i in range(runs):
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
-        params['run'] = i
         #print "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
-        women = make_players(signaller_fn, num=num_women, weights=women_weights)
+        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
         #print "made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
@@ -82,13 +78,13 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         if women_modifier is not None:
             women_modifier(women)
         #print "Set priors."
-        mw = make_players(responder_fn, num_midwives, weights=mw_weights)
+        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
         #print "Made agents."
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
         #print "Set priors."
         player_pairs.append((game, women, mw))
-
+    params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     played = list(futures.map(play_game, player_pairs))
     #print "Played!"
     #played = [(game, women, mw)]

@@ -6,6 +6,7 @@ from RecognitionAgents import *
 from AmbiguityAgents import *
 from HeuristicAgents import *
 from PayoffAgents import *
+from Dolls import *
 from multiprocessing import Pool
 import multiprocessing
 import itertools
@@ -40,10 +41,14 @@ def arguments():
         help="File name prefix for csv output.")
     parser.add_argument('-t', '--test', dest='test_only', action="store_true", 
         help="Sets test mode on, and doesn't actually run the simulations.")
+    parser.add_argument('-n', '--nested_agents', dest="nested", action="store_true",
+        help="Use nested agents to recognise opponents.")
+    parser.add_argument('-p', '--prop_women', dest='women', nargs=3, type=float,
+        help="Proportion sof type 0, 1, 2 women as decimals.")
     args = parser.parse_args()
     games = map(eval, args.games)
     players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
-    kwargs = [{'runs':args.runs, 'rounds':args.rounds}]
+    kwargs = [{'runs':args.runs, 'rounds':args.rounds, 'women_weights':args.women, 'nested':args.nested}]
     return games, players, kwargs, args.runs, args.test_only, args.file_name
 
 
@@ -75,16 +80,30 @@ def scale_weights(weights, top):
     return weights
 
 
-def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.]):
+def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
+    signaller=True):
     women = []
     player_type = 0
     for weight in weights:
         for i in range(int(round(weight*num))):
             if len(women) == num: break
-            women.append(constructor(player_type=player_type))
+            if nested:
+                if signaller:
+                    women.append(DollSignaller(player_type=player_type, child_fn=constructor))
+                else:
+                    women.append(constructor(player_type=player_type))    
+            else:
+                women.append(constructor(player_type=player_type))
         player_type += 1
     while len(women) < num:
-        women.append(constructor(player_type=0))
+        player_type = 0
+        if nested:
+            if signaller:
+                women.append(DollSignaller(player_type=player_type, child_fn=constructor))
+            else:
+                women.append(constructor(player_type=player_type))    
+        else:
+            women.append(constructor(player_type=player_type))
     return women
 
 
@@ -364,7 +383,7 @@ def random_expectations(depth=0, breadth=3, low=0, high=10):
     return results
 
 
-def params_dict(responder_rule, signaller_rule, mw_weights, women_weights, game, rounds):
+def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds):
     params = OrderedDict()
     params['game'] = str(game)
     params['decision_rule_responder'] = responder_rule
@@ -419,14 +438,14 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     num_midwives=100, num_women=1000, 
     runs=1, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
-    women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives()):
+    women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
+    nested=False):
 
     output_w = {'fields': [], 'results': []}
     output_mw = {'fields': [], 'results': []}
     if game is None:
         game = Game()
 
-    params = params_dict(str(responder_fn()), str(signaller_fn()), mw_weights, women_weights, game, rounds)
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
@@ -434,11 +453,10 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     for i in range(runs):
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
-        params['run'] = i
         #print "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
-        women = make_players(signaller_fn, num=num_women,weights=women_weights)
+        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
         print "made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
@@ -449,7 +467,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         if women_modifier is not None:
             women_modifier(women)
         print "Set priors."
-        mw = make_players(responder_fn, num_midwives, weights=mw_weights)
+        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
         print "Made agents."
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
@@ -457,7 +475,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         player_pairs.append((women, mw))
 
         #pair = game.play_game(women, mw, rounds=rounds)
-
+    params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
     played = map(lambda x: game.play_game(x), player_pairs)
     if measures_women is not None:
         output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x), played, dump(None, measures_women, params))
@@ -487,7 +505,7 @@ def kw_experiment(kwargs):
     defined by a list of keyword argument dictionaries.
     """
     pool = Pool()
-    return map(run, kwargs)
+    return pool.map(run, kwargs)
 
 
 

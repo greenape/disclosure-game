@@ -1,6 +1,5 @@
 from Model import *
 
-
 class RecognitionSignaller(BayesianSignaller):
     """
     A signalling agent which recognises and remembers opponents.
@@ -64,7 +63,7 @@ class RecognitionSignaller(BayesianSignaller):
             self.type_memory[midwife] = midwife.player_type
         # Individual specific reponse beliefs
         # Update signal-response beliefs
-        self.update_signal_response_beliefs(midwife, response)
+        #self.update_signal_response_beliefs(midwife, response)
 
     def update_signal_response_beliefs(self, midwife, response):
         """
@@ -178,8 +177,6 @@ class RecognitionSignaller(BayesianSignaller):
         if opponent in self.type_memory:
             #print "Known type."
             signal_risk = self.known_type_risk(signal, opponent)
-        elif opponent in self.individual_type_distribution:
-            signal_risk = self.type_risk(signal, opponent)
         else:
             signal_risk = super(RecognitionSignaller, self).risk(signal, opponent)
         #print "R(%d|x)=%f" % (signal, signal_risk)
@@ -190,15 +187,15 @@ class RecognitionSignaller(BayesianSignaller):
         Risk for a known type.
         """
         signal_risk = 0.
-        for response, belief in self.individual_response_belief[opponent][signal].items():
-                response_belief = belief[len(belief) - 1]
-                payoff = self.baby_payoffs[response] + self.social_payoffs[self.type_memory[opponent]][signal]
-                payoff = self.loss(payoff)
+        for response, response_belief in self.current_response_belief()[signal].items():
+            payoff = self.baby_payoffs[response] + self.social_payoffs[opponent.player_type][signal]
+            payoff = self.loss(payoff)
                 #print "Believe payoff will be",payoff,"with confidence",payoff_belief
                 #print "Risk is",payoff,"*",payoff_belief
-                signal_risk += payoff * response_belief
-        #print "Known type R(%d|x)=%f" % (signal, signal_risk)
+            signal_risk += payoff * response_belief
+       #print "R(%d|x)=%f" % (signal, signal_risk)
         return signal_risk
+
 
     def type_risk(self, signal, opponent):
         """
@@ -216,11 +213,7 @@ class RecognitionSignaller(BayesianSignaller):
         #print "Unknown type R(%d|x)=%f" % (signal, signal_risk)
         return signal_risk
 
-    def log_signal(self, signal, opponent):
-        super(RecognitionSignaller, self).log_signal(signal, opponent)
-        if not opponent in self.individual_signal_matches:
-            self.individual_signal_matches[opponent] = dict([(y, 0.) for y in self.signals])
-        self.individual_signal_matches[opponent][signal] += 1
+    
 
 
 class RecognitionResponder(BayesianResponder):
