@@ -98,7 +98,11 @@ class DollResponder(Doll):
 
     def respond(self, signal, opponent=None):
         if opponent in self.children:
+            self.signal_log.append(signal)
+            self.signal_matches[signal] += 1.
             response = self.children[opponent].respond(signal, opponent)
+            self.response_log.append(response)
+            self.rounds += 1
         else:
             response = self.children[None].respond(signal, opponent)
         return response
@@ -108,5 +112,12 @@ class DollResponder(Doll):
             self.children[signaller].update_beliefs(payoff, signaller, signal, signaller_type)
         else:
             # Hello newbie, let's make you a memory..
-            print "Do stuff"
+            child = self.child_fn(self.player_type)
+            # Type weights
+            child.init_payoffs(self.payoffs, self.type_weights)
+            # Bring you up to date
+            for i in range(len(self.payoff_log)):
+                s = Signaller(self.type_log[i])
+                child.update_beliefs(self.payoff_log[i], s, self.signal_log[i])
+                children[signaller] = child
         self.children[None].update_beliefs(payoff, signaller, signal, signaller_type)
