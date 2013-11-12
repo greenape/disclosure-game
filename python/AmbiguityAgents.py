@@ -1,10 +1,10 @@
 from RecognitionAgents import *
 
 
-class AmbiguitySignaller(RecognitionSignaller):
+class AmbiguitySignaller(FuzzySignaller):
     """
     A class of signaller that uses the Fryer model for resolving ambiguity
-    in observations.
+    in observations. i.e. confirmation bias.
 
     Fryer Jr., R.G., Harms, P. & Jackson, M., 2013. 
     Updating Beliefs with Ambiguous Evidence: Implications for Polarization., 02138(July), pp.1-22.

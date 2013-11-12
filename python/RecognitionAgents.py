@@ -1,57 +1,5 @@
 from Model import *
 
-class FuzzySignaller(RecognitionSignaller):
-    """
-    A signalling agent that remembers types and can deal with
-    ambiguous information about them.
-    """
-
-    def fuzzy_update_beliefs(self, response, midwife, payoff, possible_types):
-        """
-        A fuzzy update of type beliefs. Updates based on the possible types
-        for this payoff.
-        """
-        print "Called with possible types", possible_types
-        # If we've already learned the true type, then this is moot
-        if midwife in self.type_memory:
-            self.update_beliefs(response, midwife, payoff)
-            return
-        else:
-            # Update general response beliefs
-            super(RecognitionSignaller, self).update_beliefs(response, None, payoff)
-            self.update_type_distribution(possible_types)
-
-    def update_type_distribution(self, possible_types):
-        """
-        Update beliefs on distributions for a number of possible
-        types.
-        """
-        for midwife_type in possible_types:
-            self.type_matches[midwife_type] += 1.
-
-        for player_type, estimate in self.type_distribution.items():
-            alpha_k = self.type_weights[player_type]
-            n_k = self.type_matches[player_type]
-            n = sum(self.type_matches.values())
-            alpha_dot = sum(self.type_weights)
-            estimate.append((alpha_k + n_k) / float(alpha_dot + n))
-
-    def risk(self, signal, opponent):
-        """
-        Risk here is based on the belief about a specific opponent rather
-        than the general case. If the opponent has not been encountered
-        before, then the decision is based on the general beliefs.
-        """
-        if opponent in self.type_memory:
-            #print "Known type."
-            signal_risk = self.known_type_risk(signal, opponent)
-        else:
-            signal_risk = super(RecognitionSignaller, self).risk(signal, opponent)
-        #print "R(%d|x)=%f" % (signal, signal_risk)
-        return signal_risk
-
-
-
 class RecognitionSignaller(BayesianSignaller):
     """
     A signalling agent which recognises and remembers opponents.
@@ -112,6 +60,59 @@ class RecognitionSignaller(BayesianSignaller):
        #print "R(%d|x)=%f" % (signal, signal_risk)
         return signal_risk
 
+
+class FuzzySignaller(RecognitionSignaller):
+    """
+    A signalling agent that remembers types and can deal with
+    ambiguous information about them.
+    """
+
+    def __str__(self):
+        return "fuzzy"
+
+    def fuzzy_update_beliefs(self, response, midwife, payoff, possible_types):
+        """
+        A fuzzy update of type beliefs. Updates based on the possible types
+        for this payoff.
+        """
+        print "Called with possible types", possible_types
+        # If we've already learned the true type, then this is moot
+        if midwife in self.type_memory:
+            self.update_beliefs(response, midwife, payoff)
+            return
+        else:
+            # Update general response beliefs
+            super(RecognitionSignaller, self).update_beliefs(response, None, payoff)
+            self.update_type_distribution(possible_types)
+
+    def update_type_distribution(self, possible_types):
+        """
+        Update beliefs on distributions for a number of possible
+        types.
+        """
+        for midwife_type in possible_types:
+            self.type_matches[midwife_type] += 1.
+
+        for player_type, estimate in self.type_distribution.items():
+            alpha_k = self.type_weights[player_type]
+            n_k = self.type_matches[player_type]
+            n = sum(self.type_matches.values())
+            alpha_dot = sum(self.type_weights)
+            estimate.append((alpha_k + n_k) / float(alpha_dot + n))
+
+    def risk(self, signal, opponent):
+        """
+        Risk here is based on the belief about a specific opponent rather
+        than the general case. If the opponent has not been encountered
+        before, then the decision is based on the general beliefs.
+        """
+        if opponent in self.type_memory:
+            #print "Known type."
+            signal_risk = self.known_type_risk(signal, opponent)
+        else:
+            signal_risk = super(RecognitionSignaller, self).risk(signal, opponent)
+        #print "R(%d|x)=%f" % (signal, signal_risk)
+        return signal_risk
 
 class RecognitionResponder(BayesianResponder):
     """
