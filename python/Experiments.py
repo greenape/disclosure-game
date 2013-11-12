@@ -45,9 +45,14 @@ def arguments():
         help="Use nested agents to recognise opponents.")
     parser.add_argument('-p', '--prop_women', dest='women', nargs=3, type=float,
         help="Proportion sof type 0, 1, 2 women as decimals.")
+    parser.add_argument('-c', '--combinations', dest='combinations', action="store_true",
+        help="Run all possible combinations of signallers & responders.")
     args = parser.parse_args()
     games = map(eval, args.games)
-    players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
+    if args.combinations:
+        players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
+    else:
+        players = zip(map(eval, set(args.signallers)), map(eval, set(args.responders)))
     kwargs = [{'runs':args.runs, 'rounds':args.rounds, 'women_weights':args.women, 'nested':args.nested}]
     return games, players, kwargs, args.runs, args.test_only, args.file_name
 
