@@ -13,6 +13,6 @@ GAME[7]='-g Game CaseloadGame -f "standard_alpac_nested_" -n -p 0.85 0.1 0.05'
 SIGNALLERS='BayesianSignaller BayesianPayoffSignaller RecognitionSignaller LexicographicSignaller'
 RESPONDERS='BayesianResponder BayesianPayoffResponder RecognitionResponder LexicographicResponder'
 
-cd ../python
+cd disclosure-game/python
 module load python
 python -m scoop -vvv --tunnel HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS
