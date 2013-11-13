@@ -46,3 +46,7 @@ python/Information.py
 *.pptx
 
 *.ps
+
+*.lyx~
+
+*.tex
