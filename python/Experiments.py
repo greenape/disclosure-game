@@ -53,7 +53,9 @@ def arguments():
         players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     else:
         players = zip(map(eval, set(args.signallers)), map(eval, set(args.responders)))
-    kwargs = [{'runs':args.runs, 'rounds':args.rounds, 'women_weights':args.women, 'nested':args.nested}]
+    kwargs = [{'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}]
+    if args.women is not None:
+        kwargs['women_weights'] = args.women
     return games, players, kwargs, args.runs, args.test_only, args.file_name
 
 
