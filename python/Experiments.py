@@ -341,7 +341,7 @@ if __name__ == "__main__":
     if test:
         print "This is a test of the emergency broadcast system. This is only a test."
     else:
-        women, mw = zip(*experiment(games, players, kwargs=[kwargs]))
+        women, midwives = zip(*experiment(games, players, kwargs=[kwargs]))
         women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv" % file_name)
