@@ -159,28 +159,6 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
         midwives.append(responder(player_type=weighted_choice(zip([0, 1, 2], weights))))
     return midwives
 
-def dump(pair, measures, params, results=None):
-    """
-    A results dumper. Takes a tuple of a game and players, and two dictionaries.
-    Measures should contain a mapping from a field name to method for getting a result
-    given an appointment, set of players, and a game. Params should contain mappings
-    from parameter names to values.
-    Optionally takes an exist results object to add records to. This should have the same
-    measures and params.
-    Returns a results object for writing to csv.
-    """
-    if results is None:
-        results = {'fields':measures.keys() + params.keys(), 'results':[]}
-    if pair is None:
-        return results
-    game, women = pair
-    for i in range(params['max_rounds']):
-        line = map(lambda x: x(i, women, game), measures.values())
-        line += params.values()
-        results['results'].append(line)
-    return results
-
-
 def random_expectations(depth=0, breadth=3, low=0, high=10):
     initial = [low, high]
     for i in range(breadth - 1):
@@ -256,12 +234,12 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
         #pair = game.play_game(women, mw, rounds=rounds)
     params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
+    game.parameters = params
     played = map(lambda x: game.play_game(x), player_pairs)
-    if measures_women is not None:
-        output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x), played, dump(None, measures_women, params))
-    if measures_midwives is not None:
-        output_mw = reduce(lambda x, y: dump((y[0], y[2]), measures_midwives, params, x), played, dump(None, measures_midwives, params))
-    return (output_w, output_mw)
+    women, midwives = zip(*played)
+    women = reduce(lambda x, y: x.add_results(y), women)
+    midwives = reduce(lambda x, y: x.add_results(y), midwives)
+    return women, midwives
 
 
 def experiment(game_fns=[Game, CaseloadGame], 
@@ -364,5 +342,7 @@ if __name__ == "__main__":
         print "This is a test of the emergency broadcast system. This is only a test."
     else:
         women, mw = zip(*experiment(games, players, kwargs=kwargs))
-        write_results_set("%smw.csv" % file_name, mw)
-        write_results_set("%swomen.csv" % file_name, women)
+        women = reduce(lambda x, y: x.add_results(y), women)
+        midwives = reduce(lambda x, y: x.add_results(y), midwives)
+        women.write("%swomen.csv" % file_name)
+        midwives.write("%smw.csv" % file_name)

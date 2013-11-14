@@ -87,18 +87,14 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         #print "Set priors."
         player_pairs.append((game, women, mw))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
+    game.parameters = params
     played = list(futures.map(play_game, player_pairs))
     scoop.logger.info("Completed a parameter set.")
-    #print "Played!"
-    #played = [(game, women, mw)]
-    if measures_women is not None:
-        output_w = reduce(lambda x, y: dump((y[0], y[1]), measures_women, params, x),
-                          played, dump(None, measures_women, params))
-    if measures_midwives is not None:
-        output_mw = reduce(lambda x, y: dump((y[0], y[2]), measures_midwives, params, x),
-                           played, dump(None, measures_midwives, params))
-    scoop.logger.info("Dumped results for a parameter set.")
-    return (output_w, output_mw)
+    
+    women, midwives = zip(*played)
+    women = reduce(lambda x, y: x.add_results(y), women)
+    midwives = reduce(lambda x, y: x.add_results(y), midwives)
+    return women, midwives
 
 if __name__ == "__main__":
     games, players, kwargs, runs, test, file_name = arguments()
@@ -108,9 +104,9 @@ if __name__ == "__main__":
     if test:
         scoop.logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, mw = zip(*experiment(games, players, kwargs=kwargs))
-        scoop.logger.info("Ran successfully.")
-
-        write_results_set("%smw.csv" % file_name, mw)
-        write_results_set("%swomen.csv" % file_name, women)
+        women, midwives = zip(*experiment(games, players, kwargs=kwargs))
+        women = reduce(lambda x, y: x.add_results(y), women)
+        midwives = reduce(lambda x, y: x.add_results(y), midwives)
+        women.write("%swomen.csv" % file_name)
+        midwives.write("%smw.csv" % file_name)
 

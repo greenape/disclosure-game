@@ -1,4 +1,5 @@
 import random
+from Measures import measures_midwives, measures_women
 
 
 def random_expectations(depth=0, breadth=3, low=0, high=10):
@@ -393,7 +394,8 @@ class BayesianResponder(Responder):
 class Game(object):
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
-     type_weights=[[20., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100):
+     type_weights=[[20., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
+     measures_midwives=measures_midwives(), params=None):
         """ A multistage game played by two agents.
         """
         self.signal_log = []
@@ -405,6 +407,9 @@ class Game(object):
         self.payoffs = {}
         self.type_weights = type_weights
         self.rounds = rounds
+        self.measures_women = measures_women
+        self.measures_midwives = measures_midwives
+        self.parameters = params
 
         if randomise_payoffs:
             self.random_payoffs()
@@ -527,13 +532,19 @@ class Game(object):
             else:
                 women.insert(0, woman)
                 woman.finished += 1
-        return (self, birthed, midwives)
+        return self.measure(birthed, midwives)
 
     def is_caseloaded(self):
         return False
 
     def name(self):
         return "standard"
+
+    def measure(self, women, midwives):
+        res_women = self.measures_women.dump(women, self.rounds, self)
+        res_mw  = self.measures_midwives.dump(midwives, self.rounds, self)
+        return res_women, res_mw
+
 
     def __str__(self):
         return self.__unicode__()
@@ -586,7 +597,7 @@ class CaseloadGame(Game):
                 else:
                     cases.insert(0, woman)
                     woman.finished += 1
-        return (self, birthed, midwives)
+        return self.measure(birthed, midwives)
 
     def is_caseloaded(self):
         return True
