@@ -16,34 +16,6 @@ def play_game(config):
     game, women, midwives = config
     return game.play_game((women, midwives))
 
-def measure(config):
-    rounds, players, game, measure = config
-    return measure.measure(rounds, players, game)
-
-def dump(pair, measures, params, results=None):
-    """
-    A results dumper. Takes a tuple of a game and players, and two dictionaries.
-    Measures should contain a mapping from a field name to method for getting a result
-    given an appointment, set of players, and a game. Params should contain mappings
-    from parameter names to values.
-    Optionally takes an exist results object to add records to. This should have the same
-    measures and params.
-    Returns a results object for writing to csv.
-    """
-    if results is None:
-        results = {'fields':measures.keys() + params.keys(), 'results':[]}
-    if pair is None:
-        return results
-    game, women = pair
-    num_measures = len(measures)
-    records = []
-    for i in range(params['max_rounds']):
-        records.append(zip([i]*num_measures, [women]*num_measures, [game]*num_measures, measures.values()))
-    lines = list(futures.map(lambda record: list(futures.map(measure, record)), records))
-    lines = map(lambda line: line + params.values(), lines)
-    results['results'] += lines
-    return results
-
 def experiment(game_fns=[Game, CaseloadGame], 
     agents=[(BayesianSignaller, BayesianResponder)],
     kwargs=[{}]):

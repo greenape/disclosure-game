@@ -159,9 +159,6 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
         midwives.append(responder(player_type=weighted_choice(zip([0, 1, 2], weights))))
     return midwives
 
-
-
-
 def dump(pair, measures, params, results=None):
     """
     A results dumper. Takes a tuple of a game and players, and two dictionaries.
@@ -178,7 +175,7 @@ def dump(pair, measures, params, results=None):
         return results
     game, women = pair
     for i in range(params['max_rounds']):
-        line = map(lambda x: x.measure(i, women, game), measures.values())
+        line = map(lambda x: x(i, women, game), measures.values())
         line += params.values()
         results['results'].append(line)
     return results
