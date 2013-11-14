@@ -24,9 +24,11 @@ class Result(object):
         file = open(file_name, "w")
         file.write("\n".join(result))
         file.close()
+    
+    def write_params(self, file_name, sep=","):
         result = [sep.join(self.param_fields)]
         result += map(lambda l: sep.join(map(str, l)), self.parameters.values())
-        file = open("params_%s" % file_name, "w")
+        file = open(file_name, "w")
         file.write("\n".join(result))
         file.close()
 

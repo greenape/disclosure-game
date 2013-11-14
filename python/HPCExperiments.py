@@ -101,6 +101,7 @@ if __name__ == "__main__":
     print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
     print("Total simulations runs is %d" % (len(games) * len(players) * runs))
+    print "File is %s" % file_name
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:
@@ -109,4 +110,5 @@ if __name__ == "__main__":
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv" % file_name)
         midwives.write("%smw.csv" % file_name)
+        women.write_params("%sparams.csv" % file_name)
 
