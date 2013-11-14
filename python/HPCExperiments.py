@@ -57,6 +57,7 @@ def experiment(game_fns=[Game, CaseloadGame],
                 kwarg['signaller_fn'] = pair[0]
                 kwarg['responder_fn'] = pair[1]
                 run_params.append(kwarg.copy())
+    scoop.logger.info("Made %d parameter sets" % len(run_params))
     return kw_experiment(run_params)
 
 def kw_experiment(kwargs):
@@ -115,6 +116,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         player_pairs.append((game, women, mw))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     played = list(futures.map(play_game, player_pairs))
+    scoop.logger.info("Completed a parameter set.")
     #print "Played!"
     #played = [(game, women, mw)]
     if measures_women is not None:
@@ -123,18 +125,20 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if measures_midwives is not None:
         output_mw = reduce(lambda x, y: dump((y[0], y[2]), measures_midwives, params, x),
                            played, dump(None, measures_midwives, params))
-
+    scoop.logger.info("Dumped results for a parameter set.")
     return (output_w, output_mw)
 
 if __name__ == "__main__":
     games, players, kwargs, runs, test, file_name = arguments()
-    print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
-    print "Total simulations runs is %d" % (len(games) * len(players) * runs)
+    scoop.logger.info("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
+    scoop.logger.info("Total simulations runs is %d" % (len(games) * len(players) * runs))
     if test:
-        print "This is a test of the emergency broadcast system. This is only a test."
+        scoop.logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
         women, mw = zip(*experiment(games, players, kwargs=kwargs))
+        scoop.logger.info("Ran successfully.")
+
         write_results_set("%smw.csv" % file_name, mw)
         write_results_set("%swomen.csv" % file_name, women)
 
