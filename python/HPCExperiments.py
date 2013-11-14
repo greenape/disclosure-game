@@ -29,7 +29,7 @@ def experiment(game_fns=[Game, CaseloadGame],
                 kwarg['signaller_fn'] = pair[0]
                 kwarg['responder_fn'] = pair[1]
                 run_params.append(kwarg.copy())
-    scoop.logger.info("Made %d parameter sets" % len(run_params))
+    print("Made %d parameter sets" % len(run_params))
     return kw_experiment(run_params)
 
 def kw_experiment(kwargs):
@@ -89,7 +89,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
     played = list(futures.map(play_game, player_pairs))
-    scoop.logger.info("Completed a parameter set.")
+    print("Completed a parameter set.")
     
     women, midwives = zip(*played)
     women = reduce(lambda x, y: x.add_results(y), women)
@@ -98,11 +98,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
 if __name__ == "__main__":
     games, players, kwargs, runs, test, file_name = arguments()
-    scoop.logger.info("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
-    scoop.logger.info("Total simulations runs is %d" % (len(games) * len(players) * runs))
+    print("Total simulations runs is %d" % (len(games) * len(players) * runs))
     if test:
-        scoop.logger.info("This is a test of the emergency broadcast system. This is only a test.")
+        print("This is a test of the emergency broadcast system. This is only a test.")
     else:
         women, midwives = zip(*experiment(games, players, kwargs=[kwargs]))
         women = reduce(lambda x, y: x.add_results(y), women)
