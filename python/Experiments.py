@@ -13,6 +13,7 @@ import multiprocessing
 import itertools
 from collections import OrderedDict
 import argparse
+from os.path import expanduser
 
 
 def arguments():
@@ -48,6 +49,9 @@ def arguments():
         help="Proportion sof type 0, 1, 2 women as decimals.")
     parser.add_argument('-c', '--combinations', dest='combinations', action="store_true",
         help="Run all possible combinations of signallers & responders.")
+    parser.add_argument('-d', '--directory', dest='dir', type=str,
+        help="Optional directory to store results in. Defaults to user home.",
+        default=expanduser("~"), nargs="?")
     args = parser.parse_args()
     games = map(eval, args.games)
     if args.combinations:
@@ -57,6 +61,7 @@ def arguments():
     kwargs = [{'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}]
     if args.women is not None:
         kwargs['women_weights'] = args.women
+    file_name = "%s/%s" % (args.dir, args.file_name)
     return games, players, kwargs, args.runs, args.test_only, args.file_name
 
 
