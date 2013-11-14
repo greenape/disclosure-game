@@ -58,7 +58,7 @@ def arguments():
         players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     else:
         players = zip(map(eval, set(args.signallers)), map(eval, set(args.responders)))
-    kwargs = [{'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}]
+    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}
     if args.women is not None:
         kwargs['women_weights'] = args.women
     file_name = "%s/%s" % (args.dir, args.file_name)
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     if test:
         print "This is a test of the emergency broadcast system. This is only a test."
     else:
-        women, mw = zip(*experiment(games, players, kwargs=kwargs))
+        women, mw = zip(*experiment(games, players, kwargs=[kwargs]))
         women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv" % file_name)

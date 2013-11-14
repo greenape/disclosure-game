@@ -104,7 +104,7 @@ if __name__ == "__main__":
     if test:
         scoop.logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, midwives = zip(*experiment(games, players, kwargs=kwargs))
+        women, midwives = zip(*experiment(games, players, kwargs=[kwargs]))
         women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv" % file_name)
