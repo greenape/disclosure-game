@@ -224,18 +224,19 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                 woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
         if women_modifier is not None:
             women_modifier(women)
-        print "Set priors."
+        print("Set priors.")
         mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
-        print "Made agents."
+        print("Made agents.")
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
-        print "Set priors."
+        print("Set priors.")
         player_pairs.append((women, mw))
 
         #pair = game.play_game(women, mw, rounds=rounds)
     params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
     played = map(lambda x: game.play_game(x), player_pairs)
+    print("Ran a set of parameters.")
     women, midwives = zip(*played)
     women = reduce(lambda x, y: x.add_results(y), women)
     midwives = reduce(lambda x, y: x.add_results(y), midwives)
@@ -335,12 +336,12 @@ def run(kwargs):
 
 if __name__ == "__main__":
     games, players, kwargs, runs, test, file_name = arguments()
-    print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
-    print "Total simulations runs is %d" % (len(games) * len(players) * runs)
-    print "File is %s" % file_name
+    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
+    print("Total simulations runs is %d" % (len(games) * len(players) * runs))
+    print("File is %s" % file_name)
     if test:
-        print "This is a test of the emergency broadcast system. This is only a test."
+        print("This is a test of the emergency broadcast system. This is only a test.")
     else:
         women, midwives = zip(*experiment(games, players, kwargs=[kwargs]))
         women = reduce(lambda x, y: x.add_results(y), women)
