@@ -78,7 +78,7 @@ def arguments():
     if args.combinations:
         players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     else:
-        players = zip(map(eval, set(args.signallers)), map(eval, set(args.responders)))
+        players = zip(map(eval, args.signallers), map(eval, args.responders))
     kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}
     if args.women is not None:
         kwargs['women_weights'] = args.women
@@ -368,6 +368,8 @@ if __name__ == "__main__":
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
     print("Total simulations runs is %d" % (len(games) * len(players) * runs))
     print("File is %s" % file_name)
+    print("Player pairs are:")
+    print(players)
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:

@@ -31,14 +31,14 @@ class RecognitionSignaller(BayesianSignaller):
         #Then update beliefs about *this* opponent
         #Known type
         if midwife_type is None:
-            self.type_memory[midwife] = midwife.player_type
+            self.type_memory[hash(midwife)] = midwife.player_type
 
     def risk(self, signal, opponent):
         """
         If the opponent's type is known, then use modified risk
         that treats it as having probability 1.
         """
-        if opponent in self.type_memory:
+        if hash(opponent) in self.type_memory:
             #print "Known type."
             signal_risk = self.known_type_risk(signal, opponent)
         else:
@@ -77,7 +77,7 @@ class FuzzySignaller(RecognitionSignaller):
         """
         print "Called with possible types", possible_types
         # If we've already learned the true type, then this is moot
-        if midwife in self.type_memory:
+        if hash(midwife) in self.type_memory:
             self.update_beliefs(response, midwife, payoff)
             return
         else:
@@ -106,7 +106,7 @@ class FuzzySignaller(RecognitionSignaller):
         than the general case. If the opponent has not been encountered
         before, then the decision is based on the general beliefs.
         """
-        if opponent in self.type_memory:
+        if hash(opponent) in self.type_memory:
             #print "Known type."
             signal_risk = self.known_type_risk(signal, opponent)
         else:
