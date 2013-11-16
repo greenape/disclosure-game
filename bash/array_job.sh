@@ -15,4 +15,4 @@ RESPONDERS='BayesianResponder BayesianPayoffResponder RecognitionResponder Lexic
 
 cd disclosure-game/python
 module load python
-python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS
+python -m scoop HPCExperiments.py -R 1000 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS
