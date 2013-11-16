@@ -11,7 +11,7 @@ class Doll(object):
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], child_fn=BayesianSignaller):
         self.children = {}
         self.child_fn = child_fn
-        self.children[None] = child_fn(player_type, signals, responses)
+        self.children[hash(None)] = child_fn(player_type, signals, responses)
 
     def __str__(self):
         return "doll_%s" % (str(self.child_fn()))
@@ -20,7 +20,7 @@ class Doll(object):
         if name in {"children", "child_fn"}:
             return super(DollSignaller).__getattr__(name)
         try:
-            return getattr(self.children[None], name)
+            return getattr(self.children[hash(None)], name)
         except AttributeError:
             # Default behaviour
             raise AttributeError, name
@@ -29,7 +29,7 @@ class Doll(object):
         if name in {"children", "child_fn"}:
             return object.__setattr__(self, name, value)
         try:
-            setattr(self.children[None], name, value)
+            setattr(self.children[hash(None)], name, value)
         except AttributeError:
             # Default behaviour
             raise AttributeError
@@ -41,24 +41,29 @@ class DollSignaller(Doll):
     """
 
     def current_type_distribution(self, opponent=None):
+        opponent = hash(opponent)
         return self.children[opponent].current_type_distribution()
 
     def current_signal_risk(self, opponent=None):
+        opponent = hash(opponent)
         return self.children[opponent].current_signal_risk()
 
     def current_response_belief(self, opponent=None):
+        opponent = hash(opponent)
         return self.children[opponent].current_response_belief()
 
     def round_signal(self, rounds, opponent=None):
+        opponent = hash(opponent)
         return self.children[opponent].round_signal(rounds)
 
     def round_response_belief(self, rounds, opponent=None):
+        opponent = hash(opponent)
         return self.children[opponent].round_response_belief(rounds)
 
     def update_beliefs(self, response, midwife, payoff, midwife_type=None):
         # We know you...
-        if midwife in self.children:
-            self.children[midwife].update_beliefs(response, midwife, payoff, midwife_type)
+        if hash(midwife) in self.children:
+            self.children[hash(midwife)].update_beliefs(response, midwife, payoff, midwife_type)
         else:
             # Hullo stranger
             child = self.child_fn(self.player_type)
@@ -77,19 +82,19 @@ class DollSignaller(Doll):
             child.log_signal(self.signal_log[len(self.signal_log) - 1])
 
             child.update_beliefs(response, midwife, payoff, midwife_type)
-            self.children[midwife] = child
+            self.children[hash(midwife)] = child
         #Update the general child
-        self.children[None].update_beliefs(response, midwife, payoff, midwife_type)
+        self.children[hash(None)].update_beliefs(response, midwife, payoff, midwife_type)
 
     def do_signal(self, opponent=None):
-        if opponent in self.children:
+        if hash(opponent) in self.children:
             #print "Recognised this one:", opponent
-            signal = self.children[opponent].do_signal(opponent)
+            signal = self.children[hash(opponent)].do_signal(opponent)
             #print "Signal was %d" % signal
             self.rounds += 1
             self.log_signal(signal, opponent)
         else:
-            signal = self.children[None].do_signal(opponent)
+            signal = self.children[hash(None)].do_signal(opponent)
         return signal
 
 class DollResponder(Doll):
@@ -97,19 +102,19 @@ class DollResponder(Doll):
     """
 
     def respond(self, signal, opponent=None):
-        if opponent in self.children:
+        if hash(opponent) in self.children:
             self.signal_log.append(signal)
             self.signal_matches[signal] += 1.
-            response = self.children[opponent].respond(signal, opponent)
+            response = self.children[hash(opponent)].respond(signal, opponent)
             self.response_log.append(response)
             self.rounds += 1
         else:
-            response = self.children[None].respond(signal, opponent)
+            response = self.children[hash(None)].respond(signal, opponent)
         return response
 
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
-        if signaller in self.children:
-            self.children[signaller].update_beliefs(payoff, signaller, signal, signaller_type)
+        if hash(signaller) in self.children:
+            self.children[hash(signaller)].update_beliefs(payoff, signaller, signal, signaller_type)
         else:
             # Hello newbie, let's make you a memory..
             child = self.child_fn(self.player_type)
@@ -119,5 +124,5 @@ class DollResponder(Doll):
             for i in range(len(self.payoff_log)):
                 s = Signaller(self.type_log[i])
                 child.update_beliefs(self.payoff_log[i], s, self.signal_log[i])
-                children[signaller] = child
-        self.children[None].update_beliefs(payoff, signaller, signal, signaller_type)
+                children[hash(signaller)] = child
+        self.children[hash(None)].update_beliefs(payoff, signaller, signal, signaller_type)
