@@ -39,6 +39,7 @@ class RecognitionGame(Game):
                     try:
                         signaller.fuzzy_update_beliefs(act, receiver, signal_payoff, possible_types)
                     except AttributeError:
+                        # Must be a payoff type agent. 
                         pass
                 #But the responder doesn't unless they referred
                 if act == 1:

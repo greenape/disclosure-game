@@ -14,7 +14,25 @@ import itertools
 from collections import OrderedDict
 import argparse
 from os.path import expanduser
+import cPickle
 
+def load_kwargs(file_name):
+    
+    f = open(file_name, "r")
+    kwargs = cPickle.load(f)
+    f.close()
+    assert type(kwargs) is list, "%s does not contain a pickled list." % file_name
+    #Check this is a valid list of dicts
+    valid_args = decision_fn_compare.func_code.co_varnames[:decision_fn_compare.func_code.co_argcount]
+    line = 0
+    for kwarg in kwargs:
+        assert type(kwarg) is dict, "Kwargs %d is not a valid dictionary." % line
+        for arg, value in kwarg.items():
+            assert arg in valid_args, "Kwargs %d, argument: %s is not valid." % (line, arg)
+
+        line +=1
+
+    return kwargs
 
 def arguments():
     parser = argparse.ArgumentParser(
@@ -52,6 +70,9 @@ def arguments():
     parser.add_argument('-d', '--directory', dest='dir', type=str,
         help="Optional directory to store results in. Defaults to user home.",
         default=expanduser("~"), nargs="?")
+    parser.add_argument('--pickled-arguments', dest='kwargs', type=str, nargs='?',
+        default=None, help="A file containing a pickled list of kwarg dictionaries to be run.")
+
     args = parser.parse_args()
     games = map(eval, args.games)
     if args.combinations:
@@ -61,6 +82,16 @@ def arguments():
     kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}
     if args.women is not None:
         kwargs['women_weights'] = args.women
+    kwargs = [kwargs]
+    if args.kwargs is not None:
+        try:
+            kwargs = load_kwargs(args.kwargs)
+        except IOError:
+            print("Couldn't open %s." % args.kwargs)
+            raise
+        except cPickle.UnpicklingError:
+            print("Not a valid pickle file.")
+            raise
     file_name = "%s/%s" % (args.dir, args.file_name)
     return games, players, kwargs, args.runs, args.test_only, file_name
 
@@ -199,8 +230,6 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
     nested=False):
 
-    output_w = {'fields': [], 'results': []}
-    output_mw = {'fields': [], 'results': []}
     if game is None:
         game = Game()
 
@@ -294,7 +323,7 @@ def priors_experiment():
                 args = {'game':game, 'seeds':range(100), 'signaller_fn':BayesianSignaller, 'responder_fn':BayesianResponder,
                 'runs':100}
                 run_params.append(args)
-    return kw_experiment(run_params)
+    return run_params
 
 
 def lhs_sampling(samples):
@@ -311,7 +340,6 @@ def lhs_sampling(samples):
     for line in content:
         vals = line.split(" ")
         vals = vals[1:]
-        print vals
         priors.append(vals[0:9])
         mw_types.append(vals[9:12])
         types.append(vals[12:15])
@@ -343,7 +371,7 @@ if __name__ == "__main__":
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, midwives = zip(*experiment(games, players, kwargs=[kwargs]))
+        women, midwives = zip(*experiment(games, players, kwargs=kwargs))
         women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv" % file_name)

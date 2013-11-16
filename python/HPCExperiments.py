@@ -49,9 +49,6 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         measures_midwives=measures_midwives(), nested=False):
 
     sys.setrecursionlimit(1000)
-
-    output_w = {'fields': [], 'results': []}
-    output_mw = {'fields': [], 'results': []}
     
     if game is None:
         game = Game()
@@ -105,7 +102,7 @@ if __name__ == "__main__":
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, midwives = zip(*experiment(games, players, kwargs=[kwargs]))
+        women, midwives = zip(*experiment(games, players, kwargs=kwargs))
         women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv" % file_name)

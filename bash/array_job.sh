@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l walltime=1:00:00
-#PBS -l nodes=32:ppn=16
+#PBS -l nodes=16:ppn=16
 GAME[0]='-g ReferralGame CaseloadReferralGame -f referral_'
 GAME[1]='-g Game CaseloadGame -f standard_'
 GAME[2]='-g ReferralGame CaseloadReferralGame -f referral_nested_ -n'

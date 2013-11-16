@@ -1,7 +1,6 @@
 from Model import *
 import operator
 
-
 class LexicographicSignaller(BayesianSignaller):
     """
     A signaller that uses the Lexicographic heuristic to make decisions.
@@ -69,7 +68,6 @@ class LexicographicSignaller(BayesianSignaller):
         self.signal_log.pop()
         self.log_signal(best, opponent)
         return best
-
 
 
 class LexicographicResponder(BayesianResponder):
