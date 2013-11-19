@@ -1,84 +1,67 @@
 require(ggplot2)
 source("methods.R")
 
-figures <- function(signaller, responder, file, name, dir, target_dir) {
+figures <- function(file_prefix) {
 
-df_recognition = read.csv(sprintf("../%s/%s_women.csv", dir, file), all=TRUE)
-df_recognition = subset(df_recognition, df_recognition$decision_rule_signaller == signaller)
-df_recognition = subset(df_recognition, df_recognition$decision_rule_responder == responder)
-df_recognition_c = subset(df_recognition, df_recognition$caseload == 'True')
-df_recognition = subset(df_recognition, df_recognition$caseload == 'False')
+	alspac = grepl("alspac", file_prefix)
 
-png(sprintf("../figures/%s/%s/%s_signals_imply_referral_0.png", target_dir, name, file))
-print(signals_imply_referral_by_type(df_recognition, 0))
-dev.off()
+	results_file = sprintf("../results/%s_women.csv", file_prefix)
+	params_file = sprintf("../results/%s_params.csv", file_prefix)
 
-png(sprintf("../figures/%s/%s/%s_signals_imply_referral_1.png", target_dir, name, file))
-print(signals_imply_referral_by_type(df_recognition, 1))
-dev.off()
+	df = read.csv(results_file, all=TRUE)
+	params = read.csv(params_file, all=TRUE)
 
-png(sprintf("../figures/%s/%s/%s_signals_imply_referral_2.png", target_dir, name, file))
-print(signals_imply_referral_by_type(df_recognition, 2))
-dev.off()
+	df <- merge(x=df, y=params, by.x="parameters", by.y="hash", all.x=TRUE)
 
-png(sprintf("../figures/%s/%s/%s_c_signals_imply_referral_0.png", target_dir, name, file))
-print(signals_imply_referral_by_type(df_recognition_c, 0))
-dev.off()
+	do_figures(df, alspac)
 
-png(sprintf("../figures/%s/%s/%s_c_signals_imply_referral_1.png", target_dir, name, file))
-print(signals_imply_referral_by_type(df_recognition_c, 1))
-dev.off()
+}
 
-png(sprintf("../figures/%s/%s/%s_c_signals_imply_referral_2.png", target_dir, name, file))
-print(signals_imply_referral_by_type(df_recognition_c, 2))
-dev.off()
+do_figures <- function(df, alspac) {
+	# Loop over games
+	for(g in unique(df$game)) {
+		# Loop over signaller types
+		for(a in unique(df$decision_rule_signaller)) {
+			d <- subset(df, df$game == g & df$decision_rule_signaller == a)
+			signals(d, alspac)
+			complete(d, alpsac)
+		}
 
-png(sprintf("../figures/%s/%s/%s_signals_0.png", target_dir, name, file))
-print(signals_by_type(df_recognition, 0))
-dev.off()
+	}
+}
 
-png(sprintf("../figures/%s/%s/%s_signals_1.png", target_dir, name, file))
-print(signals_by_type(df_recognition, 1))
-dev.off()
+complete <- function(df, alpsac) {
+	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
+	finished = sprintf("%s/%s", target, "finished.png")
+	referred = sprintf("%s/%s", target, "referred.png")
 
-png(sprintf("../figures/%s/%s/%s_signals_2.png", target_dir, name, file))
-print(signals_by_type(df_recognition, 2))
-dev.off()
+	png(finished)
+	print(finished_by_type(df))
+	dev.off()
+	png(referred)
+	print(referred_by_type(df))
+	dev.off()
+}
 
-png(sprintf("../figures/%s/%s/%s_c_signals_0.png", target_dir, name, file))
-print(signals_by_type(df_recognition_c, 0))
-dev.off()
+directories <- function(game, alspac, rule) {
+	target = "../figures/%s/"
+	dir.create(sprintf(target, game), showWarnings = FALSE)
+	if(alspac) {
+		target = sprintf("%salspac/", target)
+	}
+	target = sprintf(target, game)
+	dir.create(target, showWarnings = FALSE)
+	target = sprintf("%s%s", target, rule, "%d")
+	dir.create(target, showWarnings = FALSE)
+	return(target)
+}
 
-png(sprintf("../figures/%s/%s/%s_c_signals_1.png", target_dir, name, file))
-print(signals_by_type(df_recognition_c, 1))
-dev.off()
-
-png(sprintf("../figures/%s/%s/%s_c_signals_2.png", target_dir, name, file))
-print(signals_by_type(df_recognition_c, 2))
-dev.off()
-
-png(sprintf("../figures/%s/%s/%s_c_finished_by_type.png", target_dir, name, file))
-print(finished_by_type(df_recognition_c))
-dev.off()
-png(sprintf("../figures/%s/%s/%s_finished_by_type.png", target_dir, name, file))
-print(finished_by_type(df_recognition))
-dev.off()
-
-png(sprintf("../figures/%s/%s/%s_c_referred_by_type.png", target_dir, name, file))
-print(referred_by_type(df_recognition_c))
-dev.off()
-png(sprintf("../figures/%s/%s/%s_referred_by_type.png", target_dir, name, file))
-print(referred_by_type(df_recognition))
-dev.off()
-
-# Distributions
-
-png(sprintf("../figures/%s/%s/%s_distributions.png", target_dir, name, file))
-print(distributions(df_recognition))
-dev.off()
-
-png(sprintf("../figures/%s/%s/%s_c_distributions.png", target_dir, name, file))
-print(distributions(df_recognition_c))
-dev.off()
-
+signals <- function(df, alspac) {
+	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
+	target = sprintf("%s/%s", target, "signals_%s.png")
+	for(i in 0:2) {
+		png(sprintf(target, i))
+		print(signals_by_type(df, i))
+		dev.off()
+	}
 }
