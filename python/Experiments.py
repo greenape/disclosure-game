@@ -190,7 +190,7 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
         midwives.append(responder(player_type=weighted_choice(zip([0, 1, 2], weights))))
     return midwives
 
-def random_expectations(depth=0, breadth=3, low=0, high=10):
+def random_expectations(depth=0, breadth=3, low=1, high=10):
     result = []
     if depth == 0:
         initial = high + 1
