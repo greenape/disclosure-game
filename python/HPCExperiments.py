@@ -46,13 +46,15 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         mw_weights=[80/100., 15/100., 5/100.],
                         women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
                         women_modifier=None, measures_women=measures_women(),
-                        measures_midwives=measures_midwives(), nested=False):
+                        measures_midwives=measures_midwives(), nested=False, mw_priors=None):
 
     sys.setrecursionlimit(1000)
     
     if game is None:
         game = Game()
     game.rounds = rounds
+    if mw_priors is not None:
+        game.type_weights = mw_priors
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]

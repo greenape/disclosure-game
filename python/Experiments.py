@@ -85,7 +85,7 @@ def arguments():
     kwargs = [kwargs]
     if args.kwargs is not None:
         try:
-            kwargs = load_kwargs(args.kwargs)
+            kwargs.update(load_kwargs(args.kwargs))
         except IOError:
             print("Couldn't open %s." % args.kwargs)
             raise
@@ -228,11 +228,12 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     runs=1, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
     women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
-    nested=False):
+    nested=False, mw_priors=None):
 
     if game is None:
         game = Game()
-
+    if mw_priors is not None:
+        game.type_weights = mw_priors
 
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
@@ -314,6 +315,23 @@ def proportions(num):
 
         proportions.append([x/100. for x in result])
     return proportions
+
+def proportions_experiment():
+    mw = proportions(10000)
+    w = proportions(10000)
+    kwargs = []
+    for i in range(10000):
+        kwarg = {'women_weights':w[i], 'mw_weights':mw[i]}
+        kwargs.append(kwarg)
+    return kwargs
+
+def priors_experiment():
+    mw = [random_expectations(1, 3, 1, 50) for x in range(10000)]
+    kwargs = []
+    for i in range(10000):
+        kwarg = {'mw_priors':mw[i]}
+        kwargs.append(kwarg)
+    return kwargs
 
 
 
