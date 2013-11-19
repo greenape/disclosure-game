@@ -2,7 +2,7 @@ require(ggplot2)
 source("methods.R")
 
 figures <- function(file_prefix) {
-
+	print(sprintf("Running results set %s", file_prefix))
 	alspac = grepl("alspac", file_prefix)
 
 	results_file = sprintf("../results/%s_women.csv", file_prefix)
@@ -22,6 +22,7 @@ do_figures <- function(df, alspac) {
 	for(g in unique(df$game)) {
 		# Loop over signaller types
 		for(a in unique(df$decision_rule_signaller)) {
+			print(sprintf("Running game %s, with rule %s, alspac = %s", toString(g), toString(a), alspac))
 			d <- subset(df, df$game == g & df$decision_rule_signaller == a)
 			signals(d, alspac)
 			complete(d, alpsac)
@@ -32,9 +33,9 @@ do_figures <- function(df, alspac) {
 
 complete <- function(df, alpsac) {
 	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
-	finished = sprintf("%s/%s", target, "finished.png")
-	referred = sprintf("%s/%s", target, "referred.png")
-
+	finished = sprintf("%s/finished.png", target)
+	referred = sprintf("%s/referred.png", target)
+	print(sprintf("Writing %s & %s", finished, referred))
 	png(finished)
 	print(finished_by_type(df))
 	dev.off()
@@ -45,14 +46,14 @@ complete <- function(df, alpsac) {
 
 directories <- function(game, alspac, rule) {
 	target = "../figures/%s/"
-	dir.create(sprintf(target, game), showWarnings = FALSE)
+	dir.create(sprintf(target, game))
 	if(alspac) {
 		target = sprintf("%salspac/", target)
 	}
 	target = sprintf(target, game)
-	dir.create(target, showWarnings = FALSE)
-	target = sprintf("%s%s", target, rule, "%d")
-	dir.create(target, showWarnings = FALSE)
+	dir.create(target)
+	target = sprintf("%s%s", target, rule)
+	dir.create(target)
 	return(target)
 }
 
@@ -60,6 +61,7 @@ signals <- function(df, alspac) {
 	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
 	target = sprintf("%s/%s", target, "signals_%s.png")
 	for(i in 0:2) {
+		print(sprintf("Writing %s", sprintf(target, i)))
 		png(sprintf(target, i))
 		print(signals_by_type(df, i))
 		dev.off()
