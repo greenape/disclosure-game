@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=00:30:00
+#PBS -l walltime=01:00:00
 #PBS -l nodes=16:ppn=16
 GAME[0]='-g ReferralGame CaseloadReferralGame -f referral_'
 GAME[1]='-g Game CaseloadGame -f standard_'
@@ -15,4 +15,4 @@ RESPONDERS='BayesianResponder BayesianPayoffResponder RecognitionResponder Lexic
 
 cd disclosure-game/python
 module load python
-python -m scoop HPCExperiments.py -R 1000 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS
+python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS
