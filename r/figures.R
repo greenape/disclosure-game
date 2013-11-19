@@ -25,7 +25,7 @@ do_figures <- function(df, alspac) {
 			print(sprintf("Running game %s, with rule %s, alspac = %s", toString(g), toString(a), alspac))
 			d <- subset(df, df$game == g & df$decision_rule_signaller == a)
 			signals(d, alspac)
-			complete(d, alpsac)
+			complete(d, alspac)
 		}
 
 	}
