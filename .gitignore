@@ -17,8 +17,6 @@ classicthesis*
 cython/*
 sa/*
 
-*.R
-
 *.pdf
 
 

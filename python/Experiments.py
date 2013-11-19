@@ -244,7 +244,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
         #Make players and initialise beliefs
         women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
-        print "made %d women." % len(women)
+        #print "made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
             if women_priors is not None:
@@ -253,17 +253,18 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                 woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
         if women_modifier is not None:
             women_modifier(women)
-        print("Set priors.")
+        #print("Set priors.")
         mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
-        print("Made agents.")
+        #print("Made agents.")
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
-        print("Set priors.")
+        #print("Set priors.")
         player_pairs.append((women, mw))
 
         #pair = game.play_game(women, mw, rounds=rounds)
     params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
+    game.rounds = rounds
     played = map(lambda x: game.play_game(x), player_pairs)
     print("Ran a set of parameters.")
     women, midwives = zip(*played)
