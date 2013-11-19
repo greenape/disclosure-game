@@ -2,20 +2,6 @@ import random
 from Measures import measures_midwives, measures_women
 
 
-def random_expectations(depth=0, breadth=3, low=0, high=10):
-    initial = [low, high]
-    for i in range(breadth - 1):
-        initial.append(random.random()*high)
-    initial.sort()
-    results = []
-    for i in range(breadth):
-        if depth == 0:
-            results.append(float(initial[i + 1] - initial[i]))
-        else:
-            results.append(random_expectations(depth - 1, breadth))
-    return results
-
-
 def shuffled(target):
     """
     Return a shuffled version of the argument

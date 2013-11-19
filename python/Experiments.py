@@ -191,17 +191,17 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
     return midwives
 
 def random_expectations(depth=0, breadth=3, low=0, high=10):
-    initial = [low, high]
-    for i in range(breadth - 1):
-        initial.append(random.random()*high)
-    initial.sort()
-    results = []
-    for i in range(breadth):
-        if depth == 0:
-            results.append(float(initial[i + 1] - initial[i]))
-        else:
-            results.append(random_expectations(depth - 1, breadth, low, high))
-    return results
+    result = []
+    if depth == 0:
+        initial = high + 1
+        for i in range(breadth - 1):
+            n = random.randint(low, initial - (low * (breadth - i)))
+            initial -= n
+            result.append(n)
+        result.append(initial - low)
+    else:
+        result = [random_expectations(depth - 1, breadth, low, high) for x in range(breadth)]
+    return result
 
 
 def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds):
@@ -297,8 +297,27 @@ def kw_experiment(kwargs):
     return pool.map(run, kwargs)
 
 
+def proportions(num):
+    """
+    Generate some number of combinations of 3
+    random numbers that sum to 1.
+    """
+    proportions = []
+    for i in range(num):
+        initial = 100
+        result = []
+        for i in range(2):
+            n = random.randint(0, initial)
+            initial -= n
+            result.append(n)
+        result.append(initial)
 
-def priors_experiment():
+        proportions.append([x/100. for x in result])
+    return proportions
+
+
+
+def midwife_priors():
     proportions = []#list(itertools.permutations([80/100., 15/100., 5/100.]))
     proportions.append([1/3.]*3)
     prop_women = proportions
