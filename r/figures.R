@@ -31,7 +31,7 @@ do_figures <- function(df, alspac) {
 	}
 }
 
-complete <- function(df, alpsac) {
+complete <- function(df, alspac) {
 	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
 	finished = sprintf("%s/finished.png", target)
 	referred = sprintf("%s/referred.png", target)
