@@ -85,7 +85,12 @@ def arguments():
     kwargs = [kwargs]
     if args.kwargs is not None:
         try:
-            kwargs.update(load_kwargs(args.kwargs))
+            new_args = load_kwargs(args.kwargs)
+            old = kwargs[0]
+            kwargs = []
+            for arg in new_args:
+                old.update(arg)
+                kwargs.append(old.copy())
         except IOError:
             print("Couldn't open %s." % args.kwargs)
             raise
@@ -317,6 +322,9 @@ def proportions(num):
     return proportions
 
 def proportions_experiment():
+    """
+    Sample space for type proportions.
+    """
     mw = proportions(10000)
     w = proportions(10000)
     kwargs = []
@@ -326,11 +334,28 @@ def proportions_experiment():
     return kwargs
 
 def priors_experiment():
+    """
+    Sample space for midwives' priors.
+    """
     mw = [random_expectations(1, 3, 1, 50) for x in range(10000)]
     kwargs = []
     for i in range(10000):
         kwarg = {'mw_priors':mw[i]}
         kwargs.append(kwarg)
+    return kwargs
+
+def synthetic_caseload():
+    """
+    Synthetic caseload with a harsh midwife.
+    """
+    kwargs = []
+    for i in range(3):
+        mw_weights = [0]*3
+        mw_weights[i] = 1
+
+        kwargs.append({'num_midwives':1, 'num_women':10, 'mw_weights':mw_weights})
+        kwargs.append({'num_midwives':1, 'num_women':10, 'mw_weights':mw_weights, 'nested':True})
+
     return kwargs
 
 
