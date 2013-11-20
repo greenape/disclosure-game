@@ -5,8 +5,8 @@ figures <- function(file_prefix) {
 	print(sprintf("Running results set %s", file_prefix))
 	alspac = grepl("alspac", file_prefix)
 
-	results_file = sprintf("../results/%s_women.csv", file_prefix)
-	params_file = sprintf("../results/%s_params.csv", file_prefix)
+	results_file = sprintf("../results/%s_women.csv.gz", file_prefix)
+	params_file = sprintf("../results/%s_params.csv.gz", file_prefix)
 
 	df = read.csv(results_file, all=TRUE)
 	params = read.csv(params_file, all=TRUE)

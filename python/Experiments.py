@@ -374,19 +374,15 @@ def midwife_priors():
         for variation in itertools.permutations(prior, 3):
             variations.append(variation)
     priors = variations
-    priors.append([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])
     for i in range(5):
         priors.append([[i + 1., 1., 1.], [1., i + 1., 1.], [1., 1., i + 1.]])
     #women_priors = make_random_weights(1000)
     run_params = []
-    total = len(prop_women)*len(proportions)*len(priors)*100
-    for woman_prop in prop_women:
-        for mw_prop in proportions:
-            for prior in priors:
-                game = Game(type_weights=prior)
-                args = {'game':game, 'seeds':range(100), 'signaller_fn':BayesianSignaller, 'responder_fn':BayesianResponder,
-                'runs':100}
-                run_params.append(args)
+    for prior in priors:
+        args = {'mw_priors':prior}
+        run_params.append(args)
+        args = {'mw_priors':prior, 'nested':True}
+        run_params.append(args)
     return run_params
 
 
