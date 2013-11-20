@@ -1,3 +1,5 @@
+import gzip
+
 class Result(object):
     def __init__(self, fields, parameters, results):
         fields.append("parameters")
@@ -21,14 +23,14 @@ class Result(object):
         """
         result = [sep.join(self.fields)]
         result += map(lambda l: sep.join(map(str, l)), self.results)
-        file = open(file_name, "w")
+        file = gzip.open(file_name, "w")
         file.write("\n".join(result))
         file.close()
     
     def write_params(self, file_name, sep=","):
         result = [sep.join(self.param_fields)]
         result += map(lambda l: sep.join(map(str, l)), self.parameters.values())
-        file = open(file_name, "w")
+        file = gzip.open(file_name, "w")
         file.write("\n".join(result))
         file.close()
 
