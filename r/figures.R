@@ -31,7 +31,7 @@ caseload_figures <- function() {
 		d <- subset(df, interaction(df$mw_0, df$mw_1, df$mw_2) == i)
 		for(h in unique(d$parameters)) {
 			c <- subset(d, d$parameters == h)
-			game = sprintf("%s-%s", i, as.character(c$game)[1])
+			game = sprintf("caseload/%s-%s", i, as.character(c$game)[1])
 			target = directories(game, FALSE, as.character(c$decision_rule_signaller)[1])
 			finished = sprintf("%s/finished.png", target)
 			referred = sprintf("%s/referred.png", target)	
