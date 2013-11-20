@@ -89,8 +89,9 @@ def arguments():
             old = kwargs[0]
             kwargs = []
             for arg in new_args:
-                old.update(arg)
-                kwargs.append(old.copy())
+                tmp = old.copy()
+                tmp.update(arg)
+                kwargs.append(tmp)
         except IOError:
             print("Couldn't open %s." % args.kwargs)
             raise
