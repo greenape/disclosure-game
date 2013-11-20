@@ -36,6 +36,7 @@ caseload_figures <- function() {
 			finished = sprintf("%s/finished.png", target)
 			referred = sprintf("%s/referred.png", target)	
 			do_complete(c, finished, referred)
+			do_signals(c, sprintf("%s/%s", target, "signals_%s.png"))
 		}
 	}
 }
@@ -87,6 +88,10 @@ directories <- function(game, alspac, rule) {
 signals <- function(df, alspac) {
 	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
 	target = sprintf("%s/%s", target, "signals_%s.png")
+	do_signals(df, target)
+}
+
+do_signals <- function(df, target) {
 	for(i in 0:2) {
 		print(sprintf("Writing %s", sprintf(target, i)))
 		png(sprintf(target, i))
