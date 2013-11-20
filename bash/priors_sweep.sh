@@ -11,4 +11,5 @@ RESPONDERS='BayesianResponder BayesianPayoffResponder RecognitionResponder Lexic
 
 cd disclosure-game/python
 module load python
+ulimit -n 512
 python -m scoop HPCExperiments.py -R 10 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS --pickled-arguments priors.args

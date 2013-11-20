@@ -17,6 +17,29 @@ figures <- function(file_prefix) {
 
 }
 
+caseload_figures <- function() {
+	print("Caseload figures.")
+
+	results_file = "../results/caseload_women.csv.gz"
+	params_file = "../results/caseload_params.csv.gz"
+
+	df = read.csv(results_file, all=TRUE)
+	params = read.csv(params_file, all=TRUE)
+	df <- merge(x=df, y=params, by.x="parameters", by.y="hash", all.x=TRUE)
+	# Loop over games
+	for(i in unique(interaction(df$mw_0, df$mw_1, df$mw_2))) {
+		d <- subset(df, interaction(df$mw_0, df$mw_1, df$mw_2) == i)
+		for(h in unique(d$parameters)) {
+			c <- subset(d, d$parameters == h)
+			game = sprintf("%s-%s", i, as.character(c$game)[1])
+			target = directories(game, FALSE, as.character(c$decision_rule_signaller)[1])
+			finished = sprintf("%s/finished.png", target)
+			referred = sprintf("%s/referred.png", target)	
+			do_complete(c, finished, referred)
+		}
+	}
+}
+
 do_figures <- function(df, alspac) {
 	# Loop over games
 	for(g in unique(df$game)) {
@@ -35,6 +58,10 @@ complete <- function(df, alspac) {
 	target = directories(as.character(df$game)[1], alspac, as.character(df$decision_rule_signaller)[1])
 	finished = sprintf("%s/finished.png", target)
 	referred = sprintf("%s/referred.png", target)
+	do_complete(df, finished, referred)
+}
+
+do_complete <- function(df, finished, referred) {
 	print(sprintf("Writing %s & %s", finished, referred))
 	png(finished)
 	print(finished_by_type(df))
