@@ -1,4 +1,5 @@
 *.dot
+*.csv.gz
 *.gz
 *.lyx
 *.txt
@@ -84,3 +85,5 @@ sobol.R
 test.R
 
 test2.R
+
+*.gz
