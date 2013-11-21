@@ -1,4 +1,5 @@
 *.dot
+*.gz
 *.lyx
 *.txt
 *.docx

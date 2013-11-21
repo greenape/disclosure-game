@@ -362,12 +362,6 @@ def synthetic_caseload():
 
 
 def midwife_priors():
-    proportions = []#list(itertools.permutations([80/100., 15/100., 5/100.]))
-    proportions.append([1/3.]*3)
-    prop_women = proportions
-    #prop_women = [(0.05, 0.15, 0.8), (0.15, 0.05, 0.8)]
-    #prop_women.remove((0.8, 0.15, 0.05))
-    #prop_women.remove((0.8, 0.05, 0.15))
     priors =  [[[x, 1., 1.], [1., x, 1.], [1., 1., x]] for x in xrange(5, 51, 5)]
     variations = []
     for prior in priors:
