@@ -5,6 +5,7 @@
 *.txt
 *.docx
 *.p
+results
 *.sublime-*
 .DS_Store
 .idea
@@ -87,3 +88,7 @@ test.R
 test2.R
 
 *.gz
+
+results/caseload_params.csv.gz
+
+results/caseload_women.csv.gz
