@@ -1,5 +1,7 @@
 from collections import OrderedDict
+import collections
 from Results import *
+import itertools
 
 class Measures(object):
     def __init__(self, measures):
@@ -247,9 +249,11 @@ class SignalExperience(Measure):
         if self.midwife_type is not None:
             women = filter(lambda x: x.player_type == self.midwife_type, women)
         women = filter(lambda x: len(x.signal_log) > roundnum, women)
-        group_log = reduce(+, map(lambda x: x.signal_log[:roundnum], women))
+        group_log = itertools.chain(*map(lambda x: x.signal_log[:roundnum], women))
         frequencies = collections.Counter(group_log)
         total_signals = sum(frequencies.values())
+        if total_signals == 0:
+            return 0
         return frequencies[self.signal] / float(total_signals)
 
 class TypeExperience(Measure):
@@ -261,9 +265,11 @@ class TypeExperience(Measure):
         if self.midwife_type is not None:
             women = filter(lambda x: x.player_type == self.midwife_type, women)
         women = filter(lambda x: len(x.type_log) > roundnum, women)
-        group_log = reduce(+, map(lambda x: x.type_log[:roundnum], women))
+        group_log = itertools.chain(*map(lambda x: x.type_log[:roundnum], women))
         frequencies = collections.Counter(group_log)
         total_signals = sum(frequencies.values())
+        if total_signals == 0:
+            return 0
         return frequencies[self.player_type] / float(total_signals)
 
 
@@ -290,6 +296,8 @@ class RightCallUpto(Measure):
                 else:
                     if player != 0:
                         total_right += 1
+        if total_calls == 0:
+            return 0
         return total_right / total_calls
 
 class RightCall(Measure):
@@ -303,19 +311,103 @@ class RightCall(Measure):
         total_calls = 0.
         total_right = 0.
         for midwife in women:
-            r_log = midwife.response_log[roundnum]
-            t_log = midwife.type_log[roundnum]
-            total_calls += len(r_log)
-            for i in range(len(r_log)):
-                response = r_log[i]
-                player = t_log[i]
+            try:
+                response = midwife.response_log[roundnum]
+                player = midwife.type_log[roundnum]
+                total_calls += 1
                 if response == 0:
                     if player == 0:
                         total_right += 1
                 else:
                     if player != 0:
                         total_right += 1
+            except IndexError:
+                pass
+        if total_calls == 0:
+            return 0
         return total_right / total_calls
+
+class FalsePositive(Measure):
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            try:
+                response = midwife.response_log[roundnum]
+                player = midwife.type_log[roundnum]
+                if response == 1:
+                    if player == 0:
+                        total_right += 1
+                    total_calls += 1
+            except IndexError:
+                pass
+        if total_calls == 0:
+            return 0
+        return total_right / total_calls
+
+class FalseNegative(Measure):
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            try:
+                response = midwife.response_log[roundnum]
+                player = midwife.type_log[roundnum]
+                if response == 0:
+                    if player != 0:
+                        total_right += 1
+                    total_calls += 1
+            except IndexError:
+                pass
+        if total_calls == 0:
+            return 0
+        return total_right / total_calls
+
+
+class FalsePositiveUpto(Measure):
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            r_log = midwife.response_log[:roundnum]
+            t_log = midwife.type_log[:roundnum]
+            for i in range(len(r_log)):
+                response = r_log[i]
+                player = t_log[i]
+                if response == 1:
+                    if player == 0:
+                        total_right += 1
+                    total_calls += 1
+        if total_calls == 0:
+            return 0
+        return total_right / total_calls
+
+class FalseNegativeUpto(Measure):
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            r_log = midwife.response_log[:roundnum]
+            t_log = midwife.type_log[:roundnum]
+            for i in range(len(r_log)):
+                response = r_log[i]
+                player = t_log[i]
+                if response == 0:
+                    if player != 0:
+                        total_right += 1
+                    total_calls += 1
+        if total_calls == 0:
+            return 0
+        return total_right / total_calls
+
 
 
                 
@@ -346,7 +438,21 @@ def measures_women():
 def measures_midwives():
     measures = OrderedDict()
     measures['appointment'] = Appointment()
+    measures['all_right_calls_upto'] = RightCallUpto()
+    measures['all_right_calls'] = RightCall()
+    measures['false_positives_upto'] = FalsePositiveUpto()
+    measures['false_positives'] = FalsePositive()
+    measures['false_negatives_upto'] = FalseNegativeUpto()
+    measures['false_negatives'] = FalseNegative()
     for i in range(3):
+        measures['signal_%d_frequency' % i] = SignalExperience(signal=i)
+        measures['type_%d_frequency' % i] = TypeExperience(player_type=i)
+        measures['type_%d_right_calls_upto' % i] = RightCallUpto(midwife_type=i)
+        measures['type_%d_right_calls' % i] = RightCall(midwife_type=i)
+        measures['type_%d_false_positives_upto' % i] = FalsePositiveUpto(midwife_type=i)
+        measures['type_%d_false_positives' % i] = FalsePositive(midwife_type=i)
+        measures['type_%d_false_negatives_upto' % i] = FalseNegativeUpto(midwife_type=i)
+        measures['type_%d_false_negatives' % i] = FalseNegative(midwife_type=i)
         for j in range(3):
             measures["signal_%d_means_%d" % (i, j)] = SignalMeaning(signal=i, player_type=j)
     return Measures(measures)
