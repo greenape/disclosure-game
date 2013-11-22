@@ -238,6 +238,88 @@ class SignalMeaning(Measure):
             return 0.
         return total / float(len(women))
 
+class SignalExperience(Measure):
+    """
+    A measure that gives the frequency of a signal experienced up
+    to that round by some (or all) types of midwife.
+    """
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        group_log = reduce(+, map(lambda x: x.signal_log[:roundnum], women))
+        frequencies = collections.Counter(group_log)
+        total_signals = sum(frequencies.values())
+        return frequencies[self.signal] / float(total_signals)
+
+class TypeExperience(Measure):
+    """
+    A measure that gives the frequency of a type experienced up
+    to that round by some (or all) types of midwife.
+    """
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        women = filter(lambda x: len(x.type_log) > roundnum, women)
+        group_log = reduce(+, map(lambda x: x.type_log[:roundnum], women))
+        frequencies = collections.Counter(group_log)
+        total_signals = sum(frequencies.values())
+        return frequencies[self.player_type] / float(total_signals)
+
+
+class RightCallUpto(Measure):
+    """
+    Gives the frequency of right calls given by midwives of
+    some (or any) type, up to a round.
+    """
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            r_log = midwife.response_log[:roundnum]
+            t_log = midwife.type_log[:roundnum]
+            total_calls += len(r_log)
+            for i in range(len(r_log)):
+                response = r_log[i]
+                player = t_log[i]
+                if response == 0:
+                    if player == 0:
+                        total_right += 1
+                else:
+                    if player != 0:
+                        total_right += 1
+        return total_right / total_calls
+
+class RightCall(Measure):
+    """
+    Gives the frequency of right calls given by midwives of
+    some (or any) type, in a round.
+    """
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            r_log = midwife.response_log[roundnum]
+            t_log = midwife.type_log[roundnum]
+            total_calls += len(r_log)
+            for i in range(len(r_log)):
+                response = r_log[i]
+                player = t_log[i]
+                if response == 0:
+                    if player == 0:
+                        total_right += 1
+                else:
+                    if player != 0:
+                        total_right += 1
+        return total_right / total_calls
+
+
+                
+
 
 def measures_women():
     measures = OrderedDict()
