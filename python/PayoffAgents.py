@@ -81,6 +81,7 @@ class BayesianPayoffResponder(LexicographicResponder):
         """
         self.signal_log.append(signal)
         self.signal_matches[signal] += 1.
+        self.type_log.append(opponent.player_type)
         best = (random.randint(0, 1), 9999999)
         for response in shuffled(self.responses):
             act_risk = self.risk(response, signal, opponent)

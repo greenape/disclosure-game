@@ -122,6 +122,7 @@ class LexicographicResponder(BayesianResponder):
         the signal they sent by minimising bayesian risk.
         """
         self.signal_log.append(signal)
+        self.type_log.append(opponent.player_type)
         n = 0
         while n < self.depth:
             mappings = {}

@@ -291,7 +291,6 @@ class Responder(Agent):
         rounds = self.rounds
         if signaller is not None:
             signaller_type = signaller.player_type
-            self.type_log.append(signaller_type)
             #self.type_matches[signaller_type] += 1
             self.signal_type_matches[signal][signaller_type] += 1
         if payoff is not None:
@@ -365,6 +364,7 @@ class BayesianResponder(Responder):
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
+        self.type_log.append(opponent.player_type)
         self.signal_log.append(signal)
         self.signal_matches[signal] += 1.
         best = (random.randint(0, 1), 9999999)
