@@ -17,7 +17,31 @@ figures <- function(file_prefix) {
 
 }
 
-caseload_figures <- function() {
+caseload_figures_10 <- function() {
+	print("Caseload figures.")
+
+	results_file = "../results/caseload_low_prior__women.csv.gz"
+	params_file = "../results/caseload_low_prior__params.csv.gz"
+
+	df = read.csv(results_file, all=TRUE)
+	params = read.csv(params_file, all=TRUE)
+	df <- merge(x=df, y=params, by.x="parameters", by.y="hash", all.x=TRUE)
+	# Loop over games
+	for(i in unique(interaction(df$mw_0, df$mw_1, df$mw_2))) {
+		d <- subset(df, interaction(df$mw_0, df$mw_1, df$mw_2) == i)
+		for(h in unique(d$parameters)) {
+			c <- subset(d, d$parameters == h)
+			game = sprintf("bias_10/caseload/%s-%s", i, as.character(c$game)[1])
+			target = directories(game, FALSE, as.character(c$decision_rule_signaller)[1])
+			finished = sprintf("%s/finished.png", target)
+			referred = sprintf("%s/referred.png", target)	
+			do_complete(c, finished, referred)
+			do_signals(c, sprintf("%s/%s", target, "signals_%s.png"))
+		}
+	}
+}
+
+caseload_figures_20 <- function() {
 	print("Caseload figures.")
 
 	results_file = "../results/caseload_women.csv.gz"
@@ -31,7 +55,7 @@ caseload_figures <- function() {
 		d <- subset(df, interaction(df$mw_0, df$mw_1, df$mw_2) == i)
 		for(h in unique(d$parameters)) {
 			c <- subset(d, d$parameters == h)
-			game = sprintf("caseload/%s-%s", i, as.character(c$game)[1])
+			game = sprintf("bias_20/caseload/%s-%s", i, as.character(c$game)[1])
 			target = directories(game, FALSE, as.character(c$decision_rule_signaller)[1])
 			finished = sprintf("%s/finished.png", target)
 			referred = sprintf("%s/referred.png", target)	

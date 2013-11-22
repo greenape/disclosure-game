@@ -51,16 +51,21 @@ class LexicographicSignaller(BayesianSignaller):
         # Reduce to possible
         while n < self.depth:
             mappings = {}
+            # N most frequent outcome of each signal
             for signal in signals:
                 payoff = self.frequent(signal, n, opponent)
                 mappings[signal] = payoff
             n += 1
+            # Choose the highest unless there's a tie
             sorted_mappings = sorted(mappings.items(), key=operator.itemgetter(1), reverse=True)
             # Is there a best option?
             best = sorted_mappings[0][0]
             try:
                 if sorted_mappings[0][1] > sorted_mappings[1][1]:
                     break
+                # Remove any worse than the tied pair.
+                if sorted_mappings[1][1] > sorted_mappings[2][1]:
+                    signals.remove(sorted_mappings[2][0])
             except IndexError:
                 pass
         # No advantage found so take the first
