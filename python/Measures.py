@@ -44,8 +44,8 @@ class Measure(object):
         """
         Filter out any women not present on this round.
         """
-        women = filter(lambda x: x.started < roundnum)
-        women = filter(lambda x: x.finished >= roundnum)
+        women = filter(lambda x: x.started < roundnum, women)
+        women = filter(lambda x: x.finished > roundnum, women)
         return women
 
 

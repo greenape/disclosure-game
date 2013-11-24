@@ -137,6 +137,9 @@ class RecognitionResponder(BayesianResponder):
         return response
 
     def remember(self, signaller, signal, response):
+        """
+        Remember what was done in response to a signal.
+        """
         # Nothing to do if we know the type already
         if hash(signaller) not in self.signal_memory:
             self.signal_memory[hash(signaller)] = [(signal, response)]
@@ -144,6 +147,10 @@ class RecognitionResponder(BayesianResponder):
             self.signal_memory[hash(signaller)].append((signal, response))
 
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
+        """
+        Update beliefs, and do so retrospectively for as many signal-response
+        pairs as we have for this signaller.
+        """
         if signaller is None:
             return super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
         #Need to work with an artificial response log while bulk updating
