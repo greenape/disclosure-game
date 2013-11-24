@@ -2,6 +2,7 @@ from Model import *
 from ProspectTheoryModel import *
 from ReferralGame import *
 from RecognitionGame import *
+from CarryingGame import *
 from RecognitionAgents import *
 from AmbiguityAgents import *
 from HeuristicAgents import *
@@ -40,7 +41,8 @@ def arguments():
     parser.add_argument('-g', '--games', type=str, nargs='*',
                    help='A game type to play.', default=['Game', 'CaseloadGame'],
                    choices=['Game', 'CaseloadGame', 'RecognitionGame', 'ReferralGame',
-                   'CaseloadRecognitionGame', 'CaseloadReferralGame'],
+                   'CaseloadRecognitionGame', 'CaseloadReferralGame', 'CarryingGame',
+                   'CarryingReferralGame'],
                    dest="games")
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
@@ -50,7 +52,8 @@ def arguments():
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
         choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
-        'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder'], dest="responders")
+        'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder',
+        'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
@@ -195,19 +198,6 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
     for i in range(num):
         midwives.append(responder(player_type=weighted_choice(zip([0, 1, 2], weights))))
     return midwives
-
-def random_expectations(depth=0, breadth=3, low=1, high=10):
-    result = []
-    if depth == 0:
-        initial = high + 1
-        for i in range(breadth - 1):
-            n = random.randint(low, initial - (low * (breadth - i)))
-            initial -= n
-            result.append(n)
-        result.append(initial - low)
-    else:
-        result = [random_expectations(depth - 1, breadth, low, high) for x in range(breadth)]
-    return result
 
 
 def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds):

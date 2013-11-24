@@ -1,6 +1,5 @@
 from Model import *
 
-
 class ReferralGame(Game):
         """
         Similar to the standard disclosure game, but the true drinking type
@@ -24,8 +23,6 @@ class ReferralGame(Game):
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller, signal)
                         signaller.is_finished = True
-                else:
-                        receiver.rounds -= 1
 
 
 class CaseloadReferralGame(CaseloadGame, ReferralGame):

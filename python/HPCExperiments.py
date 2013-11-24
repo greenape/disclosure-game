@@ -2,6 +2,7 @@ from scoop import futures
 from Model import *
 from ReferralGame import *
 from RecognitionGame import *
+from CarryingGame import *
 from RecognitionAgents import *
 from AmbiguityAgents import *
 from Experiments import *

@@ -1,6 +1,18 @@
 import random
 from Measures import measures_midwives, measures_women
 
+def random_expectations(depth=0, breadth=3, low=1, high=10):
+    result = []
+    if depth == 0:
+        initial = high + 1
+        for i in range(breadth - 1):
+            n = random.randint(low, initial - (low * (breadth - i)))
+            initial -= n
+            result.append(n)
+        result.append(initial - low)
+    else:
+        result = [random_expectations(depth - 1, breadth, low, high) for x in range(breadth)]
+    return result
 
 def shuffled(target):
     """
@@ -38,6 +50,7 @@ class Agent(object):
         self.baby_payoffs = None
         self.signal_matches = dict([(y, 0.) for y in signals])
         self.finished = 0
+        self.started = 0
         self.is_finished = False
 
 

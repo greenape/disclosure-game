@@ -40,6 +40,14 @@ class Measure(object):
         self.midwife_type = midwife_type
         self.signal = signal
 
+    def filter_present(self, women, roundnum):
+        """
+        Filter out any women not present on this round.
+        """
+        women = filter(lambda x: x.started < roundnum)
+        women = filter(lambda x: x.finished >= roundnum)
+        return women
+
 
 class Appointment(Measure):
     def measure(self, roundnum, women, game):
@@ -53,6 +61,7 @@ class Finished(Measure):
         """
         Return the fraction of the women finished by this round
         """
+        women = filter(lambda x: x.started < roundnum, women)
         num_women = float(len(women))
         num_finished = sum(map(lambda x: 1 if x.finished < roundnum else 0, women))
         if num_women == 0:
@@ -65,6 +74,7 @@ class TypeFinished(Measure):
     """
     def measure(self, roundnum, women, game):
         women = filter(lambda x: x.player_type == self.player_type, women)
+        women = filter(lambda x: x.started < roundnum, women)
         num_women = float(len(women))
         num_finished = sum(map(lambda x: 1 if x.finished < roundnum else 0, women))
         if num_women == 0:
@@ -82,7 +92,8 @@ class TypeSignal(Measure):
         women = filter(lambda x: x.player_type == self.player_type, women)
         #women = filter(lambda x: len(x.signal_log) > roundnum, women)
         num_women = len(women)
-        women = filter(lambda x: x.round_signal(roundnum) == self.signal, women)
+        women = self.filter_present(women, roundnum)
+        women = filter(lambda x: x.signal_log[roundnum - x.started] == self.signal, women)
         signalled = len(women)
         if num_women == 0:
             return 0
@@ -97,10 +108,10 @@ class TypeSignalBreakdown(Measure):
     """
     def measure(self, roundnum, women, game):
         women = filter(lambda x: x.player_type == self.player_type, women)
-        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        women = self.filter_present(women, roundnum)
         women = filter(lambda x: x.type_log[roundnum] == self.midwife_type, women)
         num_women = len(women)
-        women = filter(lambda x: x.signal_log[roundnum] == self.signal, women)
+        women = filter(lambda x: x.signal_log[roundnum - x.started] == self.signal, women)
         signalled = len(women)
         if num_women == 0:
             return 0
@@ -116,13 +127,13 @@ class TypeReferralBreakdown(Measure):
     """
     def measure(self, roundnum, women, game):
         women = filter(lambda x: x.player_type == self.player_type, women)
-        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        women = self.filter_present(women, roundnum)
         if self.midwife_type is not None:
-            women = filter(lambda x: x.type_log[roundnum] == self.midwife_type, women)
+            women = filter(lambda x: x.type_log[roundnum - x.started] == self.midwife_type, women)
         num_women = len(women)
         if self.signal is not None:
-            women = filter(lambda x: x.signal_log[roundnum] == self.signal, women)
-        women = filter(lambda x: x.response_log[roundnum] == 1, women)
+            women = filter(lambda x: x.signal_log[roundnum - x.started] == self.signal, women)
+        women = filter(lambda x: x.response_log[roundnum - x.started] == 1, women)
         signalled = len(women)
         if num_women == 0:
             return 0
@@ -139,10 +150,10 @@ class PayoffType(Measure):
     def measure(self, roundnum, women, game):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
-        women = filter(lambda x: len(x.payoff_log) > roundnum, women)
+        women = self.filter_present(women, roundnum)
         if len(women) == 0:
             return 0
-        return sum(map(lambda x: x.payoff_log[roundnum], women)) / float(len(women))
+        return sum(map(lambda x: x.payoff_log[roundnum - x.started], women)) / float(len(women))
     
 
 class SignalChange(Measure):
@@ -154,11 +165,11 @@ class SignalChange(Measure):
         if roundnum == 0:
             return 0
         women = filter(lambda x: x.player_type == self.player_type, women)
-        women = filter(lambda x: len(x.signal_log) > roundnum, women)
+        women = self.filter_present(women, roundnum)
         num_women = len(women)
         if num_women == 0:
             return 0
-        change = map(lambda x: x.signal_log[roundnum] - x.signal_log[roundnum - 1], women)
+        change = map(lambda x: x.signal_log[roundnum - x.started] - x.signal_log[roundnum - 1 - x.started], women)
         return sum(change) / float(num_women)
     
 
@@ -184,6 +195,7 @@ class SignalImpliesReferral(Measure):
         if self.midwife_type is not None:
             women = filter(lambda x: len(x.type_log) > roundnum, women)
             women = filter(lambda x: x.type_log[roundnum] == self.midwife_type, women)
+        women = self.filter_present(women, roundnum)
         #women = filter(lambda x: len(x.response_belief[self.signal][1]) > roundnum, women)
         belief = sum(map(lambda x: x.round_response_belief(roundnum)[self.signal][1], women))
         if len(women) == 0:
@@ -204,6 +216,7 @@ class SignalRisk(Measure):
         if self.midwife_type is not None:
             women = filter(lambda x: len(x.type_log) > roundnum, women)
             women = filter(lambda x: x.type_log[roundnum] == self.midwife_type, women)
+        women = self.filter_present(women, roundnum)
         total = sum(map(lambda x: x.round_signal_risk(roundnum)[self.signal], women))
         if len(women) == 0:
             return 0.
@@ -221,11 +234,25 @@ class DistributionBelief(Measure):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
         #women = filter(lambda x: len(x.type_distribution[midwife_type]) > roundnum, women)
+        women = self.filter_present(women, roundnum)
         num_women = len(women)
         belief = sum(map(lambda x: x.round_type_distribution(roundnum)[self.midwife_type], women))
         if num_women == 0:
             return 0.
         return belief / num_women
+
+class TypeFrequency(Measure):
+    """
+    Return the frequency of this type in the population at this round.
+    """
+    def measure(self, roundnum, women, game):
+        women = self.filter_present(women, roundnum)
+        types = map(lambda x: x.player_type, women)
+        frequencies = collections.Counter(types)
+        total = sum(frequencies.values())
+        if total == 0:
+            return 0
+        return frequencies[self.player_type] / float(total)
 
 class SignalMeaning(Measure):
     """
@@ -234,7 +261,7 @@ class SignalMeaning(Measure):
     """
     
     def measure(self, roundnum, women, game):
-        women = filter(lambda x: len(x.signal_belief[self.signal][self.player_type]) > roundnum, women)
+        women = self.filter_present(women, roundnum)
         total = sum(map(lambda x: x.signal_belief[self.signal][self.player_type][roundnum], women))
         if len(women) == 0:
             return 0.
@@ -420,19 +447,13 @@ def measures_women():
     for i in range(3):
         measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
         measures["type_%d_finished" % i] = TypeFinished(player_type=i)
-        measures["type_%d_signal_change" % i] = SignalChange(player_type=i)
         measures["global_type_frequency_%d" % i] = DistributionBelief(midwife_type=i)
         for j in range(3):
             measures["type_%d_signal_%d" % (i, j)] = TypeSignal(player_type=i, signal=j)
             measures["type_%d_mw_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, midwife_type=j)
             measures["type_%d_sig_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, signal=j)
-            measures["type_%d_signal_%d_means_referral" % (i, j)] = SignalImpliesReferral(player_type=i, signal=j)
-            measures["type_%d_sig_%d_risk" % (i, j)] = SignalRisk(player_type=i, signal=j)
-            measures["player_type_%d_frequency_%d" % (i, j)] = DistributionBelief(player_type=i, midwife_type=j)
             for k in range(3):
-                measures["type_%d_sig_%d_mw_%d_risk" % (i, j, k)] = SignalRisk(player_type=i, signal=j, midwife_type=k)
                 measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
-                measures["type_%d_signal_%d_with_mw_type_%d_means_referral" % (i, j, k)] = SignalImpliesReferral(player_type=i, signal=j, midwife_type=k)
     return Measures(measures)
 
 def measures_midwives():

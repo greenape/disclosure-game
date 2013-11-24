@@ -1,4 +1,5 @@
 from Model import *
+from RecognitionAgents import RecognitionResponder
 import operator
 
 class LexicographicSignaller(BayesianSignaller):
@@ -98,13 +99,14 @@ class LexicographicResponder(BayesianResponder):
                         self.payoff_count[signal][response][payoff] += type_weights[signal][player_type]
         self.depth = 0
         for signal, responses in self.payoff_count.items():
-            for response, payoffs in responses.items():
-                self.depth = max(len(payoffs), self.depth)
+            for response, payoff in responses.items():
+                self.depth = max(len(payoff), self.depth)
         super(LexicographicResponder, self).init_payoffs(payoffs, type_weights)
 
 
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
         if payoff is not None:
+            print self.payoff_count, signal, payoff, self.response_log[len(self.response_log) - 1]
             self.payoff_count[signal][self.response_log[len(self.response_log) - 1]][payoff] += 1
         super(LexicographicResponder, self).update_beliefs(payoff, signaller, signal, signaller_type)
 
@@ -142,3 +144,9 @@ class LexicographicResponder(BayesianResponder):
         self.rounds += 1
         self.response_log.append(best)
         return best
+
+class RecognitionLexicographicResponder(RecognitionResponder, LexicographicResponder):
+    """
+    A class of lexicographic responder that retrospectively updates when it learns a True
+    type.
+    """

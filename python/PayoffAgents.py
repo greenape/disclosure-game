@@ -90,3 +90,8 @@ class BayesianPayoffResponder(LexicographicResponder):
         self.response_log.append(best[0])
         self.rounds += 1
         return best[0]
+
+class RecognitionBayesianPayoffResponder(RecognitionResponder, BayesianPayoffResponder):
+    """
+    A payoff reasoner that retrospectively updates.
+    """

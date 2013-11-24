@@ -14,7 +14,7 @@ class RecognitionSignaller(BayesianSignaller):
         super(RecognitionSignaller, self).__init__(player_type, signals, responses)
 
     def __str__(self):
-        return "recognition"
+        return "recognition_%s" % super(RecognitionSignaller, self).__str__()
 
     def update_beliefs(self, response, midwife, payoff, midwife_type=None):
         """
@@ -122,12 +122,10 @@ class RecognitionResponder(BayesianResponder):
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
         # Memory of a particular agent's signals.
         self.signal_memory = {}
-        self.type_memory = {}
-
         super(RecognitionResponder, self).__init__(player_type, signals, responses)
 
     def __str__(self):
-        return "recognition"
+        return "recognition_%s" % super(RecognitionResponder, self).__str__()
 
     def respond(self, signal, opponent=None):
         """
@@ -135,55 +133,25 @@ class RecognitionResponder(BayesianResponder):
         the signal they sent by minimising bayesian risk.
         """
         response = super(RecognitionResponder, self).respond(signal, opponent)
-        self.fuzzy_update_beliefs(opponent, signal)
+        self.remember(opponent, signal, response)
         return response
 
-    def fuzzy_update_beliefs(self, signaller, signal):
+    def remember(self, signaller, signal, response):
         # Nothing to do if we know the type already
-        if signaller in self.type_memory:
-            return super(RecognitionResponder, self).update_beliefs(None, signaller, signal)
-        if not signaller in self.signal_memory:
-            self.signal_memory[signaller] = [signal]
-            return
-        self.signal_memory[signaller].append(signal)
+        if hash(signaller) not in self.signal_memory:
+            self.signal_memory[hash(signaller)] = [(signal, response)]
+        else:
+            self.signal_memory[hash(signaller)].append((signal, response))
 
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
         if signaller is None:
             return super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
-        self.type_memory[signaller] = signaller.player_type
+        #Need to work with an artificial response log while bulk updating
+        tmp_response_log = self.response_log
+        while len(self.signal_memory[hash(signaller)]) > 0:
+            signal, response = self.signal_memory[hash(signaller)].pop()
+            payoff = self.payoffs[signaller.player_type][response]
+            self.response_log = [response]
+            super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
 
-        rounds = self.rounds
-        signaller_type = signaller.player_type
-        self.type_log.append(signaller_type)
-        
-        for signal in self.signals:
-            sent = len(filter(lambda x: x == signal, self.signal_memory[signaller]))
-            self.signal_type_matches[signal][signaller_type] += sent
-        self.signal_memory[signaller] = []
-        
-        if payoff is not None:
-            self.payoff_log.append(payoff)
-
-        #type_matches = {}
-        #for player_type in self.signals:
-        #    type_matches[player_type] = [x == player_type for x in self.type_log]
-
-        for signal_i, types in self.signal_belief.items():
-            for player_type, belief in types.items():
-                #signal_matches = [x == signal_i for x in self.signal_log]
-                #print "Updating P(%d|%d).." % (player_type, signal_i)
-                alpha_k = self.type_weights[signal_i][player_type]
-                #print "alpha_k = %f" % alpha_k
-                alpha_dot = sum(self.type_weights[signal_i])
-                #print "Num alternatives = %d" % alpha_dot
-                #n = self.signal_matches[signal_i]
-                n = sum(self.signal_type_matches[signal_i].values())
-                #print "n = %d" % n
-
-                #matched_pairs = zip(type_matches[player_type], signal_matches)
-                #signal_type_matches = [a and b for a, b in matched_pairs]
-                n_k = self.signal_type_matches[signal_i][player_type]
-                #print "n_k = %d" % n_k
-                prob = (alpha_k + n_k) / float(alpha_dot + n)
-                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
-                self.signal_belief[signal_i][player_type].append(prob)
+        self.response_log = tmp_response_log
