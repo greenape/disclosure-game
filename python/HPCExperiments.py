@@ -9,6 +9,8 @@ from Experiments import *
 from Measures import *
 import random
 import sys
+import gzip
+import cPickle
 
 def run(kwargs):
     return decision_fn_compare(**kwargs)
@@ -54,6 +56,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if game is None:
         game = Game()
     game.rounds = rounds
+    game.measures_midwives = measures_midwives
+    game.measures_women = measures_women
     if mw_priors is not None:
         game.type_weights = mw_priors
 
@@ -91,24 +95,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     played = list(futures.map(play_game, player_pairs))
     print("Completed a parameter set.")
     
-    women, midwives = zip(*played)
+    women, midwives, pile = zip(*played)
     women = reduce(lambda x, y: x.add_results(y), women)
     midwives = reduce(lambda x, y: x.add_results(y), midwives)
-    return women, midwives
+    return women, midwives, pile
 
 if __name__ == "__main__":
-    games, players, kwargs, runs, test, file_name = arguments()
-    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
-    print("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
-    print "File is %s" % file_name
-    if test:
-        print("This is a test of the emergency broadcast system. This is only a test.")
-    else:
-        women, midwives = zip(*experiment(games, players, kwargs=kwargs))
-        women = reduce(lambda x, y: x.add_results(y), women)
-        midwives = reduce(lambda x, y: x.add_results(y), midwives)
-        women.write("%swomen.csv.gz" % file_name)
-        midwives.write("%smw.csv.gz" % file_name)
-        women.write_params("%sparams.csv.gz" % file_name)
+    main()
 

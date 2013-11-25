@@ -542,7 +542,7 @@ class Game(object):
     def measure(self, women, midwives):
         res_women = self.measures_women.dump(women, self.rounds, self)
         res_mw  = self.measures_midwives.dump(midwives, self.rounds, self)
-        return res_women, res_mw
+        return res_women, res_mw, (women, midwives, self)
 
 
     def __str__(self):

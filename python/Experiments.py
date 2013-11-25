@@ -16,6 +16,7 @@ from collections import OrderedDict
 import argparse
 from os.path import expanduser
 import cPickle
+import gzip
 
 def load_kwargs(file_name):
     
@@ -236,6 +237,9 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if mw_priors is not None:
         game.type_weights = mw_priors
 
+    game.measures_midwives = measures_midwives
+    game.measures_women = measures_women
+
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
     player_pairs = []
@@ -269,10 +273,10 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     game.rounds = rounds
     played = map(lambda x: game.play_game(x), player_pairs)
     print("Ran a set of parameters.")
-    women, midwives = zip(*played)
-    women = reduce(lambda x, y: x.add_results(y), women)
-    midwives = reduce(lambda x, y: x.add_results(y), midwives)
-    return women, midwives
+    women_res, midwives_res, pile = zip(*played)
+    women_res = reduce(lambda x, y: x.add_results(y), women_res)
+    midwives_res = reduce(lambda x, y: x.add_results(y), midwives_res)
+    return women_res, midwives_res, pile
 
 
 def experiment(game_fns=[Game, CaseloadGame], 
@@ -411,20 +415,25 @@ def lhs_sampling(samples):
 def run(kwargs):
     return decision_fn_compare(**kwargs)
 
-if __name__ == "__main__":
+
+def main():
     games, players, kwargs, runs, test, file_name = arguments()
     print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
     print("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
-    print("File is %s" % file_name)
-    print("Player pairs are:")
-    print(players)
+    print "File is %s" % file_name
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, midwives = zip(*experiment(games, players, kwargs=kwargs))
+        women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))
         women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv.gz" % file_name)
         midwives.write("%smw.csv.gz" % file_name)
         women.write_params("%sparams.csv.gz" % file_name)
+        fp = gzip.open("%s.pickle.gz" % file_name, "wb")
+        cPickle.dump(pile, fp, cPickle.HIGHEST_PROTOCOL)
+        fp.close()
+
+if __name__ == "__main__":
+    main()

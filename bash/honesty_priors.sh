@@ -1,15 +1,23 @@
 #!/bin/bash
 #PBS -l walltime=25:00:00
-#PBS -l nodes=32:ppn=16
-GAME[0]='-g ReferralGame CaseloadReferralGame -f referral_honesty_priors_'
-GAME[1]='-g Game CaseloadGame -f standard_honesty_priors_'
-GAME[2]='-g ReferralGame CaseloadReferralGame -f referral_honesty_priors_nested_'
-GAME[3]='-g Game CaseloadGame -f standard_honesty_priors_nested_'
+#PBS -l nodes=12:ppn=16
+GAME[1]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder'
 
-SIGNALLERS='BayesianSignaller BayesianPayoffSignaller RecognitionSignaller LexicographicSignaller'
-RESPONDERS='BayesianResponder BayesianPayoffResponder RecognitionResponder LexicographicResponder'
+GAME[2]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder -n'
+
+GAME[3]='-g CarryingReferralGame CarryingGame -s LexicographicSignaller -r LexicographicResponder'
+
+GAME[4]='-g CarryingReferralGame CarryingGame -s LexicographicSignaller -r LexicographicResponder -n'
+
+GAME[5]='-g CarryingReferralGame CarryingGame -s LexicographicSignaller -r RecognitionLexicographicResponder'
+
+GAME[6]='-g CarryingReferralGame CarryingGame -s LexicographicSignaller -r RecognitionLexicographicResponder -n'
+
+GAME[7]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r RecognitionBayesianPayoffResponder'
+
+GAME[8]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r RecognitionBayesianPayoffResponder -n'
 
 cd disclosure-game/python
 module load python
 ulimit -n 512
-python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} -s $SIGNALLERS -r $RESPONDERS --pickled-arguments honesty_priors.args
+python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} --pickled-arguments honesty_priors.args -f $PBS_ARRAYID_honesty_priors_ --individual-measures -i 1000

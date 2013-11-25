@@ -46,7 +46,7 @@ class IndividualMeasures(Measures):
         if women is None:
             return results
         for woman in women:
-            line = list(itertools.chain(*map(lambda x: x.measure(rounds, [woman], game), self.measures.values())))
+            line = map(lambda x: x.measure(rounds, [woman], game), self.measures.values())
             results.append(line)
         results = Result(self.measures.keys(), game.parameters, results)
         return results
@@ -70,22 +70,28 @@ class Measure(object):
 
 class PlayerType(Measure):
     """
-    Return a list of the player types.
+    Return a player type.
     """
-    def measure(self, roundnum, women, game):
-        return map(lambda x: x.player_type, women)
+    def measure(self, roundnum, woman, game):
+        woman = woman[0]
+        return woman.player_type
 
 class NumRounds(Measure):
     """
-    Return the number of rounds each player played.
+    Return the number of rounds a player played.
     """
-    def measure(self, roundnum, women, game):
-        return map(lambda x: x.finished - x.started, women)
+    def measure(self, roundnum, woman, game):
+        woman = woman[0]
+        return woman.finished - woman.started
 
 class Referred(Measure):
 
     def measure(self, roundnum, women, game):
-        return map(lambda x: 1 in x.response_log, women)
+        return map(lambda x: 1 in x.response_log, women)[0]
+
+class Started(Measure):
+    def measure(self, roundnum, women, game):
+        return women[0].started
 
 class Appointment(Measure):
     def measure(self, roundnum, women, game):
@@ -487,11 +493,12 @@ def indiv_measures_women():
     measures['player_type'] = PlayerType()
     measures['num_rounds'] = NumRounds()
     measures['referred'] = Referred()
+    measures['started'] = Started()
     for i in range(3):
         # Midwife types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
         measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
-    return Measures(measures)
+    return IndividualMeasures(measures)
 
 def indiv_measures_mw():
     measures = OrderedDict()
@@ -504,7 +511,7 @@ def indiv_measures_mw():
         # Midwife types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
         measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
-    return Measures(measures)
+    return IndividualMeasures(measures)
 
 
 def measures_women():
