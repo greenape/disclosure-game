@@ -32,13 +32,33 @@ class Measures(object):
         results = Result(self.measures.keys(), game.parameters, results)
         return results
 
+class IndividualMeasures(Measures):
+    def dump(self, women, rounds, game):
+        """
+        A results dumper. Takes a tuple of a game and players, and two dictionaries.
+        Measures should contain a mapping from a field name to method for getting a result
+        given an appointment, set of players, and a game. Params should contain mappings
+        from parameter names to values.
+        Writes rows as individuals, and takes the measure of the last round.
+        Returns a results object for writing to csv.
+        """
+        results = []
+        if women is None:
+            return results
+        for woman in women:
+            line = list(itertools.chain(*map(lambda x: x.measure(rounds, [woman], game), self.measures.values())))
+            results.append(line)
+        results = Result(self.measures.keys(), game.parameters, results)
+        return results
+
 # Measures
 
 class Measure(object):
-    def __init__(self, player_type=None, midwife_type=None, signal=None):
+    def __init__(self, player_type=None, midwife_type=None, signal=None, present=True):
         self.player_type = player_type
         self.midwife_type = midwife_type
         self.signal = signal
+        self.present = present
 
     def filter_present(self, women, roundnum):
         """
@@ -48,6 +68,24 @@ class Measure(object):
         women = filter(lambda x: x.finished > roundnum, women)
         return women
 
+class PlayerType(Measure):
+    """
+    Return a list of the player types.
+    """
+    def measure(self, roundnum, women, game):
+        return map(lambda x: x.player_type, women)
+
+class NumRounds(Measure):
+    """
+    Return the number of rounds each player played.
+    """
+    def measure(self, roundnum, women, game):
+        return map(lambda x: x.finished - x.started, women)
+
+class Referred(Measure):
+
+    def measure(self, roundnum, women, game):
+        return map(lambda x: 1 in x.response_log, women)
 
 class Appointment(Measure):
     def measure(self, roundnum, women, game):
@@ -91,8 +129,8 @@ class TypeSignal(Measure):
     def measure(self, roundnum, women, game):
         women = filter(lambda x: x.player_type == self.player_type, women)
         #women = filter(lambda x: len(x.signal_log) > roundnum, women)
-        num_women = len(women)
         women = self.filter_present(women, roundnum)
+        num_women = len(women)
         women = filter(lambda x: x.signal_log[roundnum - x.started] == self.signal, women)
         signalled = len(women)
         if num_women == 0:
@@ -275,8 +313,11 @@ class SignalExperience(Measure):
     def measure(self, roundnum, women, game):
         if self.midwife_type is not None:
             women = filter(lambda x: x.player_type == self.midwife_type, women)
-        women = filter(lambda x: len(x.signal_log) > roundnum, women)
-        group_log = itertools.chain(*map(lambda x: x.signal_log[:roundnum], women))
+        if self.present:
+            women = filter(lambda x: len(x.signal_log) > roundnum, women)
+            group_log = itertools.chain(*map(lambda x: x.signal_log[:roundnum], women))
+        else:
+            group_log = itertools.chain(*map(lambda x: x.signal_log, women))
         frequencies = collections.Counter(group_log)
         total_signals = sum(frequencies.values())
         if total_signals == 0:
@@ -291,8 +332,11 @@ class TypeExperience(Measure):
     def measure(self, roundnum, women, game):
         if self.midwife_type is not None:
             women = filter(lambda x: x.player_type == self.midwife_type, women)
-        women = filter(lambda x: len(x.type_log) > roundnum, women)
-        group_log = itertools.chain(*map(lambda x: x.type_log[:roundnum], women))
+        if self.present:
+            women = filter(lambda x: len(x.type_log) > roundnum, women)
+            group_log = itertools.chain(*map(lambda x: x.type_log[:roundnum], women))
+        else:
+            group_log = itertools.chain(*map(lambda x: x.type_log, women))
         frequencies = collections.Counter(group_log)
         total_signals = sum(frequencies.values())
         if total_signals == 0:
@@ -438,6 +482,29 @@ class FalseNegativeUpto(Measure):
 
 
                 
+def indiv_measures_women():
+    measures = OrderedDict()
+    measures['player_type'] = PlayerType()
+    measures['num_rounds'] = NumRounds()
+    measures['referred'] = Referred()
+    for i in range(3):
+        # Midwife types seen, signals sent
+        measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
+        measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
+    return Measures(measures)
+
+def indiv_measures_mw():
+    measures = OrderedDict()
+    measures['player_type'] = PlayerType()
+    measures['num_rounds'] = NumRounds()
+    measures['all_right_calls'] = RightCallUpto()
+    measures['false_positives'] = FalsePositiveUpto()
+    measures['false_negatives_upto'] = FalseNegativeUpto()
+    for i in range(3):
+        # Midwife types seen, signals sent
+        measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
+        measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
+    return Measures(measures)
 
 
 def measures_women():

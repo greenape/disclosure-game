@@ -75,6 +75,8 @@ def arguments():
         default=expanduser("~"), nargs="?")
     parser.add_argument('--pickled-arguments', dest='kwargs', type=str, nargs='?',
         default=None, help="A file containing a pickled list of kwarg dictionaries to be run.")
+    parser.add_argument('--individual-measures', dest='indiv', action="store_true",
+        help="Take individual outcome measures instead of group level.", default=False)
 
     args = parser.parse_args()
     games = map(eval, args.games)
@@ -85,6 +87,9 @@ def arguments():
     kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}
     if args.women is not None:
         kwargs['women_weights'] = args.women
+    if args.indiv:
+        kwargs['measures_midwives'] = indiv_measures_mw()
+        kwargs['measures_women'] = indiv_measures_women()
     kwargs = [kwargs]
     if args.kwargs is not None:
         try:
