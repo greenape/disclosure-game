@@ -141,6 +141,11 @@ class TypeFinished(Measure):
             return 0
         return num_finished / num_women
 
+class LastSignal(Measure):
+    def measure(self, roundnum, women, game):
+        signal = women[0].signal_log.pop()
+        women[0].signal_log.append(signal)
+        return signal
 
 
 class TypeSignal(Measure):
@@ -522,6 +527,7 @@ def indiv_measures_women():
     measures['num_rounds'] = NumRounds()
     measures['referred'] = Referred()
     measures['started'] = Started()
+    measures['signalled'] = LastSignal()
     for i in range(3):
         # Midwife types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
