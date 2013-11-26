@@ -533,7 +533,8 @@ def indiv_measures_mw():
     measures['player_id'] = PlayerHash()
     measures['player_type'] = PlayerType()
     measures['num_rounds'] = NumRounds()
-    measures['all_right_calls'] = RightCallUpto()
+    measures['all_right_calls_upto'] = RightCallUpto()
+    measures['all_right_calls'] = RightCall()
     measures['false_positives'] = FalsePositiveUpto()
     measures['false_negatives_upto'] = FalseNegativeUpto()
     for i in range(3):
