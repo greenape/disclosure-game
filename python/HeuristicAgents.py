@@ -65,8 +65,9 @@ class LexicographicSignaller(BayesianSignaller):
                 if sorted_mappings[0][1] > sorted_mappings[1][1]:
                     break
                 # Remove any worse than the tied pair.
-                if sorted_mappings[1][1] > sorted_mappings[2][1]:
-                    signals.remove(sorted_mappings[2][0])
+                #if sorted_mappings[1][1] > sorted_mappings[2][1]:
+                #    print "removing", sorted_mappings[2][0]
+                #    signals.remove(sorted_mappings[2][0])
             except IndexError:
                 pass
         # No advantage found so take the first
