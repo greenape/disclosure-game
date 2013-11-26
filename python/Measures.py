@@ -143,8 +143,12 @@ class TypeFinished(Measure):
 
 class LastSignal(Measure):
     def measure(self, roundnum, women, game):
-        signal = women[0].signal_log.pop()
-        women[0].signal_log.append(signal)
+        signal = 0
+        try:
+            signal = women[0].signal_log.pop()
+            women[0].signal_log.append(signal)
+        except IndexError:
+            pass
         return signal
 
 

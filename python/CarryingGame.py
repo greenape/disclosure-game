@@ -20,6 +20,7 @@ class CarryingGame(Model.Game):
             if draw < bracket:
                 player = player_fn(player_type=i)
                 return player
+        print "Whoops!",bracket,draw
 
 
     def get_distribution(self, players):
@@ -28,7 +29,7 @@ class CarryingGame(Model.Game):
         """
         player_types = map(lambda x: x.player_type, players)
         counts = collections.Counter(player_types)
-        return map(lambda x: x / sum(counts.values()), counts.values())
+        return map(lambda x: float(x) / sum(counts.values()), counts.values())
 
 
 
@@ -145,7 +146,7 @@ class CarryingReferralGame(CarryingGame, ReferralGame):
         Just like the referral game, but maintains a carrying capacity.
         """
 
-class CarryingCaseloadReferralGame(CaseloadCarryingGame, ReferralGame)
+class CarryingCaseloadReferralGame(CaseloadCarryingGame, ReferralGame):
     """
     Ditto, but caseloaded.
     """

@@ -43,7 +43,7 @@ def arguments():
                    help='A game type to play.', default=['Game', 'CaseloadGame'],
                    choices=['Game', 'CaseloadGame', 'RecognitionGame', 'ReferralGame',
                    'CaseloadRecognitionGame', 'CaseloadReferralGame', 'CarryingGame',
-                   'CarryingReferralGame'],
+                   'CarryingReferralGame', 'CarryingCaseloadReferralGame'],
                    dest="games")
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
