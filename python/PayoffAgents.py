@@ -79,16 +79,14 @@ class BayesianPayoffResponder(LexicographicResponder):
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
-        self.signal_log.append(signal)
-        self.signal_matches[signal] += 1.
-        self.type_log.append(opponent.player_type)
+        super(BayesianPayoffResponder, self).respond(signal, opponent)
         best = (random.randint(0, 1), 9999999)
         for response in shuffled(self.responses):
             act_risk = self.risk(response, signal, opponent)
             if act_risk < best[1]:
                 best = (response, act_risk)
+        self.response_log.pop()
         self.response_log.append(best[0])
-        self.rounds += 1
         return best[0]
 
 class RecognitionBayesianPayoffResponder(RecognitionResponder, BayesianPayoffResponder):

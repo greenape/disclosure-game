@@ -18,12 +18,18 @@ class CarryingGame(Model.Game):
         birthed = []
         random.shuffle(women)
         num_midwives = len(midwives)
+        if not self.measures_women.take_at_end:
+            women_res = self.measures_women.dump(women, self.rounds, self)
+        if not self.measures_midwives.take_at_end:
+            mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
         for i in range(rounds):
             players = [women.pop() for i in range(num_midwives)]
             random.shuffle(midwives)
             map(self.play_round, players, midwives)
+            for x in midwives:
+                x.finished += 1
             for woman in players:
-                if self.all_played([woman], rounds):
+                if self.all_played([woman], rounds / 10):
                     birthed.append(woman)
                     woman.is_finished = True
                     # Add a new naive women back into the mix
@@ -36,8 +42,16 @@ class CarryingGame(Model.Game):
                 else:
                     women.insert(0, woman)
                     woman.finished += 1
+            if not self.measures_women.take_at_end:
+                women_res.add_results(self.measures_women.dump(players, self.rounds, self))
+            if not self.measures_midwives.take_at_end:
+                mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
         birthed += women
-        return self.measure(birthed, midwives)
+        if self.measures_women.take_at_end:
+            women_res = self.measures_women.dump(birthed, self.rounds, self)
+        if self.measures_midwives.take_at_end:
+            mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        return women_res, mw_res, (birthed, midwives, self)
 
 class CarryingReferralGame(CarryingGame, ReferralGame):
         """

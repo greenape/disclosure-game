@@ -123,8 +123,7 @@ class LexicographicResponder(BayesianResponder):
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
-        self.signal_log.append(signal)
-        self.type_log.append(opponent.player_type)
+        super(LexicographicResponder, self).respond(signal, opponent)
         n = 0
         while n < self.depth:
             mappings = {}
@@ -141,7 +140,7 @@ class LexicographicResponder(BayesianResponder):
                     #Only one payoff
                 pass
             n += 1
-        self.rounds += 1
+        self.response_log.pop()
         self.response_log.append(best)
         return best
 

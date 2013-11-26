@@ -100,6 +100,25 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     midwives = reduce(lambda x, y: x.add_results(y), midwives)
     return women, midwives, pile
 
+def main():
+    games, players, kwargs, runs, test, file_name = arguments()
+    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
+    print("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
+    print "File is %s" % file_name
+    if test:
+        print("This is a test of the emergency broadcast system. This is only a test.")
+    else:
+        women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))
+        women = reduce(lambda x, y: x.add_results(y), women)
+        midwives = reduce(lambda x, y: x.add_results(y), midwives)
+        women.write("%swomen.csv.gz" % file_name)
+        midwives.write("%smw.csv.gz" % file_name)
+        women.write_params("%sparams.csv.gz" % file_name)
+        fp = gzip.open("%s.pickle.gz" % file_name, "wb")
+        cPickle.dump(pile, fp, cPickle.HIGHEST_PROTOCOL)
+        fp.close()
+
 if __name__ == "__main__":
     main()
 

@@ -377,7 +377,8 @@ class BayesianResponder(Responder):
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
-        self.type_log.append(opponent.player_type)
+        if opponent is not None:
+            self.type_log.append(opponent.player_type)
         self.signal_log.append(signal)
         self.signal_matches[signal] += 1.
         best = (random.randint(0, 1), 9999999)

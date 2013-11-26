@@ -4,6 +4,7 @@ from Results import *
 import itertools
 
 class Measures(object):
+    take_at_end = True
     def __init__(self, measures):
         self.measures = measures
 
@@ -33,6 +34,7 @@ class Measures(object):
         return results
 
 class IndividualMeasures(Measures):
+    take_at_end = False
     def dump(self, women, rounds, game):
         """
         A results dumper. Takes a tuple of a game and players, and two dictionaries.
@@ -67,6 +69,20 @@ class Measure(object):
         women = filter(lambda x: x.started < roundnum, women)
         women = filter(lambda x: x.finished > roundnum, women)
         return women
+
+class PlayerHash(Measure):
+    """
+    Return a unique ident for a player.
+    """
+    def measure(self, roundnum, woman, game):
+        return hash(woman[0])
+
+class TypeWeight(Measure):
+    """
+    Return the starting weight for midwife type.
+    """
+    def measure(self, roundnum, woman, game):
+        return woman[0].type_weights[self.midwife_type]
 
 class PlayerType(Measure):
     """
@@ -485,11 +501,23 @@ class FalseNegativeUpto(Measure):
             return 0
         return total_right / total_calls
 
+class Response(Measure):
+    def measure(self, roundnum, women, game):
+        woman = women[0]
+        r = woman.respond(self.signal, None)
+        woman.signal_log.pop()
+        woman.response_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[self.signal] -= 1
+        return r
+
+
 
 
                 
 def indiv_measures_women():
     measures = OrderedDict()
+    measures['player_id'] = PlayerHash()
     measures['player_type'] = PlayerType()
     measures['num_rounds'] = NumRounds()
     measures['referred'] = Referred()
@@ -502,15 +530,17 @@ def indiv_measures_women():
 
 def indiv_measures_mw():
     measures = OrderedDict()
+    measures['player_id'] = PlayerHash()
     measures['player_type'] = PlayerType()
     measures['num_rounds'] = NumRounds()
     measures['all_right_calls'] = RightCallUpto()
     measures['false_positives'] = FalsePositiveUpto()
     measures['false_negatives_upto'] = FalseNegativeUpto()
     for i in range(3):
-        # Midwife types seen, signals sent
+        # Women types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
         measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
+        measures['response_to_signal_%d' % i] = Response(signal=i)
     return IndividualMeasures(measures)
 
 
