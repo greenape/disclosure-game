@@ -29,7 +29,7 @@ class CarryingGame(Model.Game):
             for x in midwives:
                 x.finished += 1
             for woman in players:
-                if self.all_played([woman], rounds / 10):
+                if self.all_played([woman], 12):
                     birthed.append(woman)
                     woman.is_finished = True
                     # Add a new naive women back into the mix
