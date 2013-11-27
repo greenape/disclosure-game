@@ -335,6 +335,24 @@ def proportions_experiment():
         kwargs.append(kwarg)
     return kwargs
 
+def naive_partition():
+    parts = []
+    for x in itertools.product(xrange(101), repeat=3):
+        if sum(x) == 100:
+            parts.append(map(lambda y: y / 100., x))
+    return parts
+
+def naive_women_proportions():
+    """
+    Sample space for type proportions.
+    """
+    w = naive_partition()
+    kwargs = []
+    for x in w:
+        kwarg = {'women_weights':x}
+        kwargs.append(kwarg)
+    return kwargs
+
 def priors_experiment():
     """
     Sample space for midwives' priors.
