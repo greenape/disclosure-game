@@ -56,7 +56,7 @@ def arguments():
         choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
         'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder',
         'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
-        'PayoffProspectResponder'], dest="responders")
+        'PayoffProspectResponder', 'RecognitionPayoffProspectResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
