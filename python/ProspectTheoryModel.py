@@ -9,7 +9,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
     A responder which makes decision using cumulative prospect theory.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], 
-        alpha=.94, beta=.86, l=2.25, gamma=.99, delta=.93):
+        alpha=.94, beta=.86, l=1.25, gamma=.99, delta=.93):
         self.alpha = alpha
         self.gamma = gamma
         self.l = l
@@ -135,7 +135,7 @@ class ProspectTheoryResponder(Model.BayesianResponder):
     Weighting is some function that takes the probability p and returns a weighted version of it.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1],
-        alpha=.94, beta=.86, l=2.25, gamma=.99, delta=.93):
+        alpha=.94, beta=.86, l=1.25, gamma=.99, delta=.93):
         self.alpha = alpha
         self.gamma = gamma
         self.l = l
@@ -247,3 +247,10 @@ class PayoffProspectResponder(ProspectTheoryResponder, BayesianPayoffResponder):
         prospects.sort()
         prospects.reverse()
         return prospects
+
+class RecognitionPayoffProspectResponder(RecognitionResponder, PayoffProspectResponder):
+    """
+    """
+
+    def __str__(self):
+        return "recog_cpt_payoff"
