@@ -17,6 +17,14 @@ GAME[7]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r Reco
 
 GAME[8]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r RecognitionBayesianPayoffResponder -n'
 
+GAME[9]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r PayoffProspectResponder'
+
+GAME[10]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r PayoffProspectResponder -n'
+
+GAME[11]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r RecognitionPayoffProspectResponder'
+
+GAME[12]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r RecognitionPayoffProspectResponder -n'
+
 cd disclosure-game/python
 module load python
 ulimit -n 512
