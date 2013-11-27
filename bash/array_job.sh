@@ -13,4 +13,4 @@ GAME[8]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r Reco
 
 cd disclosure-game/python
 module load python
-python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]}  -f $PBS_ARRAYID_alspac_ --individual-measures -i 1000
+python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} -f ${PBS_ARRAYID}_alspac_ --individual-measures -i 1000

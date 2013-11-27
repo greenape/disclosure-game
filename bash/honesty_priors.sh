@@ -20,4 +20,4 @@ GAME[8]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r Reco
 cd disclosure-game/python
 module load python
 ulimit -n 512
-python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} --pickled-arguments honesty_priors.args -f $PBS_ARRAYID_honesty_priors_ --individual-measures -i 1000
+python -m scoop HPCExperiments.py -R 100 ${GAME[$PBS_ARRAYID]} --pickled-arguments honesty_priors.args -f ${PBS_ARRAYID}_honesty_priors_ --individual-measures -i 1000
