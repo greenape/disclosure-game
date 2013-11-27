@@ -81,6 +81,8 @@ class CarryingGame(Model.Game):
         return women_res, mw_res, (birthed, midwives, self)
 
 class CaseloadCarryingGame(CarryingGame):
+    def __unicode__(self):
+        return "caseload_carrying_%s" % super(CarryingGame, self).__unicode__()
     def play_game(self, players):
         women, midwives = players
         player_dist = self.get_distribution(women)

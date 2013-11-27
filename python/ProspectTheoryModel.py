@@ -1,13 +1,15 @@
 import Model
 import math
 import random
+from PayoffAgents import *
+from RecognitionAgents import *
 
 class ProspectTheorySignaller(Model.BayesianSignaller):
     """
     A responder which makes decision using cumulative prospect theory.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], 
-        alpha=.859, beta=.826, l=2.25, gamma=.618, delta=.592):
+        alpha=.94, beta=.86, l=2.25, gamma=.99, delta=.93):
         self.alpha = alpha
         self.gamma = gamma
         self.l = l
@@ -93,6 +95,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         Make a judgement about somebody based on
         the signal they sent based on expe
         """
+        super(LexicographicSignaller, self).do_signal(opponent)
         best = (random.randint(0, 2), -9999999)
         for signal in Model.shuffled(self.signals):
             act_risk = self.cpt_value(self.collect_prospects(signal))
@@ -100,12 +103,29 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
             self.risk_log_general[signal].append(act_risk)
             if act_risk > best[1]:
                 best = (signal, act_risk)
-        self.rounds += 1
-        self.log_signal(best[0])
+        self.signal_log.pop()
+        self.signal_log.append(best[0])
         return best[0]
 
     def __str__(self):
         return "prospect"
+
+class PayoffProspectSignaller(ProspectTheorySignaller, BayesianPayoffSignaller):
+    def __str__(self):
+        return "cpt_payoff"
+
+    def collect_prospects(self, signal):
+        """
+        Compute the cumulative prospect theory value of this signal
+        based on the estimated probalities at this appointment.
+        """
+        prospects = []
+        for payoff, belief in self.payoff_belief[signal].items():
+            belief = belief[len(belief) - 1]
+            prospects.append((payoff, belief))
+        prospects.sort()
+        prospects.reverse()
+        return prospects
 
 class ProspectTheoryResponder(Model.BayesianResponder):
     """
@@ -115,7 +135,7 @@ class ProspectTheoryResponder(Model.BayesianResponder):
     Weighting is some function that takes the probability p and returns a weighted version of it.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1],
-        alpha=.88, beta=.88, l=2.25, gamma=.61, delta=.69):
+        alpha=.94, beta=.86, l=2.25, gamma=.99, delta=.93):
         self.alpha = alpha
         self.gamma = gamma
         self.l = l
@@ -197,17 +217,33 @@ class ProspectTheoryResponder(Model.BayesianResponder):
         Make a judgement about somebody based on
         the signal they sent based on expe
         """
-        self.signal_log.append(signal)
-        self.signal_matches[signal] += 1.
+        super(ProspectTheoryResponder, self).respond(signal, opponent)
 
         best = (random.randint(0, 1), -9999999)
         for response in Model.shuffled(self.responses):
             act_risk = self.cpt_value(self.collect_prospects(response, signal))
             if act_risk > best[1]:
                 best = (response, act_risk)
+        self.response_log.pop()
         self.response_log.append(best[0])
-        self.rounds += 1
         return best[0]
 
     def __str__(self):
         return "prospect"
+
+class PayoffProspectResponder(ProspectTheoryResponder, BayesianPayoffResponder):
+    def __str__(self):
+        return "cpt_payoff"
+
+    def collect_prospects(self, response, signal):
+        """
+        Compute the cumulative prospect theory value of this signal
+        based on the estimated probalities at this appointment.
+        """
+        prospects = []
+        for payoff, belief in self.payoff_belief[signal][response].items():
+            belief = belief[len(belief) - 1]
+            prospects.append((payoff, belief))
+        prospects.sort()
+        prospects.reverse()
+        return prospects

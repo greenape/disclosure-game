@@ -48,7 +48,6 @@ class BayesianPayoffResponder(LexicographicResponder):
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
         super(BayesianPayoffResponder, self).update_beliefs(
             payoff, signaller, signal, signaller_type)
-        
         for signal, responses in self.payoff_belief.items():
             for response, payoffs in responses.items():
                 for payoff, belief in payoffs.items():

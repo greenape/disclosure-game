@@ -48,13 +48,15 @@ def arguments():
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
         choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
-        'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller'],
+        'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
+        'PayoffProspectSignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
         choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
         'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder',
-        'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder'], dest="responders")
+        'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
+        'PayoffProspectResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
