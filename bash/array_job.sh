@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=10:00:00
+#PBS -l walltime=60:00:00
 #PBS -l nodes=16:ppn=16
 
 GAME[1]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder -p 0.85 0.1 0.05'
