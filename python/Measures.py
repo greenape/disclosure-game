@@ -519,11 +519,7 @@ class Response(Measure):
         woman.rounds -= 1
         woman.signal_matches[self.signal] -= 1
         return r
-
-
-
-
-                
+               
 def indiv_measures_women():
     measures = OrderedDict()
     measures['player_id'] = PlayerHash()

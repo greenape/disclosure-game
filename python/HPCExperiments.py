@@ -96,9 +96,12 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     print("Completed a parameter set.")
     
     women, midwives, pile = zip(*played)
-    women = reduce(lambda x, y: x.add_results(y), women)
-    midwives = reduce(lambda x, y: x.add_results(y), midwives)
-    return women, midwives, pile
+    #q.put((women, midwives))
+    map(lambda x: x.write_db("women_test"), women)
+    map(lambda x: x.write_db("mw_test"), midwives)
+    #women = reduce(lambda x, y: x.add_results(y), women)
+    #midwives = reduce(lambda x, y: x.add_results(y), midwives)
+    return None#women, midwives, pile
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
@@ -109,15 +112,16 @@ def main():
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))
-        women = reduce(lambda x, y: x.add_results(y), women)
+        experiment(games, players, kwargs=kwargs)
+        #women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))
+        """women = reduce(lambda x, y: x.add_results(y), women)
         midwives = reduce(lambda x, y: x.add_results(y), midwives)
         women.write("%swomen.csv.gz" % file_name)
         midwives.write("%smw.csv.gz" % file_name)
         women.write_params("%sparams.csv.gz" % file_name)
         fp = gzip.open("%s.pickle.gz" % file_name, "wb")
         cPickle.dump(pile, fp, cPickle.HIGHEST_PROTOCOL)
-        fp.close()
+        fp.close()"""
 
 if __name__ == "__main__":
     main()
