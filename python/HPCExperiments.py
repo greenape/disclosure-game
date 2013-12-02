@@ -93,7 +93,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
     played = list(futures.map(play_game, player_pairs))
-    print("Completed a parameter set.")
+    print "Completed a parameter set."
     
     women, midwives, pile = zip(*played)
     #q.put((women, midwives))
@@ -105,12 +105,12 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
-    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
-    print("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
+    print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
+    print "Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs))
     print "File is %s" % file_name
     if test:
-        print("This is a test of the emergency broadcast system. This is only a test.")
+        print "This is a test of the emergency broadcast system. This is only a test."
     else:
         experiment(games, players, kwargs=kwargs)
         #women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))

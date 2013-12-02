@@ -1,6 +1,6 @@
 #!/bin/bash
-#PBS -l walltime=60:00:00
-#PBS -l nodes=16:ppn=16
+#PBS -l walltime=01:00:00
+#PBS -l nodes=10:ppn=16
 GAME[1]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder'
 
 GAME[2]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder -n'
@@ -27,5 +27,6 @@ GAME[12]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r Rec
 
 cd disclosure-game/python
 ulimit -n 512
-source /home/jg1g12/hpc/bin/activate
-pypy -m scoop HPCExperiments.py -R 10 ${GAME[$PBS_ARRAYID]}  --pickled-arguments women_proportions.args -f ${PBS_ARRAYID}_women_proportions_ --individual-measures -i 1000
+module load python
+#source /home/jg1g12/hpc/bin/activate
+python -m scoop -vvv HPCExperiments.py -R 2 ${GAME[$PBS_ARRAYID]}  --pickled-arguments small_test.args -f ${PBS_ARRAYID}_women_proportions_ --individual-measures -i 1000
