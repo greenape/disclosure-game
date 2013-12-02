@@ -49,7 +49,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         mw_weights=[80/100., 15/100., 5/100.],
                         women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
                         women_modifier=None, measures_women=measures_women(),
-                        measures_midwives=measures_midwives(), nested=False, mw_priors=None):
+                        measures_midwives=measures_midwives(), nested=False, mw_priors=None,
+                        file_name=""):
 
     sys.setrecursionlimit(1000)
     
@@ -97,8 +98,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     
     women, midwives, pile = zip(*played)
     #q.put((women, midwives))
-    map(lambda x: x.write_db("women_test"), women)
-    map(lambda x: x.write_db("mw_test"), midwives)
+    map(lambda x: x.write_db("%s_women" % file_name), women)
+    map(lambda x: x.write_db("%s_mw" % file_name), midwives)
     #women = reduce(lambda x, y: x.add_results(y), women)
     #midwives = reduce(lambda x, y: x.add_results(y), midwives)
     return None#women, midwives, pile

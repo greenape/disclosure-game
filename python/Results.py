@@ -50,12 +50,12 @@ class Result(object):
         Write this result set to an sqlite db.
         """
         if not single_db:
-            db_name = "%s_%s" % (scoop.worker[0], db_name)
+            db_name = "%s_%s" % (db_name, scoop.worker[0])
 
         conn = sqlite3.connect("%s.db" % db_name)
         
         fields = ",".join(self.fields)
-        print fields
+        #print fields
         try:
             conn.execute("CREATE TABLE IF NOT EXISTS results (%s)" % fields)
         except sqlite3.OperationalError:

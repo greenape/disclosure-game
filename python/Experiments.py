@@ -82,12 +82,13 @@ def arguments():
         help="Take individual outcome measures instead of group level.", default=False)
 
     args = parser.parse_args()
+    file_name = "%s/%s" % (args.dir, args.file_name)
     games = map(eval, args.games)
     if args.combinations:
         players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     else:
         players = zip(map(eval, args.signallers), map(eval, args.responders))
-    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested}
+    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested, 'file_name':file_name}
     if args.women is not None:
         kwargs['women_weights'] = args.women
     if args.indiv:
@@ -109,7 +110,6 @@ def arguments():
         except cPickle.UnpicklingError:
             print("Not a valid pickle file.")
             raise
-    file_name = "%s/%s" % (args.dir, args.file_name)
     return games, players, kwargs, args.runs, args.test_only, file_name
 
 
