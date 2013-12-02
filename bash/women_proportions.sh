@@ -26,6 +26,6 @@ GAME[11]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r Rec
 GAME[12]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r RecognitionPayoffProspectResponder -n'
 
 cd disclosure-game/python
-module load python
 ulimit -n 512
-python -m scoop HPCExperiments.py -R 10 ${GAME[$PBS_ARRAYID]}  --pickled-arguments women_proportions.args -f ${PBS_ARRAYID}_women_proportions_ --individual-measures -i 1000
+source /home/jg1g12/hpc/bin/activate
+pypy -m scoop HPCExperiments.py -R 10 ${GAME[$PBS_ARRAYID]}  --pickled-arguments women_proportions.args -f ${PBS_ARRAYID}_women_proportions_ --individual-measures -i 1000
