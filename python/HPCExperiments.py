@@ -32,7 +32,7 @@ def experiment(game_fns=[Game, CaseloadGame],
                 kwarg['signaller_fn'] = pair[0]
                 kwarg['responder_fn'] = pair[1]
                 run_params.append(kwarg.copy())
-    print("Made %d parameter sets" % len(run_params))
+    scoop.logger.info("Made %d parameter sets" % len(run_params))
     return kw_experiment(run_params)
 
 def kw_experiment(kwargs):
@@ -68,11 +68,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     for i in range(runs):
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
-        #print "Making run %d/%d on %s" % (i + 1, runs, file_name)
+        #scoop.logger.info("Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
         women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
-        #print "made %d women." % len(women)
+        #scoop.logger.info("made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
             if women_priors is not None:
@@ -84,17 +84,17 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                                    [random_expectations(breadth=2) for x in range(3)])
         if women_modifier is not None:
             women_modifier(women)
-        #print "Set priors."
+        #scoop.logger.info("Set priors."
         mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
-        #print "Made agents."
+        #scoop.logger.info("Made agents."
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
-        #print "Set priors."
+        #scoop.logger.info("Set priors."
         player_pairs.append((game, women, mw))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
     played = list(futures.map(play_game, player_pairs))
-    print "Completed a parameter set."
+    scoop.logger.info("Completed a parameter set.")
     
     women, midwives, pile = zip(*played)
     #q.put((women, midwives))
@@ -106,12 +106,12 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
-    print "Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:])
-    print "Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs))
-    print "File is %s" % file_name
+    scoop.logger.info("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
+    scoop.logger.info("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
+    scoop.logger.info("File is %s" % file_name)
     if test:
-        print "This is a test of the emergency broadcast system. This is only a test."
+        scoop.logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
         experiment(games, players, kwargs=kwargs)
         #women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))

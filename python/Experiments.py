@@ -337,7 +337,7 @@ def proportions_experiment():
 
 def naive_partition():
     parts = []
-    for x in itertools.product(xrange(101), repeat=3):
+    for x in itertools.product(xrange(0, 101, 5), repeat=3):
         if sum(x) == 100:
             parts.append(map(lambda y: y / 100., x))
     return parts

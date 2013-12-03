@@ -57,7 +57,8 @@ class CarryingGame(Model.Game):
                 x.finished += 1
             for woman in players:
                 if self.all_played([woman], 12):
-                    birthed.append(woman)
+                    if self.measures_women.take_at_end:
+                        birthed.append(woman)
                     woman.is_finished = True
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, type(woman))#type(woman)(player_type=woman.player_type)
@@ -120,7 +121,8 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
                 woman = players[i]
                 women = caseloads[midwives[i]]
                 if self.all_played([woman], 12):
-                    birthed.append(woman)
+                    if self.measures_women.take_at_end:
+                        birthed.append(woman)
                     woman.is_finished = True
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, type(woman))#type(woman)(player_type=woman.player_type)
