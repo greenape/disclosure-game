@@ -37,8 +37,8 @@ class CarryingGame(Model.Game):
     A game type that maintains the size of the population of
     women, by adding in a new one of the same type as any that finish.
     """
-    def play_game(self, players):
-        women, midwives, file_name = players
+    def play_game(self, players, file_name=""):
+        women, midwives = players
         player_dist = self.get_distribution(women)
 
         rounds = self.rounds
@@ -91,7 +91,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
     def __unicode__(self):
         return "caseload_carrying_%s" % super(CarryingGame, self).__unicode__()
 
-    def play_game(self, players):
+    def play_game(self, players, file_name=""):
         women, midwives = players
         player_dist = self.get_distribution(women)
 

@@ -16,8 +16,8 @@ def run(kwargs):
     return decision_fn_compare(**kwargs)
 
 def play_game(config):
-    game, women, midwives = config
-    return game.play_game((women, midwives))
+    game, women, midwives, file_name = config
+    return game.play_game((women, midwives), file_name)
 
 def experiment(game_fns=[Game, CaseloadGame], 
     agents=[(BayesianSignaller, BayesianResponder)],
