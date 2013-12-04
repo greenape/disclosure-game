@@ -94,7 +94,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
     played = list(futures.map(play_game, player_pairs))
-    scoop.logger.info("Completed a parameter set.")
+    scoop.logger.info("Worker %s completed a parameter set." % scoop.worker[0])
     
     #women, midwives, pile = zip(*played)
     #q.put((women, midwives))

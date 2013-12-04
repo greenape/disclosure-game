@@ -84,8 +84,8 @@ class CarryingGame(Model.Game):
                 women_res.add_results(self.measures_women.dump(players, self.rounds, self))
             if not self.measures_midwives.take_at_end:
                 mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
-            if scoop_on:
-                scoop.logger.info("Played %d rounds." % i)
+            #if scoop_on:
+            #    scoop.logger.info("Worker %s played %d rounds." % (scoop.worker[0], i))
         birthed += women
         if self.measures_women.take_at_end:
             women_res = self.measures_women.dump(birthed, self.rounds, self)
@@ -94,7 +94,7 @@ class CarryingGame(Model.Game):
         women_res.write_db("%s_women" % file_name)
         mw_res.write_db("%s_mw" % file_name)
         if scoop_on:
-            scoop.logger.info("Completed a game.")
+            scoop.logger.info("Worker %s completed a game." % scoop.worker[0])
         return None
 
 class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
@@ -155,7 +155,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
             if not self.measures_midwives.take_at_end:
                 mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
             if scoop_on:
-                scoop.logger.info("Played %d rounds." % i)
+                scoop.logger.info("Worker %s played %d rounds." % (scoop.worker[0], i))
         birthed += women
         if self.measures_women.take_at_end:
             women_res = self.measures_women.dump(birthed, self.rounds, self)
@@ -164,7 +164,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
         women_res.write_db("%s_women" % file_name)
         mw_res.write_db("%s_mw" % file_name)
         if scoop_on:
-            scoop.logger.info("Completed a game.")
+            scoop.logger.info("Worker %s completed a game." % (scoop.worker[0]))
         return None
 
 
