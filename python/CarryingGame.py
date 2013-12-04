@@ -60,7 +60,7 @@ class CarryingGame(Model.Game):
         if not self.measures_midwives.take_at_end:
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
         for i in range(rounds):
-            players = [women.pop() for i in range(num_midwives)]
+            players = [women.pop() for j in range(num_midwives)]
             random.shuffle(midwives)
             map(self.play_round, players, midwives)
             for x in midwives:
@@ -133,9 +133,9 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
             map(self.play_round, players, midwives)
             for x in midwives:
                 x.finished += 1
-            for i in range(len(players)):
-                woman = players[i]
-                women = caseloads[midwives[i]]
+            for j in range(len(players)):
+                woman = players[j]
+                women = caseloads[midwives[j]]
                 if self.all_played([woman], 12):
                     if self.measures_women.take_at_end:
                         birthed.append(woman)
