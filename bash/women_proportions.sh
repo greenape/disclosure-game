@@ -1,6 +1,7 @@
 #!/bin/bash
 #PBS -l walltime=05:00:00
 #PBS -l nodes=1:ppn=16
+#PBS -l mem=8gb
 GAME[1]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder'
 
 GAME[2]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder -n'
