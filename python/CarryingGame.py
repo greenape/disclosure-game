@@ -5,9 +5,9 @@ from ReferralGame import *
 import collections
 try:
     import scoop
-    scoop = True
+    scoop_on = True
 except:
-    scoop = False
+    scoop_on = False
     pass
 
 class CarryingGame(Model.Game):
@@ -84,7 +84,7 @@ class CarryingGame(Model.Game):
                 women_res.add_results(self.measures_women.dump(players, self.rounds, self))
             if not self.measures_midwives.take_at_end:
                 mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
-            if scoop:
+            if scoop_on:
                 scoop.logger.info("Played %d rounds." % i)
         birthed += women
         if self.measures_women.take_at_end:
@@ -93,7 +93,7 @@ class CarryingGame(Model.Game):
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
         women_res.write_db("%s_women" % file_name)
         mw_res.write_db("%s_mw" % file_name)
-        if scoop:
+        if scoop_on:
             scoop.logger.info("Completed a game.")
         return None
 
@@ -154,7 +154,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
                 women_res.add_results(self.measures_women.dump(players, self.rounds, self))
             if not self.measures_midwives.take_at_end:
                 mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
-            if scoop:
+            if scoop_on:
                 scoop.logger.info("Played %d rounds." % i)
         birthed += women
         if self.measures_women.take_at_end:
@@ -163,7 +163,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
         women_res.write_db("%s_women" % file_name)
         mw_res.write_db("%s_mw" % file_name)
-        if scoop:
+        if scoop_on:
             scoop.logger.info("Completed a game.")
         return None
 
