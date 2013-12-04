@@ -90,16 +90,16 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
         #scoop.logger.info("Set priors."
-        player_pairs.append((game, women, mw))
+        player_pairs.append((game, women, mw, file_name))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
     played = list(futures.map(play_game, player_pairs))
     scoop.logger.info("Completed a parameter set.")
     
-    women, midwives, pile = zip(*played)
+    #women, midwives, pile = zip(*played)
     #q.put((women, midwives))
-    map(lambda x: x.write_db("%s_women" % file_name), women)
-    map(lambda x: x.write_db("%s_mw" % file_name), midwives)
+    #map(lambda x: x.write_db("%s_women" % file_name), women)
+    #map(lambda x: x.write_db("%s_mw" % file_name), midwives)
     #women = reduce(lambda x, y: x.add_results(y), women)
     #midwives = reduce(lambda x, y: x.add_results(y), midwives)
     return None#women, midwives, pile

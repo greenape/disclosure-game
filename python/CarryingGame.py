@@ -38,7 +38,7 @@ class CarryingGame(Model.Game):
     women, by adding in a new one of the same type as any that finish.
     """
     def play_game(self, players):
-        women, midwives = players
+        women, midwives, file_name = players
         player_dist = self.get_distribution(women)
 
         rounds = self.rounds
@@ -47,8 +47,10 @@ class CarryingGame(Model.Game):
         num_midwives = len(midwives)
         if not self.measures_women.take_at_end:
             women_res = self.measures_women.dump(women, self.rounds, self)
+            women_res.write_db("%s_women" % file_name)
         if not self.measures_midwives.take_at_end:
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+            mw_res.write_db("%s_mw" % file_name)
         for i in range(rounds):
             players = [women.pop() for i in range(num_midwives)]
             random.shuffle(midwives)
@@ -71,15 +73,19 @@ class CarryingGame(Model.Game):
                     women.insert(0, woman)
                     woman.finished += 1
             if not self.measures_women.take_at_end:
-                women_res.add_results(self.measures_women.dump(players, self.rounds, self))
+                women_res = self.measures_women.dump(players, self.rounds, self)
+                women_res.write_db("%s_women" % file_name)
             if not self.measures_midwives.take_at_end:
-                mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
+                mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+                mw_res.write_db("%s_mw" % file_name)
         birthed += women
         if self.measures_women.take_at_end:
             women_res = self.measures_women.dump(birthed, self.rounds, self)
+            women_res.write_db("%s_women" % file_name)
         if self.measures_midwives.take_at_end:
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
-        return women_res, mw_res, (birthed, midwives, self)
+            mw_res.write_db("%s_mw" % file_name)
+        return None
 
 class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
     def __unicode__(self):
@@ -95,8 +101,10 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
         num_midwives = len(midwives)
         if not self.measures_women.take_at_end:
             women_res = self.measures_women.dump(women, self.rounds, self)
+            women_res.write_db("%s_women" % file_name)
         if not self.measures_midwives.take_at_end:
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+            mw_res.write_db("%s_mw" % file_name)
 
         caseloads = {}
         num_women = len(women)
@@ -135,15 +143,19 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
                     women.insert(0, woman)
                     woman.finished += 1
             if not self.measures_women.take_at_end:
-                women_res.add_results(self.measures_women.dump(players, self.rounds, self))
+                women_res = self.measures_women.dump(players, self.rounds, self)
+                women_res.write_db("%s_women" % file_name)
             if not self.measures_midwives.take_at_end:
-                mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
+                mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+                mw_res.write_db("%s_mw" % file_name)
         birthed += women
         if self.measures_women.take_at_end:
             women_res = self.measures_women.dump(birthed, self.rounds, self)
+            women_res.write_db("%s_women" % file_name)
         if self.measures_midwives.take_at_end:
             mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
-        return women_res, mw_res, (birthed, midwives, self)
+            mw_res.write_db("%s_mw" % file_name)
+        return None
 
 
 class CarryingReferralGame(CarryingGame, ReferralGame):
