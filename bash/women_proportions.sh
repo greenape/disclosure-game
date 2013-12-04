@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=01:30:00
+#PBS -l walltime=05:00:00
 #PBS -l nodes=1:ppn=16
 GAME[1]='-g CarryingReferralGame CarryingGame -s BayesianPayoffSignaller -r BayesianPayoffResponder'
 
@@ -27,7 +27,7 @@ GAME[12]='-g CarryingReferralGame CarryingGame -s PayoffProspectSignaller -r Rec
 
 GAME[13]='-g CarryingReferralGame CarryingGame -s BayesianSignaller -r BayesianResponder'
 
-GAME[14]='-g CarryingReferralGame CarryingGame -s BayesianSignaller -r BayesianResponder'
+GAME[14]='-g CarryingReferralGame CarryingGame -s BayesianSignaller -r RecognitionResponder -n'
 
 cd disclosure-game/python
 ulimit -n 512
