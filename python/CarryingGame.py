@@ -8,7 +8,7 @@ class CarryingGame(Model.Game):
     def __unicode__(self):
         return "carrying_%s" % super(CarryingGame, self).__unicode__()
 
-    def random_player(self, probabilities, player_fn):
+    def random_player(self, probabilities, player):
         """
         Generate a random player, based on the probabilities
         provided by roulette.
@@ -18,7 +18,11 @@ class CarryingGame(Model.Game):
         for i in range(len(probabilities)):
             bracket += probabilities[i]
             if draw < bracket:
-                player = player_fn(player_type=i)
+                try:
+                    new_player = type(player)(player_type=i, child_fn=player.child_fn)
+                    player = new_player
+                except AttributeError:
+                    player = player_fn(player_type=i)
                 return player
         print "Whoops!",bracket,draw
 
@@ -61,7 +65,7 @@ class CarryingGame(Model.Game):
                         birthed.append(woman)
                     woman.is_finished = True
                     # Add a new naive women back into the mix
-                    new_woman = self.random_player(player_dist, type(woman))#type(woman)(player_type=woman.player_type)
+                    new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
                         random_expectations(), [random_expectations(breadth=2) for x in range(3)])
                     new_woman.started = i
@@ -127,7 +131,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
                         birthed.append(woman)
                     woman.is_finished = True
                     # Add a new naive women back into the mix
-                    new_woman = self.random_player(player_dist, type(woman))#type(woman)(player_type=woman.player_type)
+                    new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
                         random_expectations(), [random_expectations(breadth=2) for x in range(3)])
                     new_woman.started = i
