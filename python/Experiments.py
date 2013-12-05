@@ -375,27 +375,17 @@ def synthetic_caseload():
         mw_weights[i] = 1
 
         kwargs.append({'num_midwives':1, 'num_women':10, 'mw_weights':mw_weights})
-        kwargs.append({'num_midwives':1, 'num_women':10, 'mw_weights':mw_weights, 'nested':True})
-
     return kwargs
 
 
 
 def midwife_priors():
     priors =  [[[x, 1., 1.], [1., x, 1.], [1., 1., x]] for x in xrange(5, 51, 5)]
-    variations = []
-    for prior in priors:
-        for variation in itertools.permutations(prior, 3):
-            variations.append(variation)
-    priors = variations
-    for i in range(5):
+    for i in range(4):
         priors.append([[i + 1., 1., 1.], [1., i + 1., 1.], [1., 1., i + 1.]])
-    #women_priors = make_random_weights(1000)
     run_params = []
     for prior in priors:
         args = {'mw_priors':prior}
-        run_params.append(args)
-        args = {'mw_priors':prior, 'nested':True}
         run_params.append(args)
     return run_params
 

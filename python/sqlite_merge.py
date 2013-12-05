@@ -13,9 +13,9 @@ def merge_db(target, source):
     print("Attempting to merge " + source + ".")
     query = "attach '" + source + "' as toMerge;"
     c.execute(query)
-    c.execute("insert into results * from toMerge.results")
-    c.execute("insert into parameters * from toMerge.parameters")
-    c.execute("detach toMerge")
+    c.execute("insert into results select * from toMerge.results;")
+    c.execute("insert into parameters select * from toMerge.parameters;")
+    c.execute("detach toMerge;")
     t.commit()
     c.close()
     t.close()
@@ -31,7 +31,7 @@ def list_matching(directory, name):
     matching = []
     for file in os.listdir(directory):
         if fnmatch.fnmatch(file, name):
-            matching.append(file)
+            matching.append("%s/%s" % (directory, file))
     return matching
 
  
@@ -57,4 +57,5 @@ def arguments():
 
 if __name__ =="__main__":
     target, files = arguments()
+    print "Merging", files
     merge_dbs(files, target)
