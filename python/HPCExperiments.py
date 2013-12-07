@@ -47,7 +47,7 @@ def kw_experiment(kwargs):
     Run a bunch of experiments in parallel. Experiments are
     defined by a list of keyword argument dictionaries.
     """
-    return list(map(run, kwargs))
+    return list(futures.map(run, kwargs))
     
 
 def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
@@ -100,7 +100,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         player_pairs.append((game, women, mw, file_name))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
     game.parameters = params
-    played = list(map(play_game, player_pairs))
+    played = list(futures.map(play_game, player_pairs))
     scoop.logger.info("Worker %s completed a parameter set." % scoop.worker[0])
     
     #women, midwives, pile = zip(*played)
