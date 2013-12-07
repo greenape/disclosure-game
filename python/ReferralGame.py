@@ -13,16 +13,22 @@ class ReferralGame(Game):
                 two players.
                 """
                 signal = signaller.do_signal(receiver)
+                if signaller.rounds == self.num_appointments:
+                        signaller.is_finished = True
                 act = receiver.respond(signal, opponent=signaller)
                 signal_payoff = self.woman_baby_payoff[signaller.player_type][act] + self.woman_social_payoff[signal][receiver.player_type]
                 receive_payoff = self.midwife_payoff[signaller.player_type][act]
 
                 #Signaller learns the true type
                 signaller.update_beliefs(act, receiver, signal_payoff)
+                signaller.accrued_payoffs += signal_payoff
+                receiver.accrued_payoffs += receive_payoff
                 #But the responder doesn't unless they referred
                 if act == 1:
                         receiver.update_beliefs(receive_payoff, signaller, signal)
                         signaller.is_finished = True
+                elif signaller.rounds == self.num_appointments:
+                        receiver.update_beliefs(receive_payoff, signaller, signal)
 
 
 class CaseloadReferralGame(CaseloadGame, ReferralGame):

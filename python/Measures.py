@@ -469,6 +469,26 @@ class FalseNegative(Measure):
             return 0
         return total_right / total_calls
 
+class TypedFalseNegativeUpto(Measure):
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        total_calls = 0.
+        total_right = 0.
+        for midwife in women:
+            r_log = midwife.response_log[:roundnum]
+            t_log = midwife.type_log[:roundnum]
+            for i in range(len(r_log)):
+                response = r_log[i]
+                player = t_log[i]
+                if player == self.player_type:
+                    total_calls += 1
+                    if response == 0:
+                        total_right += 1
+        if total_calls == 0:
+            return 0
+        return total_right / total_calls
+
 
 class FalsePositiveUpto(Measure):
     def measure(self, roundnum, women, game):
@@ -513,12 +533,24 @@ class FalseNegativeUpto(Measure):
 class Response(Measure):
     def measure(self, roundnum, women, game):
         woman = women[0]
-        r = woman.respond(self.signal, None)
+        signaller = type(woman)()
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.respond(self.signal, signaller)
         woman.signal_log.pop()
         woman.response_log.pop()
         woman.rounds -= 1
         woman.signal_matches[self.signal] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            raise
         return r
+
+class AccruedPayoffs(Measure):
+    def measure(self, roundnum, women, game):
+        total = sum(map(lambda x: x.accrued_payoffs, women))
+        return total / float(len(women))
                
 def indiv_measures_women():
     measures = OrderedDict()
@@ -528,6 +560,7 @@ def indiv_measures_women():
     measures['referred'] = Referred()
     measures['started'] = Started()
     measures['signalled'] = LastSignal()
+    measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
         # Midwife types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
@@ -540,14 +573,15 @@ def indiv_measures_mw():
     measures['player_type'] = PlayerType()
     measures['num_rounds'] = NumRounds()
     measures['all_right_calls_upto'] = RightCallUpto()
-    measures['all_right_calls'] = RightCall()
     measures['false_positives'] = FalsePositiveUpto()
     measures['false_negatives_upto'] = FalseNegativeUpto()
+    measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
         # Women types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
         measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
         measures['response_to_signal_%d' % i] = Response(signal=i)
+        measures['type_%d_misses' % i] = TypedFalseNegativeUpto(player_type=i)
     return IndividualMeasures(measures)
 
 

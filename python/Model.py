@@ -52,6 +52,7 @@ class Agent(object):
         self.finished = 0
         self.started = 0
         self.is_finished = False
+        self.accrued_payoffs = 0
 
 
 class Signaller(Agent):
@@ -512,6 +513,8 @@ class Game(object):
         receive_payoff = self.midwife_payoff[signaller.player_type][act]
         #self.signal_log.append(signal)
         #self.act_log.append(act)
+        signaller.accrued_payoffs += signal_payoff
+        receiver.accrued_payoffs += receive_payoff
         signaller.update_beliefs(act, receiver, signal_payoff)
         receiver.update_beliefs(receive_payoff, signaller, signal)
         # Log honesty of signal

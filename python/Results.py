@@ -2,6 +2,7 @@ import gzip
 import sqlite3
 try:
     import scoop
+    scoop.worker
     single_db = False
 except:
     single_db = True
@@ -9,7 +10,7 @@ except:
 
 class Result(object):
     def __init__(self, fields, parameters, results):
-        fields.append("parameters")
+        fields.append("hash")
         self.fields = fields
         self.param_fields = parameters.keys()
         self.param_fields.append("hash")
@@ -56,25 +57,22 @@ class Result(object):
         
         fields = ",".join(self.fields)
         #print fields
-        try:
-            conn.execute("CREATE TABLE IF NOT EXISTS results (%s)" % fields)
-        except sqlite3.OperationalError:
-            pass #Already exists I guess
-        fields = ",".join(self.param_fields)
-        try:
-            conn.execute("CREATE TABLE IF NOT EXISTS parameters (%s)" % fields)
-        except sqlite3.OperationalError:
-            pass #Already exists I guess
+        conn.execute("CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY, %s)" % fields)
+        
+        fields = list(self.param_fields)
+        fields.append("%s PRIMARY KEY" % fields.pop())
+        fields = ",".join(fields)
+        conn.execute("CREATE TABLE IF NOT EXISTS parameters (%s)" % fields)
 
         params = map(tuple, self.parameters.values())
         placeholders = ",".join(['?']*len(self.param_fields))
-        insert = "INSERT INTO parameters VALUES(%s)" % placeholders
+        insert = "INSERT OR IGNORE INTO parameters VALUES(%s)" % placeholders
         #print insert
         conn.executemany(insert, params)
 
         results = map(tuple, self.results)
         placeholders = ",".join(['?']*len(self.fields))
-        insert = "INSERT INTO results VALUES(%s)" % placeholders
+        insert = "INSERT INTO results VALUES(NULL, %s)" % placeholders
         #print insert
         conn.executemany(insert, results)
         conn.commit()

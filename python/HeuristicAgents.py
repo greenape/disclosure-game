@@ -1,5 +1,6 @@
 from Model import *
 from RecognitionAgents import RecognitionResponder
+from SharingAgents import *
 import operator
 
 class LexicographicSignaller(BayesianSignaller):
@@ -43,7 +44,11 @@ class LexicographicSignaller(BayesianSignaller):
     def update_beliefs(self, response, midwife, payoff, midwife_type=None):
         super(LexicographicSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
         if payoff is not None:
-            self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] += 1
+            try:
+                self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] += 1
+            except KeyError:
+                # Must be an impossible payoff add it anyway?
+                self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] = 1
 
     def do_signal(self, opponent=None):
         super(LexicographicSignaller, self).do_signal(opponent)
@@ -149,4 +154,14 @@ class RecognitionLexicographicResponder(RecognitionResponder, LexicographicRespo
     """
     A class of lexicographic responder that retrospectively updates when it learns a True
     type.
+    """
+
+class SharingLexicographicResponder(SharingResponder, LexicographicResponder):
+    """
+    A lexicographic reasoner that shares info updates.
+    """
+
+class SharingLexicographicSignaller(SharingSignaller, LexicographicSignaller):
+    """
+    A lexicographic reasoner that shares info updates.
     """

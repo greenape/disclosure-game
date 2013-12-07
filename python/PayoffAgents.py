@@ -1,4 +1,6 @@
 from HeuristicAgents import *
+from RecognitionAgents import *
+from SharingAgents import *
 
 class BayesianPayoffSignaller(LexicographicSignaller):
 
@@ -91,4 +93,14 @@ class BayesianPayoffResponder(LexicographicResponder):
 class RecognitionBayesianPayoffResponder(RecognitionResponder, BayesianPayoffResponder):
     """
     A payoff reasoner that retrospectively updates.
+    """
+
+class SharingBayesianPayoffResponder(SharingResponder, BayesianPayoffResponder):
+    """
+    A payoff reasoner that shares info updates.
+    """
+
+class SharingBayesianPayoffSignaller(SharingSignaller, BayesianPayoffSignaller):
+    """
+    A payoff reasoner that shares info updates.
     """

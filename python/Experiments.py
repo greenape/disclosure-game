@@ -7,6 +7,7 @@ from RecognitionAgents import *
 from AmbiguityAgents import *
 from HeuristicAgents import *
 from PayoffAgents import *
+from SharingGames import *
 from Dolls import *
 from multiprocessing import Pool
 from Measures import *
@@ -43,21 +44,24 @@ def arguments():
                    help='A game type to play.', default=['Game', 'CaseloadGame'],
                    choices=['Game', 'CaseloadGame', 'RecognitionGame', 'ReferralGame',
                    'CaseloadRecognitionGame', 'CaseloadReferralGame', 'CarryingGame',
-                   'CarryingReferralGame', 'CarryingCaseloadReferralGame'],
+                   'CarryingReferralGame', 'CarryingCaseloadReferralGame', 'CaseloadSharingGame',
+                   'CarryingInformationGame'],
                    dest="games")
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
         choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
         'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
-        'PayoffProspectSignaller'],
+        'PayoffProspectSignaller', 'SharingBayesianPayoffSignaller', 'SharingLexicographicSignaller',
+        'SharingPayoffProspectSignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
         choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
         'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder',
-        'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
-        'PayoffProspectResponder', 'RecognitionPayoffProspectResponder',
-        'RecognitionResponder'], dest="responders")
+        'SharingBayesianPayoffResponder', 'SharingLexicographicResponder',
+        'PayoffProspectResponder', 'SharingPayoffProspectResponder',
+        'RecognitionResponder', 'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
+        'PayoffProspectResponder', 'RecognitionPayoffProspectResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)

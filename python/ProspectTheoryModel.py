@@ -254,3 +254,13 @@ class RecognitionPayoffProspectResponder(RecognitionResponder, PayoffProspectRes
 
     def __str__(self):
         return "recog_cpt_payoff"
+
+class SharingPayoffProspectResponder(SharingResponder, PayoffProspectResponder):
+    """
+    A payoff reasoner that shares info updates.
+    """
+
+class SharingPayoffProspectSignaller(SharingSignaller, PayoffProspectSignaller):
+    """
+    A payoff reasoner that shares info updates.
+    """

@@ -24,6 +24,9 @@ class RecognitionGame(Game):
                 signal_payoff = self.woman_baby_payoff[signaller.player_type][act] + self.woman_social_payoff[signal][receiver.player_type]
                 receive_payoff = self.midwife_payoff[signaller.player_type][act]
 
+                signaller.accrued_payoffs += signal_payoff
+                receiver.accrued_payoffs += receive_payoff
+
                 #Signaller learns something about the type
                 social = self.woman_social_payoff[signal][receiver.player_type]
 
