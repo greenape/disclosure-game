@@ -33,7 +33,7 @@ class CarryingInformationGame(CarryingReferralGame):
         self.num_appointments = num_appointments
 
     def __str__(self):
-        return "information_carrying_%s" % super(CarryingInformationGame, self).__unicode__()
+        return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
 
     def play_game(self, players, file_name=""):
         if scoop_on:

@@ -54,7 +54,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         num_midwives=100, num_women=1000,
                         runs=1000, game=None, rounds=100,
                         mw_weights=[80/100., 15/100., 5/100.],
-                        women_weights=[.80, .15, .5], women_priors=None, seeds=None,
+                        women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
                         women_modifier=None, measures_women=measures_women(),
                         measures_midwives=measures_midwives(), nested=False, mw_priors=None,
                         file_name=""):

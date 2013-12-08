@@ -14,7 +14,7 @@ def merge_db(target, source):
     query = "attach '" + source + "' as toMerge;"
     c.execute(query)
     c.execute("insert into results select * from toMerge.results;")
-    c.execute("insert into parameters select * from toMerge.parameters;")
+    c.execute("insert or ignore into parameters select * from toMerge.parameters;")
     c.execute("detach toMerge;")
     t.commit()
     c.close()

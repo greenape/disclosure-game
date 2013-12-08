@@ -293,7 +293,10 @@ def experiment(game_fns=[Game, CaseloadGame],
     for pair in agents:
         for game_fn in game_fns:
             for kwarg in kwargs:
-                game = game_fn()
+                if 'game_args' in kwarg:
+                    game = game_fn(**kwarg['game_args'])
+                else:
+                    game = game_fn()
                 #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
                 kwarg['game'] = game
                 kwarg['signaller_fn'] = pair[0]
@@ -379,6 +382,21 @@ def synthetic_caseload():
         mw_weights[i] = 1
 
         kwargs.append({'num_midwives':1, 'num_women':10, 'mw_weights':mw_weights})
+    return kwargs
+
+def mw_sharing_experiment():
+    kwargs = []
+    for x in itertools.product((y/10. for y in range(0, 11)), repeat=2):
+        kwarg = {'game_args': {'mw_share_width':x[0], 'mw_share_bias':-x[1]}}
+        kwargs.append(kwarg)
+    return kwargs
+
+def w_sharing_experiment():
+    kwargs = []
+    for x in itertools.product((y/10. for y in range(0, 11)), repeat=2):
+        kwarg = {'game_args': {'mw_share_width':0, 'mw_share_bias':1,
+            'women_share_width':x[0], 'women_share_bias':-x[1]}}
+        kwargs.append(kwarg)
     return kwargs
 
 

@@ -1,15 +1,19 @@
 require(ggplot2)
 library(sqldf)
-files = c("/Users/jg1g12/Downloads/6_women_proportions__mw_%s.db", "/Users/jg1g12/Downloads/8_women_proportions__mw_%s.db", "/Users/jg1g12/Downloads/9_women_proportions__mw_%s.db", "/Users/jg1g12/Downloads/12_women_proportions__mw_%s.db", "/Users/jg1g12/Downloads/13_women_proportions__mw_%s.db", "/Users/jg1g12/Downloads/14_women_proportions__mw_%s.db")
+files = c("/Users/jg1g12/Downloads/1_women_proportions_mw_%s.db", "/Users/jg1g12/Downloads/2_women_proportions_mw_%s.db", "/Users/jg1g12/Downloads/3_women_proportions_mw_%s.db")
 for(x in files) {
-	df <- sqldf("select decision_rule_signaller, decision_rule_responder, game, all_right_calls_upto, false_positives, false_negatives_upto, women_1, women_2 from results join parameters where num_rounds=999 AND game='carrying_referral'", dbname=sprintf(x, 1))
+	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where num_rounds=1000", dbname=sprintf(x, 1))
+	params <- sqldf("select decision_rule_signaller, decision_rule_responder, game, women_1, women_2, hash from parameters", dbname=sprintf(x, 1))
 	print("Loaded 1..")
 	for(i in 2:16) {
-		df = rbind(df, sqldf("select decision_rule_signaller, decision_rule_responder, game, all_right_calls_upto, false_positives, false_negatives_upto, women_1, women_2 from results join parameters where num_rounds=999 AND game='carrying_referral'", dbname=sprintf(x, i)))
-		print(sprintf("Loaded %d - %s.", i, x))
+		df = rbind(df, sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where num_rounds=1000", dbname=sprintf(x, i)))
+		params = rbind(params, sqldf("select decision_rule_signaller, decision_rule_responder, game, women_1, women_2, hash from parameters", dbname=sprintf(x, i)))
+		print(sprintf("Loaded %d - %s.", i, sprintf(x, i)))
 	}
-	for(i in unique(interaction(df$decision_rule_signaller, df$decision_rule_responder, df$game))) {
-		d <- subset(df, interaction(df$decision_rule_signaller, df$decision_rule_responder, df$game) == i)
+	df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
+	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)
+	for(i in unique(df$hash) {
+		d <- subset(df, df$hash == i)
 		c <- ggplot(d, aes(x=women_1, y=women_2))
 		png(sprintf("../figures/right_calls_%s_%s_%s.png", as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))
 		print(c + geom_tile(aes(fill=all_right_calls_upto)))
@@ -21,6 +25,14 @@ for(x in files) {
 
 		png(sprintf("../figures/false_negatives_%s_%s_%s.png", as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))
 		print(c + geom_tile(aes(fill=false_negatives_upto)))
+		dev.off()
+
+		png(sprintf("../figures/type_2_misses_%s_%s_%s.png", as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))
+		print(c + geom_tile(aes(fill=type_2_misses)))
+		dev.off()
+
+		png(sprintf("../figures/payoffs_%s_%s_%s.png", as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))
+		print(c + geom_tile(aes(fill=accrued_payoffs)))
 		dev.off()
 		rm(d)
 	}
