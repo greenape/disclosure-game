@@ -12,8 +12,8 @@ for(x in files) {
 	}
 	df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
 	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)
-	for(i in unique(df$hash) {
-		d <- subset(df, df$hash == i)
+	for(i in unique(interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder))) {
+		d <- subset(df, interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder) == i)
 		c <- ggplot(d, aes(x=women_1, y=women_2))
 		png(sprintf("../figures/right_calls_%s_%s_%s.png", as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))
 		print(c + geom_tile(aes(fill=all_right_calls_upto)))

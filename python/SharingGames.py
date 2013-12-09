@@ -81,8 +81,8 @@ class CarryingInformationGame(CarryingReferralGame):
 
             #if scoop_on:
             #    scoop.logger.debug("Worker %s played %d rounds." % (scoop.worker[0], i))
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        women_res.add_results(self.measures_women.dump(women, self.rounds, self))
+        mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
         del women
         del midwives
         women_res.write_db("%s_women" % file_name)
@@ -141,7 +141,7 @@ class CarryingInformationGame(CarryingReferralGame):
         if memory is None or len(recepients) == 0:
             return
         player_type, signals = memory
-        print "Sharing to midwives.", memory
+        #print "Sharing to midwives.", memory
         tmp_signaller = type(recepients[0])(player_type=player_type)
         for recepient in recepients:
             for signal, response in signals:
@@ -151,7 +151,7 @@ class CarryingInformationGame(CarryingReferralGame):
     def disseminate_women(self, memory, recepients):
         if scoop_on:
             scoop.logger.debug("Sharing a memory to women.")
-        print "Sharing to women.", memory
+        #print "Sharing to women.", memory
         if memory is None:
             return
         for recepient in recepients:
@@ -248,8 +248,8 @@ class CaseloadSharingGame(CarryingInformationGame):
 
             #if scoop_on:
             #    scoop.logger.debug("Worker %s played %d rounds." % (scoop.worker[0], i))
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        women_res.add_results(self.measures_women.dump(women, self.rounds, self))
+        mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
         del women
         del midwives
         women_res.write_db("%s_women" % file_name)
