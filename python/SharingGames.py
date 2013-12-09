@@ -98,7 +98,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #print mw_memories
             #Sort them according to the threshold sign
             if self.mw_share_bias == 0:
-                mw_memories.shuffle()
+                random.shuffle(mw_memories)
             elif copysign(1, self.mw_share_bias) == 1:
                 mw_memories.sort(key=operator.itemgetter(1), reverse=True)
             elif copysign(1, self.mw_share_bias) == -1:
@@ -120,7 +120,7 @@ class CarryingInformationGame(CarryingReferralGame):
     def share_women(self, women, women_memories):
         #Sort them according to the threshold sign
             if self.women_share_bias == 0:
-                women_memories.shuffle()
+                random.shuffle(women_memories)
             elif copysign(1, self.women_share_bias) == 1:
                 women_memories.sort(key=operator.itemgetter(0), reverse=True)
             elif copysign(1, self.women_share_bias) == -1:
