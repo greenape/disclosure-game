@@ -359,6 +359,17 @@ def naive_women_proportions():
         kwargs.append(kwarg)
     return kwargs
 
+def naive_mw_proportions():
+    """
+    Sample space for type proportions.
+    """
+    w = naive_partition()
+    kwargs = []
+    for x in w:
+        kwarg = {'mw_weights':x}
+        kwargs.append(kwarg)
+    return kwargs
+
 def priors_experiment():
     """
     Sample space for midwives' priors.
