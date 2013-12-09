@@ -293,10 +293,7 @@ def experiment(game_fns=[Game, CaseloadGame],
     for pair in agents:
         for game_fn in game_fns:
             for kwarg in kwargs:
-                if 'game_args' in kwarg:
-                    game = game_fn(**kwarg['game_args'])
-                else:
-                    game = game_fn()
+                game = game_fn(**kwarg.pop('game_args', {}))
                 #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
                 kwarg['game'] = game
                 kwarg['signaller_fn'] = pair[0]
