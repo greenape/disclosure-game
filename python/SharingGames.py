@@ -138,7 +138,7 @@ class CarryingInformationGame(CarryingReferralGame):
     def disseminate_midwives(self, memory, recepients):
         if scoop_on:
             scoop.logger.debug("Sharing a memory to midwives.")
-        if memory is None:
+        if memory is None or len(recepients) == 0:
             return
         player_type, signals = memory
         print "Sharing to midwives.", memory
