@@ -31,7 +31,8 @@ def load_kwargs(file_name):
     for kwarg in kwargs:
         assert type(kwarg) is dict, "Kwargs %d is not a valid dictionary." % line
         for arg, value in kwarg.items():
-            assert arg in valid_args, "Kwargs %d, argument: %s is not valid." % (line, arg)
+            if arg != "game_args":
+                assert arg in valid_args, "Kwargs %d, argument: %s is not valid." % (line, arg)
 
         line +=1
 
