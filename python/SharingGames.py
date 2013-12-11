@@ -31,6 +31,8 @@ class CarryingInformationGame(CarryingReferralGame):
         self.women_share_bias = women_share_bias
         self.women_share_width = women_share_width
         self.num_appointments = num_appointments
+        if self.parameters is None:
+            self.parameters = {}
         self.parameters['mw_share_width'] = mw_share_width
         self.parameters['mw_share_bias'] = mw_share_bias
         self.parameters['women_share_width'] = women_share_width

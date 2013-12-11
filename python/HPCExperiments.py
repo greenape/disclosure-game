@@ -99,7 +99,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         #scoop.logger.info("Set priors."
         player_pairs.append((game, women, mw, file_name))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
-    game.parameters = params
+    game.parameters.update(params)
     played = list(futures.map(play_game, player_pairs))
     scoop.logger.info("Worker %s completed a parameter set." % scoop.worker[0])
     
