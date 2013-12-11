@@ -52,7 +52,7 @@ class CarryingInformationGame(CarryingReferralGame):
         random.shuffle(women)
         num_midwives = len(midwives)
         women_res = self.measures_women.dump([], self.rounds, self)
-        mw_res = [self.measures_midwives.dump([], self.rounds, self)]
+        mw_res = self.measures_midwives.dump([], self.rounds, self)
         women_memories = []
         for i in range(rounds):
             players = [women.pop() for j in range(num_midwives)]
