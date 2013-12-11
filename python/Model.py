@@ -1,5 +1,6 @@
 import random
 from Measures import measures_midwives, measures_women
+from collections import OrderedDict
 
 def random_expectations(depth=0, breadth=3, low=1, high=10):
     result = []
@@ -396,7 +397,7 @@ class Game(object):
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
-     measures_midwives=measures_midwives(), params={}):
+     measures_midwives=measures_midwives(), params=OrderedDict()):
         """ A multistage game played by two agents.
         """
         self.signal_log = []
