@@ -277,7 +277,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
         #pair = game.play_game(women, mw, rounds=rounds)
     params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
-    game.parameters = params
+    game.parameters.update(params)
     game.rounds = rounds
     played = map(lambda x: game.play_game(x), player_pairs)
     print("Ran a set of parameters.")
