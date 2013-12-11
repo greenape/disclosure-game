@@ -26,7 +26,7 @@ class Measures(object):
         """
         results = []
         if women is None:
-            return results
+            return Result(self.measures.keys(), game.parameters, results)
         for i in range(rounds):
             line = map(lambda x: x.measure(i, women, game), self.measures.values())
             results.append(line)
@@ -46,7 +46,7 @@ class IndividualMeasures(Measures):
         """
         results = []
         if women is None:
-            return results
+            return Result(self.measures.keys(), game.parameters, results)
         for woman in women:
             line = map(lambda x: x.measure(rounds, [woman], game), self.measures.values())
             results.append(line)

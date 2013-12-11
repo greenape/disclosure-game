@@ -31,6 +31,10 @@ class CarryingInformationGame(CarryingReferralGame):
         self.women_share_bias = women_share_bias
         self.women_share_width = women_share_width
         self.num_appointments = num_appointments
+        self.parameters['mw_share_width'] = mw_share_width
+        self.parameters['mw_share_bias'] = mw_share_bias
+        self.parameters['women_share_width'] = women_share_width
+        self.parameters['women_share_bias'] = women_share_bias
 
     def __str__(self):
         return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
@@ -45,8 +49,8 @@ class CarryingInformationGame(CarryingReferralGame):
         birthed = []
         random.shuffle(women)
         num_midwives = len(midwives)
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        women_res = self.measures_women.dump([], self.rounds, self)
+        mw_res = [self.measures_midwives.dump([], self.rounds, self)]
         women_memories = []
         for i in range(rounds):
             players = [women.pop() for j in range(num_midwives)]
@@ -64,7 +68,7 @@ class CarryingInformationGame(CarryingReferralGame):
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
-                    women_res.add_results(self.measures_women.dump([woman, new_woman], self.rounds, self))
+                    women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
                     women_memories.append(woman.get_memory())
                     del woman
                 else:
@@ -197,8 +201,8 @@ class CaseloadSharingGame(CarryingInformationGame):
         birthed = []
         random.shuffle(women)
         num_midwives = len(midwives)
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        women_res = self.measures_women.dump([], self.rounds, self)
+        mw_res = self.measures_midwives.dump([], self.rounds, self)
         women_memories = []
         caseloads = {}
         num_women = len(women)
@@ -231,7 +235,7 @@ class CaseloadSharingGame(CarryingInformationGame):
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
-                    women_res.add_results(self.measures_women.dump([woman, new_woman], self.rounds, self))
+                    women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
                     women_memories.append(woman.get_memory())
                     del woman
                 else:

@@ -76,7 +76,7 @@ def arguments():
     parser.add_argument('-n', '--nested_agents', dest="nested", action="store_true",
         help="Use nested agents to recognise opponents.")
     parser.add_argument('-p', '--prop_women', dest='women', nargs=3, type=float,
-        help="Proportion sof type 0, 1, 2 women as decimals.")
+        help="Proportions of type 0, 1, 2 women as decimals.")
     parser.add_argument('-c', '--combinations', dest='combinations', action="store_true",
         help="Run all possible combinations of signallers & responders.")
     parser.add_argument('-d', '--directory', dest='dir', type=str,

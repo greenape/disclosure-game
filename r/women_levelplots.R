@@ -3,11 +3,11 @@ library(sqldf)
 files = c("/Users/jg1g12/Downloads/1_women_proportions_women_%s.db", "/Users/jg1g12/Downloads/2_women_proportions_women_%s.db", "/Users/jg1g12/Downloads/3_women_proportions_women_%s.db")
 cols = "player_type, accrued_payoffs, referred, hash"
 for(x in files) {
-	df <- sqldf(sprintf("select %s from results where num_rounds>0 OR referred='True'", cols), dbname=sprintf(x, 1))
+	df <- sqldf(sprintf("select %s from results where num_rounds>0 OR referred=1", cols), dbname=sprintf(x, 1))
 	params <- sqldf("select decision_rule_signaller, decision_rule_responder, game, women_1, women_2, hash from parameters", dbname=sprintf(x, 1))
 	print("Loaded 1..")
 	for(i in 2:16) {
-		df = rbind(df, sqldf(sprintf("select %s from results where num_rounds>0 OR referred='True'", cols), dbname=sprintf(x, i)))
+		df = rbind(df, sqldf(sprintf("select %s from results where num_rounds>0 OR referred=1", cols), dbname=sprintf(x, i)))
 		params = rbind(params, sqldf("select decision_rule_signaller, decision_rule_responder, game, women_1, women_2, hash from parameters", dbname=sprintf(x, i)))
 		print(sprintf("Loaded %d - %s.", i, sprintf(x, i)))
 	}
