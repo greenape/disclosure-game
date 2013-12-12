@@ -151,6 +151,13 @@ class LastSignal(Measure):
             pass
         return signal
 
+class RoundSignal(Measure):
+    def measure(self, roundnum, women, game):
+        try:
+            signal = woman[0].signal_log[self.player_type]
+        except:
+            signal = "NA"
+        return signal
 
 class TypeSignal(Measure):
     """
@@ -567,6 +574,8 @@ def indiv_measures_women():
         # Midwife types seen, signals sent
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
         measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
+    for i in range(12):
+        measures['round_%d_signal'] = RoundSignal(player_type = i)
     return IndividualMeasures(measures)
 
 def indiv_measures_mw():

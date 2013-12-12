@@ -70,7 +70,8 @@ class CarryingInformationGame(CarryingReferralGame):
                     new_woman.finished = i
                     women.insert(0, new_woman)
                     women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
-                    women_memories.append(woman.get_memory())
+                    if women_share_width > 0 and abs(women_share_bias) != 1:
+                        women_memories.append(woman.get_memory())
                     del woman
                 else:
                     women.insert(0, woman)
