@@ -33,13 +33,15 @@ def experiment(game_fns=[Game, CaseloadGame],
     for pair in agents:
         for game_fn in game_fns:
             for kwarg in kwargs:
-                game = game_fn(**kwarg.pop('game_args', {}))
+                arg = kwarg.copy()
+                game = game_fn(**arg.pop('game_args', {}))
                 #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
-                kwarg['game'] = game
-                kwarg['signaller_fn'] = pair[0]
-                kwarg['responder_fn'] = pair[1]
-                run_params.append(kwarg.copy())
+                arg['game'] = game
+                arg['signaller_fn'] = pair[0]
+                arg['responder_fn'] = pair[1]
+                run_params.append(arg)
     scoop.logger.info("Made %d parameter sets" % len(run_params))
+    #cPickle.dump(run_params, open("params.fuckit", "wb"))
     return kw_experiment(run_params)
 
 def kw_experiment(kwargs):
@@ -60,9 +62,10 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                         file_name=""):
 
     sys.setrecursionlimit(1000)
-    
+    #print "Start:", game.parameters
     if game is None:
         game = Game()
+        print "New default game."
     game.rounds = rounds
     game.measures_midwives = measures_midwives
     game.measures_women = measures_women
@@ -99,7 +102,9 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         #scoop.logger.info("Set priors."
         player_pairs.append((game, women, mw, file_name))
     params = params_dict(str(player_pairs[0][1][0]), str(player_pairs[0][2][0]), mw_weights, women_weights, game, rounds)
-    game.parameters.update(params)
+    for key, value in params.items():
+        game.parameters[key] = value
+    #print game.parameters
     played = list(futures.map(play_game, player_pairs))
     scoop.logger.info("Worker %s completed a parameter set." % scoop.worker[0])
     

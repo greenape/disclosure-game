@@ -277,7 +277,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
         #pair = game.play_game(women, mw, rounds=rounds)
     params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
-    game.parameters.update(params)
+    for key, value in params.items():
+        game.parameters[key] = value
     game.rounds = rounds
     played = map(lambda x: game.play_game(x), player_pairs)
     print("Ran a set of parameters.")
@@ -294,12 +295,13 @@ def experiment(game_fns=[Game, CaseloadGame],
     for pair in agents:
         for game_fn in game_fns:
             for kwarg in kwargs:
-                game = game_fn(**kwarg.pop('game_args', {}))
+                arg = kwarg.copy()
+                game = game_fn(**arg.pop('game_args', {}))
                 #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
-                kwarg['game'] = game
-                kwarg['signaller_fn'] = pair[0]
-                kwarg['responder_fn'] = pair[1]
-                run_params.append(kwarg.copy())
+                arg['game'] = game
+                arg['signaller_fn'] = pair[0]
+                arg['responder_fn'] = pair[1]
+                run_params.append(arg)
     return kw_experiment(run_params)
 
 def kw_experiment(kwargs):
