@@ -70,7 +70,7 @@ class CarryingInformationGame(CarryingReferralGame):
                     new_woman.finished = i
                     women.insert(0, new_woman)
                     women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
-                    if women_share_width > 0 and abs(women_share_bias) != 1:
+                    if self.women_share_width > 0 and abs(self.women_share_bias) != 1:
                         women_memories.append(woman.get_memory())
                     del woman
                 else:
@@ -238,7 +238,8 @@ class CaseloadSharingGame(CarryingInformationGame):
                     new_woman.finished = i
                     women.insert(0, new_woman)
                     women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
-                    women_memories.append(woman.get_memory())
+                    if self.women_share_width > 0 and abs(self.women_share_bias) != 1:
+                        women_memories.append(woman.get_memory())
                     del woman
                 else:
                     women.insert(0, woman)
@@ -254,6 +255,7 @@ class CaseloadSharingGame(CarryingInformationGame):
 
             #if scoop_on:
             #    scoop.logger.debug("Worker %s played %d rounds." % (scoop.worker[0], i))
+        women = reduce(lambda x, y: x + y, caseloads.values())
         women_res.add_results(self.measures_women.dump(women, self.rounds, self))
         mw_res.add_results(self.measures_midwives.dump(midwives, self.rounds, self))
         del women
@@ -263,84 +265,3 @@ class CaseloadSharingGame(CarryingInformationGame):
         if scoop_on:
             scoop.logger.debug("Worker %s completed a game." % (scoop.worker[0]))
         return None
-
-
-        women, midwives = players
-        player_dist = self.get_distribution(women)
-
-        rounds = self.rounds
-        birthed = []
-        random.shuffle(women)
-        num_midwives = len(midwives)
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
-        caseloads = {}
-        num_women = len(women)
-        num_midwives = len(midwives)
-        load = num_women / num_midwives
-        random.shuffle(women)
-        for midwife in midwives:
-            caseloads[midwife] = []
-            for i in range(load):
-                caseloads[midwife].append(women.pop())
-         # Assign leftovers at random
-        while len(women) > 0:
-            caseloads[random.choice(midwives)].append(women.pop())
-
-        for i in range(rounds):
-            players = [caseloads[midwife].pop() for midwife in midwives]
-            random.shuffle(midwives)
-            map(self.play_round, players, midwives)
-            for x in midwives:
-                x.finished += 1
-            for j in range(len(players)):
-                woman = players[j]
-                women = caseloads[midwives[j]]
-                if self.all_played([woman], self.num_appointments):
-                    woman.is_finished = True
-                    # Add a new naive women back into the mix
-                    new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
-                    new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(), [random_expectations(breadth=2) for x in range(3)])
-                    new_woman.started = i
-                    new_woman.finished = i
-                    women.insert(0, new_woman)
-                    women_res.add_results(self.measures_women.dump([woman, new_woman], self.rounds, self))
-                    birthed.append(woman)
-                else:
-                    women.insert(0, woman)
-                    woman.finished += 1
-            # Share information
-            #Midwives
-            mw_memories = map(lambda x: self.should_share(x, self.mw_share_bias), midwives)
-            for owner, memory in mw_memories:
-                possibles = filter(lambda x: hash(x) != owner, midwives)
-                self.share(memory, self.share_to(possibles, self.mw_share_width))
-            w_memories = []
-            new_birthed = []
-            women = reduce(lambda x, y: x + y, caseloads.values())
-            while len(birthed) > 0:
-                woman = birthed.pop()
-                mem = self.should_share(woman, self.women_share_bias)
-                if mem is None:
-                    new_birthed.append(woman)
-                else:
-                    self.share(mem, self.share_to(women, self.women_share_width))
-            birthed = new_birthed
-
-
-
-            #if scoop_on:
-            #    scoop.logger.debug("Worker %s played %d rounds." % (scoop.worker[0], i))
-        women = reduce(lambda x, y: x + y, caseloads.values())
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
-        del women
-        del midwives
-        women_res.write_db("%s_women" % file_name)
-        mw_res.write_db("%s_mw" % file_name)
-        if scoop_on:
-            scoop.logger.debug("Worker %s completed a game." % (scoop.worker[0]))
-        return None    
-
-
