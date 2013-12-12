@@ -575,7 +575,7 @@ def indiv_measures_women():
         measures['type_%d_frequency' % i] = TypeExperience(player_type=i, present=False)
         measures['signal_%d_frequency' % i] = SignalExperience(signal=i, present=False)
     for i in range(12):
-        measures['round_%d_signal'] = RoundSignal(player_type = i)
+        measures['round_%d_signal' % i] = RoundSignal(player_type = i)
     return IndividualMeasures(measures)
 
 def indiv_measures_mw():
