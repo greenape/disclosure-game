@@ -9,8 +9,10 @@ def random_expectations(depth=0, breadth=3, low=1, high=10):
         for i in range(breadth - 1):
             n = random.randint(low, initial - (low * (breadth - i)))
             initial -= n
+            print "n:",n
             result.append(n)
         result.append(initial - low)
+        random.shuffle(result)
     else:
         result = [random_expectations(depth - 1, breadth, low, high) for x in range(breadth)]
     return result

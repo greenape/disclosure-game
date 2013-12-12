@@ -503,7 +503,7 @@ class FalsePositiveUpto(Measure):
                 response = r_log[i]
                 player = t_log[i]
                 if response == 1:
-                    if player == 0:
+                    if player != 0:
                         total_right += 1
                     total_calls += 1
         if total_calls == 0:
@@ -549,6 +549,8 @@ class Response(Measure):
 
 class AccruedPayoffs(Measure):
     def measure(self, roundnum, women, game):
+        if self.player_type is not None:
+            women = filter(lambda x: x.player_type == self.player_type, women)
         total = sum(map(lambda x: x.accrued_payoffs, women))
         return total / float(len(women))
                
