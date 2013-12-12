@@ -238,7 +238,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     runs=1, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
     women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
-    nested=False, mw_priors=None):
+    nested=False, mw_priors=None, file_name=""):
 
     if game is None:
         game = Game()
@@ -280,12 +280,9 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     for key, value in params.items():
         game.parameters[key] = value
     game.rounds = rounds
-    played = map(lambda x: game.play_game(x), player_pairs)
+    played = map(lambda x: game.play_game(x, file_name), player_pairs)
     print("Ran a set of parameters.")
-    women_res, midwives_res, pile = zip(*played)
-    women_res = reduce(lambda x, y: x.add_results(y), women_res)
-    midwives_res = reduce(lambda x, y: x.add_results(y), midwives_res)
-    return women_res, midwives_res, pile
+    return None
 
 
 def experiment(game_fns=[Game, CaseloadGame], 
@@ -302,7 +299,7 @@ def experiment(game_fns=[Game, CaseloadGame],
                 arg['signaller_fn'] = pair[0]
                 arg['responder_fn'] = pair[1]
                 run_params.append(arg)
-    return kw_experiment(run_params)
+    kw_experiment(run_params)
 
 def kw_experiment(kwargs):
     """
@@ -310,7 +307,7 @@ def kw_experiment(kwargs):
     defined by a list of keyword argument dictionaries.
     """
     pool = Pool()
-    return pool.map(run, kwargs)
+    map(run, kwargs)
 
 
 def proportions(num):
@@ -469,15 +466,7 @@ def main():
     if test:
         print("This is a test of the emergency broadcast system. This is only a test.")
     else:
-        women, midwives, pile = zip(*experiment(games, players, kwargs=kwargs))
-        women = reduce(lambda x, y: x.add_results(y), women)
-        midwives = reduce(lambda x, y: x.add_results(y), midwives)
-        women.write("%swomen.csv.gz" % file_name)
-        midwives.write("%smw.csv.gz" % file_name)
-        women.write_params("%sparams.csv.gz" % file_name)
-        fp = gzip.open("%s.pickle.gz" % file_name, "wb")
-        cPickle.dump(pile, fp, cPickle.HIGHEST_PROTOCOL)
-        fp.close()
+        experiment(games, players, kwargs=kwargs)
 
 if __name__ == "__main__":
     main()

@@ -72,6 +72,8 @@ class CarryingInformationGame(CarryingReferralGame):
                     women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
                     if self.women_share_width > 0 and abs(self.women_share_bias) != 1:
                         women_memories.append(woman.get_memory())
+                    for midwife in midwives:
+                        midwife.signal_memory.pop(hash(woman), None)
                     del woman
                 else:
                     women.insert(0, woman)
@@ -240,6 +242,8 @@ class CaseloadSharingGame(CarryingInformationGame):
                     women_res.add_results(self.measures_women.dump([woman], self.rounds, self))
                     if self.women_share_width > 0 and abs(self.women_share_bias) != 1:
                         women_memories.append(woman.get_memory())
+                    for midwife in midwives:
+                        midwife.signal_memory.pop(hash(woman), None)
                     del woman
                 else:
                     women.insert(0, woman)

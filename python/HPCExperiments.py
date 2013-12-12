@@ -41,7 +41,7 @@ def experiment(game_fns=[Game, CaseloadGame],
                 arg['responder_fn'] = pair[1]
                 run_params.append(arg)
     scoop.logger.info("Made %d parameter sets" % len(run_params))
-    #cPickle.dump(run_params, open("params.fuckit", "wb"))
+    cPickle.dump(run_params, open("params.fuckit", "wb"))
     return kw_experiment(run_params)
 
 def kw_experiment(kwargs):
