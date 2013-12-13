@@ -194,7 +194,9 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
     player_pairs = []
-    for i in range(runs):
+    #for i in range(runs):
+    i =  0
+    while i < runs:
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
         #logger.info "Making run %d/%d on %s" % (i + 1, runs, file_name)
@@ -216,12 +218,14 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
         #logger.info("Set priors.")
-        player_pairs.append((deepcopy(game), women, mw))
+        #player_pairs.append((deepcopy(game), women, mw))
+        yield (deepcopy(game), women, mw)
+        i += 1
 
         #pair = game.play_game(women, mw, rounds=rounds)
     #played = map(lambda x: game.play_game(x, "%s_%s" % (file_name, str(game))), player_pairs)
     #logger.info("Ran a set of parameters.")
-    return player_pairs
+    #return player_pairs
 
 def play_game(config):
     """
@@ -235,9 +239,9 @@ def make_work(queue, kwargs, num_consumers):
     i = 1
     while len(kwargs) > 0:
         exps = decision_fn_compare(**kwargs.pop())
-        while len(exps) > 0:
+        for exp in exps:
             logger.info("Enqueing experiment %d" %  i)
-            queue.put((i, exps.pop()))
+            queue.put((i, exp))
             i += 1
     for i in range(num_consumers):
         queue.put(None)
@@ -251,7 +255,7 @@ def do_work(queueIn, queueOut):
         try:
             number, config = queueIn.get()
             logger.info("Running game %d." % number)
-            res = play_game(config)
+            res = (number, play_game(config))
             queueOut.put(res)
             del config
         except:
@@ -261,8 +265,9 @@ def do_work(queueIn, queueOut):
 def write(queue, db_name):
     while True:
         try:
-            women_res, mw_res = queue.get()
-            logger.info("Writing a result.")
+            number, res = queue.get()
+            women_res, mw_res = res
+            logger.info("Writing game %d." % number)
             women_res.write_db("%s_women" % db_name)
             mw_res.write_db("%s_mw" % db_name)
             del women_res
@@ -296,7 +301,7 @@ def kw_experiment(kwargs, file_name):
     """
     num_consumers = multiprocessing.cpu_count()
     #Make tasks
-    jobs = multiprocessing.Queue(num_consumers*2)
+    jobs = multiprocessing.Queue(num_consumers)
     results = multiprocessing.Queue()
     producer = multiprocessing.Process(target = make_work, args = (jobs, kwargs, num_consumers))
     producer.start()
@@ -315,8 +320,6 @@ def kw_experiment(kwargs, file_name):
     writProc.join()
     producer.join()
 
-def run(kwargs):
-    return decision_fn_compare(**kwargs)
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
