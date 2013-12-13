@@ -50,9 +50,14 @@ class Measure(object):
 
 class NumRounds(Measure):
     """
-    Return the average number of rounds a player played.
+    Return the average number of rounds a player played before finishing.
     """
-    def measure(self, roundnum, woman, game):
+    def measure(self, roundnum, women, game):
+        if self.player_type is not None:
+            women = filter(lambda x: x.player_type == self.player_type, women)
+        women = filter(lambda x: x.is_finished, women)
+        if len(women) == 0:
+            return 0.
         return sum(map(lambda woman: woman.finished - woman.started, women)) / float(len(women))
 
 class Referred(Measure):
@@ -392,6 +397,7 @@ def measures_women():
         measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
         measures["type_%d_finished" % i] = TypeFinished(player_type=i)
         measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
+        measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
         for j in range(3):
             measures["type_%d_signal_%d" % (i, j)] = TypeSignalBreakdown(player_type=i, signal=j)
             measures["type_%d_mw_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, midwife_type=j)

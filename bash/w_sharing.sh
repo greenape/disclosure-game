@@ -11,5 +11,5 @@ GAME[3]='-g CarryingInformationGame CaseloadSharingGame -s SharingPayoffProspect
 cd disclosure-game/python
 ulimit -n 512
 module load python
-#source /home/jg1g12/hpc/bin/activate
-python -m scoop -v HPCExperiments.py -R 25 ${GAME[$PBS_ARRAYID]}  --pickled-arguments w_sharing.args -f ${PBS_ARRAYID}_women_sharing --individual-measures -i 1000 -d /scratch/jg1g12
+source /home/jg1g12/hpc/bin/activate
+pypy Run.py -R 25 ${GAME[$PBS_ARRAYID]}  --pickled-arguments w_sharing.args -f ${PBS_ARRAYID}_women_sharing --individual-measures -i 1000 -d /scratch/jg1g12

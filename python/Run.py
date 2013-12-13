@@ -228,10 +228,13 @@ def play_game(config):
 
 
 def make_work(queue, kwargs, num_consumers):
-    for arg in kwargs:
-        for exp in decision_fn_compare(**arg):
-            print("Enqueing")
-            queue.put(exp)
+    i = 1
+    while len(kwargs) > 0:
+        exps = decision_fn_compare(**kwargs.pop())
+        while len(exps) > 0:
+            print("Enqueing experiment %d" %  i)
+            queue.put((i, exps.pop()))
+            i += 1
     for i in range(num_consumers):
         queue.put(None)
 
@@ -242,10 +245,11 @@ def do_work(queueIn, queueOut):
     """
     while True:
         try:
-            config = queueIn.get()
-            print("Running a game.")
+            number, config = queueIn.get()
+            print("Running game %d." % number)
             res = play_game(config)
             queueOut.put(res)
+            del config
         except:
             print("Done.")
             break
@@ -257,6 +261,8 @@ def write(queue, db_name):
             print("Writing a result.")
             women_res.write_db("%s_women" % db_name)
             mw_res.write_db("%s_mw" % db_name)
+            del women_res
+            del mw_res
         except sqlite3.OperationalError:
             raise
         except:
