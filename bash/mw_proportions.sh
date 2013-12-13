@@ -11,5 +11,5 @@ GAME[3]='-g CarryingInformationGame CaseloadSharingGame -s SharingPayoffProspect
 cd disclosure-game/python
 ulimit -n 512
 module load python
-source /home/jg1g12/hpc/bin/activate
-pypy Run.py -R 10 ${GAME[$PBS_ARRAYID]}  --pickled-arguments mw_proportions.args -f ${PBS_ARRAYID}_mw_proportions --individual-measures -i 1000 -d /scratch/jg1g12
+#source /home/jg1g12/hpc/bin/activate
+python Run.py -R 10 ${GAME[$PBS_ARRAYID]}  --pickled-arguments mw_proportions.args -f ${PBS_ARRAYID}_mw_proportions -i 1000 -d /scratch/jg1g12

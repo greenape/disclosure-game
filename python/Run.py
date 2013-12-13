@@ -22,6 +22,10 @@ from Experiments import *
 from copy import deepcopy
 import sqlite3
 import sys
+import logging
+
+logger = multiprocessing.log_to_stderr()
+logger.setLevel(logging.INFO)
 
 def load_kwargs(file_name):
     
@@ -115,10 +119,10 @@ def arguments():
                 tmp.update(arg)
                 kwargs.append(tmp)
         except IOError:
-            print("Couldn't open %s." % args.kwargs)
+            logger.info("Couldn't open %s." % args.kwargs)
             raise
         except cPickle.UnpicklingError:
-            print("Not a valid pickle file.")
+            logger.info("Not a valid pickle file.")
             raise
     return games, players, kwargs, args.runs, args.test_only, file_name
 
@@ -193,11 +197,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     for i in range(runs):
         # Parity across different conditions but random between runs.
         random.seed(seeds[i])
-        #print "Making run %d/%d on %s" % (i + 1, runs, file_name)
+        #logger.info "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
         women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
-        #print "made %d women." % len(women)
+        #logger.info "made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
             if women_priors is not None:
@@ -206,17 +210,17 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
                 woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
         if women_modifier is not None:
             women_modifier(women)
-        #print("Set priors.")
+        #logger.info("Set priors.")
         mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
-        #print("Made agents.")
+        #logger.info("Made agents.")
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
-        #print("Set priors.")
+        #logger.info("Set priors.")
         player_pairs.append((deepcopy(game), women, mw))
 
         #pair = game.play_game(women, mw, rounds=rounds)
     #played = map(lambda x: game.play_game(x, "%s_%s" % (file_name, str(game))), player_pairs)
-    #print("Ran a set of parameters.")
+    #logger.info("Ran a set of parameters.")
     return player_pairs
 
 def play_game(config):
@@ -232,7 +236,7 @@ def make_work(queue, kwargs, num_consumers):
     while len(kwargs) > 0:
         exps = decision_fn_compare(**kwargs.pop())
         while len(exps) > 0:
-            print("Enqueing experiment %d" %  i)
+            logger.info("Enqueing experiment %d" %  i)
             queue.put((i, exps.pop()))
             i += 1
     for i in range(num_consumers):
@@ -246,19 +250,19 @@ def do_work(queueIn, queueOut):
     while True:
         try:
             number, config = queueIn.get()
-            print("Running game %d." % number)
+            logger.info("Running game %d." % number)
             res = play_game(config)
             queueOut.put(res)
             del config
         except:
-            print("Done.")
+            logger.info("Done.")
             break
 
 def write(queue, db_name):
     while True:
         try:
             women_res, mw_res = queue.get()
-            print("Writing a result.")
+            logger.info("Writing a result.")
             women_res.write_db("%s_women" % db_name)
             mw_res.write_db("%s_mw" % db_name)
             del women_res
@@ -316,12 +320,12 @@ def run(kwargs):
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
-    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
+    logger.info("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
-    print("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
-    print "File is %s" % file_name
+    logger.info("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
+    logger.info("File is %s" % file_name)
     if test:
-        print("This is a test of the emergency broadcast system. This is only a test.")
+        logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
         experiment(file_name, games, players, kwargs=kwargs)
 
