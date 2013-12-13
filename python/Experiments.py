@@ -9,7 +9,7 @@ from HeuristicAgents import *
 from PayoffAgents import *
 from SharingGames import *
 from Dolls import *
-from multiprocessing import Pool
+from multiprocessing import Pool, Queue
 from Measures import *
 import multiprocessing
 import itertools
@@ -19,159 +19,12 @@ from os.path import expanduser
 import cPickle
 import gzip
 
-def load_kwargs(file_name):
-    
-    f = open(file_name, "r")
-    kwargs = cPickle.load(f)
-    f.close()
-    assert type(kwargs) is list, "%s does not contain a pickled list." % file_name
-    #Check this is a valid list of dicts
-    valid_args = decision_fn_compare.func_code.co_varnames[:decision_fn_compare.func_code.co_argcount]
-    line = 0
-    for kwarg in kwargs:
-        assert type(kwarg) is dict, "Kwargs %d is not a valid dictionary." % line
-        for arg, value in kwarg.items():
-            if arg != "game_args":
-                assert arg in valid_args, "Kwargs %d, argument: %s is not valid." % (line, arg)
-
-        line +=1
-
-    return kwargs
-
-def arguments():
-    parser = argparse.ArgumentParser(
-        description='Run some variations of the disclosure game with all combinations of games, signallers and responders provided.')
-    parser.add_argument('-g', '--games', type=str, nargs='*',
-                   help='A game type to play.', default=['Game', 'CaseloadGame'],
-                   choices=['Game', 'CaseloadGame', 'RecognitionGame', 'ReferralGame',
-                   'CaseloadRecognitionGame', 'CaseloadReferralGame', 'CarryingGame',
-                   'CarryingReferralGame', 'CarryingCaseloadReferralGame', 'CaseloadSharingGame',
-                   'CarryingInformationGame'],
-                   dest="games")
-    parser.add_argument('-s','--signallers', type=str, nargs='*',
-        help='A signaller type.', default=["BayesianSignaller"],
-        choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
-        'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
-        'PayoffProspectSignaller', 'SharingBayesianPayoffSignaller', 'SharingLexicographicSignaller',
-        'SharingPayoffProspectSignaller'],
-        dest="signallers")
-    parser.add_argument('-r','--responders', type=str, nargs='*',
-        help='A responder type.', default=["BayesianResponder"],
-        choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
-        'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder',
-        'SharingBayesianPayoffResponder', 'SharingLexicographicResponder',
-        'PayoffProspectResponder', 'SharingPayoffProspectResponder',
-        'RecognitionResponder', 'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
-        'PayoffProspectResponder', 'RecognitionPayoffProspectResponder'], dest="responders")
-    parser.add_argument('-R','--runs', dest='runs', type=int,
-        help="Number of runs for each combination of players and games.",
-        default=100)
-    parser.add_argument('-i','--rounds', dest='rounds', type=int,
-        help="Number of rounds each woman plays for.",
-        default=100)
-    parser.add_argument('-f','--file', dest='file_name', default="", type=str,
-        help="File name prefix for csv output.")
-    parser.add_argument('-t', '--test', dest='test_only', action="store_true", 
-        help="Sets test mode on, and doesn't actually run the simulations.")
-    parser.add_argument('-n', '--nested_agents', dest="nested", action="store_true",
-        help="Use nested agents to recognise opponents.")
-    parser.add_argument('-p', '--prop_women', dest='women', nargs=3, type=float,
-        help="Proportions of type 0, 1, 2 women as decimals.")
-    parser.add_argument('-c', '--combinations', dest='combinations', action="store_true",
-        help="Run all possible combinations of signallers & responders.")
-    parser.add_argument('-d', '--directory', dest='dir', type=str,
-        help="Optional directory to store results in. Defaults to user home.",
-        default=expanduser("~"), nargs="?")
-    parser.add_argument('--pickled-arguments', dest='kwargs', type=str, nargs='?',
-        default=None, help="A file containing a pickled list of kwarg dictionaries to be run.")
-    parser.add_argument('--individual-measures', dest='indiv', action="store_true",
-        help="Take individual outcome measures instead of group level.", default=False)
-
-    args = parser.parse_args()
-    file_name = "%s/%s" % (args.dir, args.file_name)
-    games = map(eval, args.games)
-    if args.combinations:
-        players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
-    else:
-        players = zip(map(eval, args.signallers), map(eval, args.responders))
-    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested, 'file_name':file_name}
-    if args.women is not None:
-        kwargs['women_weights'] = args.women
-    if args.indiv:
-        kwargs['measures_midwives'] = indiv_measures_mw()
-        kwargs['measures_women'] = indiv_measures_women()
-    kwargs = [kwargs]
-    if args.kwargs is not None:
-        try:
-            new_args = load_kwargs(args.kwargs)
-            old = kwargs[0]
-            kwargs = []
-            for arg in new_args:
-                tmp = old.copy()
-                tmp.update(arg)
-                kwargs.append(tmp)
-        except IOError:
-            print("Couldn't open %s." % args.kwargs)
-            raise
-        except cPickle.UnpicklingError:
-            print("Not a valid pickle file.")
-            raise
-    return games, players, kwargs, args.runs, args.test_only, file_name
-
-
-def write_results_set(file_name, results, sep=","):
-    results = list(results)
-    write_results(file_name, results.pop(), 'w')
-    for result in results:
-        write_results(file_name, result, 'a', sep)
-
-
-def write_results(file_name, results, mode, sep=","):
-    """
-    Write a results dictionary to a (csv) file.
-    """
-    if mode == 'w':
-        result = [sep.join(results['fields'])]
-    else:
-        result = ["\n"]
-    result += map(lambda l: sep.join(map(str, l)), results['results'])
-    file = open(file_name, mode)
-    file.write("\n".join(result))
-    file.close()
-
 
 def scale_weights(weights, top):
     scaling = top / float(sum(weights))
     for i in range(len(weights)):
         weights[i] *= scaling
     return weights
-
-
-def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
-    signaller=True):
-    women = []
-    player_type = 0
-    for weight in weights:
-        for i in range(int(round(weight*num))):
-            if len(women) == num: break
-            if nested:
-                if signaller:
-                    women.append(DollSignaller(player_type=player_type, child_fn=constructor))
-                else:
-                    women.append(constructor(player_type=player_type))    
-            else:
-                women.append(constructor(player_type=player_type))
-        player_type += 1
-    while len(women) < num:
-        player_type = 0
-        if nested:
-            if signaller:
-                women.append(DollSignaller(player_type=player_type, child_fn=constructor))
-            else:
-                women.append(constructor(player_type=player_type))    
-        else:
-            women.append(constructor(player_type=player_type))
-    return women
 
 
 def make_random_patients(signaller, num=1000, weights=[1/3., 1/3., 1/3.]):
@@ -212,103 +65,6 @@ def make_random_midwives(responder, num=100, weights=[80/100., 15/100., 5/100.])
     for i in range(num):
         midwives.append(responder(player_type=weighted_choice(zip([0, 1, 2], weights))))
     return midwives
-
-
-def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds):
-    params = OrderedDict()
-    params['game'] = str(game)
-    params['decision_rule_responder'] = responder_rule
-    params['decision_rule_signaller'] = signaller_rule
-    params['caseload'] = game.is_caseloaded()
-    params['mw_0'] = mw_weights[0]
-    params['mw_1'] = mw_weights[1]
-    params['mw_2'] = mw_weights[2]
-    params['women_0'] = women_weights[0]
-    params['women_1'] = women_weights[1]
-    params['women_2'] = women_weights[2]
-    params['max_rounds'] = rounds
-
-    for i in range(3):
-        for j in range(3):
-            params['weight_%d_%d' % (i, j)] = game.type_weights[i][j]
-    return params
-
-def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianResponder,
-    num_midwives=100, num_women=1000, 
-    runs=1, game=None, rounds=100,
-    mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
-    women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
-    nested=False, mw_priors=None, file_name=""):
-
-    if game is None:
-        game = Game()
-    if mw_priors is not None:
-        game.type_weights = mw_priors
-
-    game.measures_midwives = measures_midwives
-    game.measures_women = measures_women
-
-    if seeds is None:
-        seeds = [random.random() for x in range(runs)]
-    player_pairs = []
-    for i in range(runs):
-        # Parity across different conditions but random between runs.
-        random.seed(seeds[i])
-        #print "Making run %d/%d on %s" % (i + 1, runs, file_name)
-
-        #Make players and initialise beliefs
-        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
-        #print "made %d women." % len(women)
-        for j in range(len(women)):
-            woman = women[j]
-            if women_priors is not None:
-                woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, women_priors[j][0], women_priors[j][1])
-            else:
-                woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
-        if women_modifier is not None:
-            women_modifier(women)
-        #print("Set priors.")
-        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
-        #print("Made agents.")
-        for midwife in mw:
-            midwife.init_payoffs(game.midwife_payoff, game.type_weights)
-        #print("Set priors.")
-        player_pairs.append((women, mw))
-
-        #pair = game.play_game(women, mw, rounds=rounds)
-    params = params_dict(str(player_pairs[0][0][0]), str(player_pairs[0][1][0]), mw_weights, women_weights, game, rounds)
-    for key, value in params.items():
-        game.parameters[key] = value
-    game.rounds = rounds
-    played = map(lambda x: game.play_game(x, file_name), player_pairs)
-    print("Ran a set of parameters.")
-    return None
-
-
-def experiment(game_fns=[Game, CaseloadGame], 
-    agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
-    kwargs=[{}]):
-    run_params = []
-    for pair in agents:
-        for game_fn in game_fns:
-            for kwarg in kwargs:
-                arg = kwarg.copy()
-                game = game_fn(**arg.pop('game_args', {}))
-                #kwarg.update({'measures_midwives': measures_midwives, 'measures_women': measures_women})
-                arg['game'] = game
-                arg['signaller_fn'] = pair[0]
-                arg['responder_fn'] = pair[1]
-                run_params.append(arg)
-    kw_experiment(run_params)
-
-def kw_experiment(kwargs):
-    """
-    Run a bunch of experiments in parallel. Experiments are
-    defined by a list of keyword argument dictionaries.
-    """
-    pool = Pool()
-    map(run, kwargs)
-
 
 def proportions(num):
     """
@@ -452,21 +208,3 @@ def lhs_sampling(samples):
         run_params.append(args)
         #random.setstate(random_state)
     return kw_experiment(run_params)
-
-def run(kwargs):
-    return decision_fn_compare(**kwargs)
-
-
-def main():
-    games, players, kwargs, runs, test, file_name = arguments()
-    print("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
-        len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
-    print("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
-    print "File is %s" % file_name
-    if test:
-        print("This is a test of the emergency broadcast system. This is only a test.")
-    else:
-        experiment(games, players, kwargs=kwargs)
-
-if __name__ == "__main__":
-    main()

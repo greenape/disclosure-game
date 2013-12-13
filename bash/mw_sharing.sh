@@ -12,4 +12,4 @@ cd disclosure-game/python
 ulimit -n 512
 module load python
 source /home/jg1g12/hpc/bin/activate
-pypy HPCExperiments.py -R 25 ${GAME[$PBS_ARRAYID]}  --pickled-arguments mw_sharing.args -f ${PBS_ARRAYID}_mw_sharing --individual-measures -i 1000 -d /scratch/jg1g12
+pypy Experiments.py -R 25 ${GAME[$PBS_ARRAYID]}  --pickled-arguments mw_sharing.args -f ${PBS_ARRAYID}_mw_sharing --individual-measures -i 1000 -d /scratch/jg1g12

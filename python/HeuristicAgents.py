@@ -2,6 +2,7 @@ from Model import *
 from RecognitionAgents import RecognitionResponder
 from SharingAgents import *
 import operator
+import random
 
 class LexicographicSignaller(BayesianSignaller):
     """
@@ -26,7 +27,8 @@ class LexicographicSignaller(BayesianSignaller):
             self.depth = max(len(payoffs), self.depth)
         # Psuedocounts go in
         for signal in self.signals:
-            weights = random_expectations(breadth=len(self.payoff_count[signal]), high=10)
+            breadth = len(self.payoff_count[signal])
+            weights = random_expectations(breadth=breadth, high=random.randint(breadth, 10))
             i = 0
             for payoff in self.payoff_count[signal].keys():
                 self.payoff_count[signal][payoff] = weights[i]

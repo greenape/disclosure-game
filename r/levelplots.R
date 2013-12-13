@@ -11,7 +11,6 @@ for(x in files) {
 		params = rbind(params, sqldf("select decision_rule_signaller, decision_rule_responder, game, mw_share_width, mw_share_bias, hash from parameters", dbname=sprintf(x, i)))
 		print(sprintf("Loaded %d - %s.", i, sprintf(x, i)))
 	}
-	df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
 	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)
 	for(i in unique(interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder))) {
 		d <- subset(df, interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder) == i)
