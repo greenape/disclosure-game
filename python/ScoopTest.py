@@ -12,17 +12,7 @@ from Dolls import *
 import multiprocessing
 from Measures import *
 import itertools
-from collections import OrderedDict
-import argparse
-from os.path import expanduser
-import cPickle
-import pickle
-import gzip
 from Experiments import *
-from copy import deepcopy
-import sqlite3
-import sys
-import logging
 from scoop import futures
 import scoop
 from Run import play_game, decision_fn_compare, arguments, write, make_work, logger
@@ -65,11 +55,11 @@ def kw_experiment(kwargs, file_name):
     """
     num_consumers = scoop.SIZE
     #Make tasks
-    jobs = multiprocessing.Queue(int(num_consumers * 1.5))
+    jobs = multiprocessing.Queue(num_consumers)
     results = multiprocessing.Queue()
     producer = multiprocessing.Process(target = make_work, args = (jobs, kwargs, num_consumers))
     producer.start()
-    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results)) for i in range(num_consumers)]
+    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results)) for i in range(num_consumers - 1)]
     writProc = multiprocessing.Process(target = write, args = (results, file_name))
     writProc.start()
 
@@ -79,9 +69,10 @@ def kw_experiment(kwargs, file_name):
         try:
             p.join()
         except KeyboardInterrupt:
-            for proc in calcProc:
-                p.terminate()
-            break
+            for p in calcProc:
+                jobs.put(None)
+                jobs.close()
+            producer.interrupt()
     results.put(None)
     writProc.join()
     producer.join()

@@ -18,6 +18,7 @@ class BayesianPayoffSignaller(LexicographicSignaller):
             for payoff, belief in payoffs.items():
                 n_k = self.payoff_count[signal][payoff]
                 n = sum(self.payoff_count[signal].values())
+                del belief[:]
                 belief.append(n_k / float(n))
 
     def risk(self, signal, opponent):
@@ -56,6 +57,7 @@ class BayesianPayoffResponder(LexicographicResponder):
                     #print self.payoff_count
                     n_k = self.payoff_count[signal][response][payoff]
                     n = sum(self.payoff_count[signal][response].values())
+                    del belief[:]
                     belief.append(n_k / float(n))
 
     def risk(self, act, signal, opponent):

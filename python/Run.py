@@ -258,6 +258,8 @@ def do_work(queueIn, queueOut):
             res = (number, play_game(config))
             queueOut.put(res)
             del config
+        except MemoryError:
+            raise
         except:
             logger.info("Done.")
             break
@@ -315,9 +317,14 @@ def kw_experiment(kwargs, file_name):
         try:
             p.join()
         except KeyboardInterrupt:
-            break
+            for p in calcProc:
+                jobs.put(None)
+            jobs.close()
     results.put(None)
     writProc.join()
+    while True:
+        if jobs.get() is None:
+            break
     producer.join()
 
 

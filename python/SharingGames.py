@@ -44,8 +44,7 @@ class CarryingInformationGame(CarryingReferralGame):
         return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
 
     def play_game(self, players, file_name=""):
-        if scoop_on:
-            scoop.logger.debug("Worker %s playing a game." % (scoop.worker[0]))
+        LOG.debug("Worker %s playing a game." % (scoop.worker[0]))
         women, midwives = players
         player_dist = self.get_distribution(women)
 
@@ -83,8 +82,7 @@ class CarryingInformationGame(CarryingReferralGame):
                     women.insert(0, woman)
                     woman.finished += 1
             # Share information
-            if scoop_on:
-                scoop.logger.debug("Worker %s prepping share." % (scoop.worker[0]))
+            LOG.debug("Worker %s prepping share." % (scoop.worker[0]))
             #Midwives
             self.share_midwives(midwives)
 
@@ -96,8 +94,7 @@ class CarryingInformationGame(CarryingReferralGame):
         del women
         del midwives
         del women_memories
-        if scoop_on:
-            scoop.logger.debug("Worker %s completed a game." % (scoop.worker[0]))
+        LOG.debug("Worker %s completed a game." % (scoop.worker[0]))
         return women_res, mw_res
 
     def share_midwives(self, midwives):
@@ -125,6 +122,7 @@ class CarryingInformationGame(CarryingReferralGame):
                 #And null it
                 lucky = filter(lambda x: hash(x) == memory[0], midwives)[0]
                 lucky.shareable = None
+            del mw_memories
 
     def share_women(self, women, women_memories):
         #Sort them according to the threshold sign
@@ -145,8 +143,7 @@ class CarryingInformationGame(CarryingReferralGame):
                 women_memories.remove(memory)
 
     def disseminate_midwives(self, memory, recepients):
-        if scoop_on:
-            scoop.logger.debug("Sharing a memory to midwives.")
+        LOG.debug("Sharing a memory to midwives.")
         if memory is None or len(recepients) == 0:
             return
         player_type, signals = memory
@@ -158,8 +155,7 @@ class CarryingInformationGame(CarryingReferralGame):
                 recepient.update_beliefs(None, tmp_signaller, signal, signaller_type=player_type)
 
     def disseminate_women(self, memory, recepients):
-        if scoop_on:
-            scoop.logger.debug("Sharing a memory to women.")
+        LOG.debug("Sharing a memory to women.")
         #print "Sharing to women.", memory
         if memory is None:
             return

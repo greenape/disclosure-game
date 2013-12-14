@@ -155,8 +155,9 @@ class RecognitionResponder(BayesianResponder):
             return super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
         #Need to work with an artificial response log while bulk updating
         tmp_response_log = self.response_log
-        while len(self.signal_memory[hash(signaller)]) > 0:
-            signal, response = self.signal_memory[hash(signaller)].pop()
+        mem = self.signal_memory.pop(hash(signaller), [])
+        while len(mem) > 0:
+            signal, response = mem.pop()
             payoff = self.payoffs[signaller.player_type][response]
             self.response_log = [response]
             super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)

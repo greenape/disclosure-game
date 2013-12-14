@@ -121,7 +121,7 @@ class LexicographicResponder(BayesianResponder):
         if payoff is not None:
             #print self.payoff_count, signal, payoff, self.response_log[len(self.response_log) - 1]
             self.payoff_count[signal][self.response_log[len(self.response_log) - 1]][payoff] += 1
-        super(LexicographicResponder, self).update_beliefs(payoff, signaller, signal, signaller_type)
+        #super(LexicographicResponder, self).update_beliefs(payoff, signaller, signal, signaller_type)
 
     def frequent(self, signal, response, n, signaller=None):
         """
