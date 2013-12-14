@@ -262,7 +262,6 @@ def do_work(queueIn, queueOut):
         except MemoryError:
             raise
         except:
-            raise
             logger.info("Done.")
             break
 
