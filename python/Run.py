@@ -25,7 +25,7 @@ import sys
 import logging
 
 logger = multiprocessing.log_to_stderr()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 def load_kwargs(file_name):
     
@@ -245,6 +245,7 @@ def make_work(queue, kwargs, num_consumers):
             i += 1
     for i in range(num_consumers):
         queue.put(None)
+    queue.put(None)
 
 
 def do_work(queueIn, queueOut):

@@ -49,7 +49,7 @@ class LexicographicSignaller(BayesianSignaller):
         return sorted_dict[min(n, len(sorted_dict) - 1)][0]
 
     def update_beliefs(self, response, midwife, payoff, midwife_type=None):
-        super(LexicographicSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
+        #super(LexicographicSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
         if payoff is not None:
             try:
                 self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] += 1
