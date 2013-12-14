@@ -25,7 +25,7 @@ import sys
 import logging
 
 logger = multiprocessing.log_to_stderr()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 def load_kwargs(file_name):
     
@@ -262,6 +262,7 @@ def do_work(queueIn, queueOut):
         except MemoryError:
             raise
         except:
+            raise
             logger.info("Done.")
             break
 

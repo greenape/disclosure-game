@@ -58,7 +58,7 @@ class LexicographicSignaller(BayesianSignaller):
                 self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] = 1
 
     def do_signal(self, opponent=None):
-        super(LexicographicSignaller, self).do_signal(opponent)
+        #super(LexicographicSignaller, self).do_signal(opponent)
         signals = shuffled(self.signals)
         n = 0
         # Reduce to possible
@@ -83,8 +83,7 @@ class LexicographicSignaller(BayesianSignaller):
             except IndexError:
                 pass
         # No advantage found so take the first
-        #self.rounds += 1
-        self.signal_log.pop()
+        self.rounds += 1
         self.log_signal(best, opponent)
         return best
 
@@ -136,7 +135,11 @@ class LexicographicResponder(BayesianResponder):
         Make a judgement about somebody based on
         the signal they sent by minimising bayesian risk.
         """
-        super(LexicographicResponder, self).respond(signal, opponent)
+        #super(LexicographicResponder, self).respond(signal, opponent)
+        if opponent is not None:
+            self.type_log.append(opponent.player_type)
+        self.signal_log.append(signal)
+        self.signal_matches[signal] += 1.
         n = 0
         while n < self.depth:
             mappings = {}
@@ -153,7 +156,8 @@ class LexicographicResponder(BayesianResponder):
                     #Only one payoff
                 pass
             n += 1
-        self.response_log.pop()
+        #self.response_log.pop()
+        self.rounds += 1
         self.response_log.append(best)
         return best
 
