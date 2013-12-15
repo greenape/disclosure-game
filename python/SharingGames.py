@@ -197,6 +197,10 @@ class CaseloadSharingGame(CarryingInformationGame):
 
 
     def play_game(self, players, file_name=""):
+        try:
+            worker = scoop.worker[0]
+        except:
+            worker = multiprocessing.current_process()
         if scoop_on:
             scoop.logger.debug("Worker %s playing a game." % (worker))
         else:
