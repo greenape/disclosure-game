@@ -44,7 +44,11 @@ class CarryingInformationGame(CarryingReferralGame):
         return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
 
     def play_game(self, players, file_name=""):
-        LOG.debug("Worker %s playing a game." % (scoop.worker[0]))
+        try:
+            worker = scoop.worker[0]
+        except:
+            worker = multiprocessing.current_process()
+        LOG.debug("Worker %s playing a game." % (worker))
         women, midwives = players
         player_dist = self.get_distribution(women)
 
@@ -82,7 +86,7 @@ class CarryingInformationGame(CarryingReferralGame):
                     women.insert(0, woman)
                     woman.finished += 1
             # Share information
-            LOG.debug("Worker %s prepping share." % (scoop.worker[0]))
+            LOG.debug("Worker %s prepping share." % (worker))
             #Midwives
             self.share_midwives(midwives)
 
@@ -90,11 +94,11 @@ class CarryingInformationGame(CarryingReferralGame):
             self.share_women(women, women_memories)
 
             #if scoop_on:
-            #    scoop.logger.debug("Worker %s played %d rounds." % (scoop.worker[0], i))
+            #    scoop.logger.debug("Worker %s played %d rounds." % (worker, i))
         del women
         del midwives
         del women_memories
-        LOG.debug("Worker %s completed a game." % (scoop.worker[0]))
+        LOG.debug("Worker %s completed a game." % (worker))
         return women_res, mw_res
 
     def share_midwives(self, midwives):
@@ -194,7 +198,7 @@ class CaseloadSharingGame(CarryingInformationGame):
 
     def play_game(self, players, file_name=""):
         if scoop_on:
-            scoop.logger.debug("Worker %s playing a game." % (scoop.worker[0]))
+            scoop.logger.debug("Worker %s playing a game." % (worker))
         else:
             LOG.debug("Playing a game.")
         women, midwives = players
@@ -262,7 +266,7 @@ class CaseloadSharingGame(CarryingInformationGame):
                     woman.finished += 1
             # Share information
             if scoop_on:
-                LOG.debug("Worker %s prepping share." % (scoop.worker[0]))
+                LOG.debug("Worker %s prepping share." % (worker))
             #Midwives
             try:
                 self.share_midwives(midwives)
@@ -277,12 +281,12 @@ class CaseloadSharingGame(CarryingInformationGame):
             LOG.debug("Played %d rounds." % i)
 
             #if scoop_on:
-            #    scoop.logger.debug("Worker %s played %d rounds." % (scoop.worker[0], i))
+            #    scoop.logger.debug("Worker %s played %d rounds." % (worker, i))
         del women
         del midwives
         del women_memories
         if scoop_on:
-            scoop.logger.debug("Worker %s completed a game." % (scoop.worker[0]))
+            scoop.logger.debug("Worker %s completed a game." % (worker))
         else:
             LOG.debug("Completed a game.")
         return women_res, mw_res

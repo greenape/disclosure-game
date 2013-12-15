@@ -71,10 +71,12 @@ def kw_experiment(kwargs, file_name):
         except KeyboardInterrupt:
             for p in calcProc:
                 jobs.put(None)
-                jobs.close()
-            producer.interrupt()
+            jobs.close()
     results.put(None)
     writProc.join()
+    while True:
+        if jobs.get() is None:
+            break
     producer.join()
 
 
