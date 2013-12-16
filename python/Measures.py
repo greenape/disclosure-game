@@ -350,7 +350,7 @@ class FalsePositiveUpto(Measure):
                 response = r_log[i]
                 player = t_log[i]
                 if response == 1:
-                    if player != 0:
+                    if player == 0:
                         total_right += 1
                     total_calls += 1
         if total_calls == 0:

@@ -8,6 +8,12 @@ GAME[2]='-g CarryingInformationGame CaseloadSharingGame -s SharingLexicographicS
 
 GAME[3]='-g CarryingInformationGame CaseloadSharingGame -s SharingPayoffProspectSignaller -r SharingPayoffProspectResponder'
 
+GAME[4]='-g CarryingInformationGame CaseloadSharingGame -s SharingBayesianPayoffSignaller -r SharingBayesianPayoffResponder -p 0.85 0.1 0.05'
+
+GAME[5]='-g CarryingInformationGame CaseloadSharingGame -s SharingLexicographicSignaller -r SharingLexicographicResponder -p 0.85 0.1 0.05'
+
+GAME[6]='-g CarryingInformationGame CaseloadSharingGame -s SharingPayoffProspectSignaller -r SharingPayoffProspectResponder -p 0.85 0.1 0.05'
+
 cd disclosure-game/python
 ulimit -n 512
 module load python
