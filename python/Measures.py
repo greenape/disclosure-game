@@ -398,6 +398,7 @@ def measures_women():
         measures["type_%d_finished" % i] = TypeFinished(player_type=i)
         measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
         measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
+        measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
         for j in range(3):
             measures["type_%d_signal_%d" % (i, j)] = TypeSignalBreakdown(player_type=i, signal=j)
             measures["type_%d_mw_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, midwife_type=j)

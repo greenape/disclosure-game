@@ -3,9 +3,9 @@ library(sqldf)
 
 files = c("/Users/jg1g12/Downloads/1_women_proportions_mw.db", "/Users/jg1g12/Downloads/2_women_proportions_mw.db", "/Users/jg1g12/Downloads/3_women_proportions_mw.db")
 for(x in files) {
-	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where num_rounds=1000", dbname=x)
+	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where appointment=999", dbname=x)
 	params <- sqldf("select decision_rule_signaller, decision_rule_responder, game, mw_share_width, mw_share_bias, women_1, women_2, hash from parameters", dbname=x)
-	print(sprintf("Loaded 1 %s", x))
+	print(sprintf("Loaded %s", x))
 	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)
 	for(i in unique(interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder))) {
 		d <- subset(df, interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder) == i)
@@ -37,7 +37,7 @@ for(x in files) {
 
 files = c("/Users/jg1g12/Downloads/1_mw_proportions_mw.db", "/Users/jg1g12/Downloads/2_mw_proportions_mw.db", "/Users/jg1g12/Downloads/3_mw_proportions_mw.db")
 for(x in files) {
-	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where num_rounds=1000", dbname=x)
+	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where appointment=999", dbname=x)
 	params <- sqldf("select decision_rule_signaller, decision_rule_responder, game, mw_share_width, mw_share_bias, mw_1, mw_2, hash from parameters", dbname=x)
 	print(sprintf("Loaded 1 %s", x))
 	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)
@@ -71,7 +71,7 @@ for(x in files) {
 
 files = c("/Users/jg1g12/Downloads/1_mw_sharing_mw.db", "/Users/jg1g12/Downloads/2_mw_sharing_mw.db", "/Users/jg1g12/Downloads/3_mw_sharing_mw.db")
 for(x in files) {
-	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where num_rounds=1000", dbname=sprintf(x, 1))
+	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where appointment=999", dbname=sprintf(x, 1))
 	params <- sqldf("select decision_rule_signaller, decision_rule_responder, game, mw_share_width, mw_share_bias, mw_1, mw_2, hash from parameters", dbname=x)
 	print(sprintf("Loaded 1 %s", x))
 	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)
@@ -105,7 +105,7 @@ for(x in files) {
 
 files = c("/Users/jg1g12/Downloads/1_women_sharing_mw.db", "/Users/jg1g12/Downloads/2_women_sharing_mw.db", "/Users/jg1g12/Downloads/3_women_sharing_mw.db")
 for(x in files) {
-	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where num_rounds=1000", dbname=sprintf(x, 1))
+	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where appointment=999", dbname=sprintf(x, 1))
 	params <- sqldf("select decision_rule_signaller, decision_rule_responder, game, women_share_width, women_share_bias, hash from parameters", dbname=sprintf(x, 1))
 	print(sprintf("Loaded 1 %s", x))
 	df <- merge(x=df, y=unique(params), by.x="hash", by.y="hash", all.x=TRUE)

@@ -15,15 +15,29 @@ num_rounds_type <- function(df, type, x, y) {
 
 payoffs_type <- function(df, type, x, y) {
 	# Average payoff accrued
+	filter = eval(parse(text=sprintf("df$type_%d_frequency", type)))
+	df <- subset(df, filter > 0)
 	x = eval(parse(text=sprint("df$%s",x)))
 	y = eval(parse(text=sprint("df$%s",y)))
 	fill = eval(parse(text=sprintf("df$accrued_payoffs_type_%d", type)))
-	#filter = eval(parse(text=sprintf("df$type_%d_finished", type)))
-	#df <- subset(df, filter > 0)
 	df <- aggregate(df, by=list(x, y), FUN=mean)
 	c <- ggplot(df, aes(x=x, y=y))
 	return(c + geom_tile(aes(fill=fill)))
 }
+
+signals_type <- function(df, type, signal, x, y) {
+	# Levelplot of average signal frequency across whole game
+	# Include only rounds where at least some of that type played
+	# Type 0
+	filter = eval(parse(text=sprintf("df$type_%d_frequency", type)))
+	df <- subset(df, filter > 0)
+	# Average payoff accrued
+	x = eval(parse(text=sprint("df$%s",x)))
+	y = eval(parse(text=sprint("df$%s",y)))
+	fill = eval(parse(text=sprintf("df$type_%d_signal_%d", type, signal)))
+	df <- aggregate(df, by=list(x, y), FUN=mean)
+	c <- ggplot(df, aes(x=x, y=y))
+	return(c + geom_tile(aes(fill=fill)))
 
 num_rounds <- function(df) {
 	# Average number of rounds played over time for all types
@@ -52,16 +66,32 @@ num_rounds <- function(df) {
 }
 
 signals_by_type <- function(df, type) {
+	# Include only rounds where at least some of that type played
+	# Type 0
+	filter = eval(parse(text=sprintf("df$type_%d_frequency", type)))
+	df <- subset(df, filter > 0)
 	frame_type = paste(paste("df$type", type, sep="_"), "signal", sep="_")
 	a = paste(frame_type, 0, sep="_")
 	b = paste(frame_type, 1, sep="_")
 	c = paste(frame_type, 2, sep="_")
-	y <- c(eval(parse(text=a)), eval(parse(text=b)), eval(parse(text=c)))
-	d <- data.frame(y)
-	d$x <- rep(min(df$appointment):max(df$appointment), nrow(d) / (max(df$appointment) + 1))
-	d$group <- c(rep("Light", nrow(d)/3), rep("Moderate", nrow(d)/3), rep("Heavy", nrow(d)/3))
-	c <- ggplot(d, aes(x=x, y=y, color=group)) + xlab("Appointment") + ylab("Signal frequency")
-	c <- c + stat_summary(fun.data = "mean_cl_boot", geom="smooth", aes(group=group))   +  theme(text = element_text(family='CMU Serif',size=15)) + scale_colour_discrete(name = "Signal") + ylim(0.0, 1.0)
+	d$appointment <- s['appointment']
+	d$num_rounds <- s[a]
+	d$player_type <- "Light"
+	# Type 1
+	s <- subset(df, df$type_1_finished > 0)
+	e$appointment <- s['appointment']
+	e$num_rounds <- s[b]
+	e$player_type <- "Moderate"
+	d <- rbind(d, e)
+	# Type 2
+	s <- subset(df, df$type_2_finished > 0)
+	e$appointment <- s['appointment']
+	e$num_rounds <- s[c]
+	e$player_type <- "Heavy"
+	d <- rbind(d, e)
+	
+	c <- ggplot(d, aes(x=appointment, y=num_rounds, color=player_type)) + xlab("Appointment") + ylab("Signal frequency")
+	c <- c + stat_summary(fun.data = "mean_cl_boot", geom="smooth", aes(group=player_type))   +  theme(text = element_text(family='CMU Serif',size=15)) + scale_colour_discrete(name = "Signal")
 	return(c)
 }
 
@@ -79,14 +109,114 @@ for(x in files) {
 	#df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
 	#df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
 	print("Merged.")
-	for(i in unique(interaction(df$game, df$Group.4, df$Group.5, df$Group.6))) {
-			d <- subset(df, interaction(df$Group.3, df$Group.4, df$Group.5, df$Group.6) == i)
-			c <- ggplot(d, aes(x=Group.1, y=Group.2))
+	for(i in unique(df$game) {
+			d <- subset(df, df$game == i)
 
-			png(sprintf("../figures/honest_signals_%s_%s_%s_type_%d_women.png", as.character(d$Group.3)[1], as.character(d$Group.4)[1], as.character(d$Group.3)[1], d$Group.6))
-			signal = eval(sprintf("d$signal_%d_frequency", d$Group.6[1]))
-			print(c + geom_tile(aes(fill=signal)))
-			dev.off()
+			for(j in 0:2) {
+				png(sprintf("../figures/women_proportions_num_rounds_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = num_rounds_type(d, j, "women_1", "women_2")
+				print(c)
+				dev.off()
+				png(sprintf("../figures/women_proportions_payoffs_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = payoffs_type(d, j, "women_1", "women_2")
+				print(c)
+				dev.off()
+				for(k in 0:2) {
+					png(sprintf("../figures/women_proportions_signal_%d_%s_%s_type_%d_women.png", k, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+					c = signals_type(d, j, "women_1", "women_2")
+					print(c)
+					dev.off()
+				}
+			rm(d)
+	}
+	print("Made figures.")
+	rm(df)
+}
+
+files = c("/Users/user/Downloads/1_mw_proportions_women.db", "/Users/user/Downloads/2_mw_proportions_women.db", "/Users/user/Downloads/3_mw_proportions_women.db")
+for(x in files) {
+	df <- load(x)
+	#df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
+	#df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
+	print("Merged.")
+	for(i in unique(df$game) {
+			d <- subset(df, df$game == i)
+
+			for(j in 0:2) {
+				png(sprintf("../figures/mw_proportions_num_rounds_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = num_rounds_type(d, j, "mw_1", "mw_2")
+				print(c)
+				dev.off()
+				png(sprintf("../figures/mw_proportions_payoffs_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = payoffs_type(d, j, "mw_1", "mw_2")
+				print(c)
+				dev.off()
+				for(k in 0:2) {
+					png(sprintf("../figures/mw_proportions_signal_%d_%s_%s_type_%d_women.png", k, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+					c = signals_type(d, j, "mw_1", "mw_2")
+					print(c)
+					dev.off()
+				}
+			rm(d)
+	}
+	print("Made figures.")
+	rm(df)
+}
+
+files = c("/Users/user/Downloads/1_mw_sharing_women.db", "/Users/user/Downloads/2_mw_sharing_women.db", "/Users/user/Downloads/3_mw_sharing_women.db")
+for(x in files) {
+	df <- load(x)
+	#df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
+	#df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
+	print("Merged.")
+	for(i in unique(df$game) {
+			d <- subset(df, df$game == i)
+
+			for(j in 0:2) {
+				png(sprintf("../figures/mw_sharing_num_rounds_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = num_rounds_type(d, j, "mw_share_width", "mw_share_bias")
+				print(c)
+				dev.off()
+				png(sprintf("../figures/mw_sharing_payoffs_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = payoffs_type(d, j, "mw_share_width", "mw_share_bias")
+				print(c)
+				dev.off()
+				for(k in 0:2) {
+					png(sprintf("../figures/mw_sharing_signal_%d_%s_%s_type_%d_women.png", k, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+					c = signals_type(d, j, "mw_share_width", "mw_share_bias")
+					print(c)
+					dev.off()
+				}
+			rm(d)
+	}
+	print("Made figures.")
+	rm(df)
+}
+
+files = c("/Users/user/Downloads/1_women_sharing_women.db", "/Users/user/Downloads/2_women_sharing_women.db", "/Users/user/Downloads/3_women_sharing_women.db")
+for(x in files) {
+	df <- load(x)
+	#df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
+	#df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
+	print("Merged.")
+	for(i in unique(df$game) {
+			d <- subset(df, df$game == i)
+
+			for(j in 0:2) {
+				png(sprintf("../figures/women_sharing_num_rounds_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = num_rounds_type(d, j, "women_share_width", "women_share_bias")
+				print(c)
+				dev.off()
+				png(sprintf("../figures/women_sharing_payoffs_%s_%s_type_%d_women.png", as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+				c = payoffs_type(d, j, "women_share_width", "women_share_bias")
+				print(c)
+				dev.off()
+				for(k in 0:2) {
+					png(sprintf("../figures/women_sharing_signal_%d_%s_%s_type_%d_women.png", k, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j))
+					c = signals_type(d, j, "women_share_width", "women_share_bias")
+					print(c)
+					dev.off()
+				}
 			rm(d)
 	}
 	print("Made figures.")
