@@ -235,11 +235,15 @@ def play_game(config):
     return game.play_game((women, midwives))
 
 
-def make_work(queue, kwargs, num_consumers):
+def make_work(queue, kwargs, num_consumers, kill_queue):
     i = 1
     while len(kwargs) > 0:
+        if not kill_queue.empty():
+            break
         exps = decision_fn_compare(**kwargs.pop())
         for exp in exps:
+            if not kill_queue.empty():
+                break
             logger.info("Enqueing experiment %d" %  i)
             queue.put((i, exp))
             i += 1
@@ -248,12 +252,14 @@ def make_work(queue, kwargs, num_consumers):
     queue.put(None)
 
 
-def do_work(queueIn, queueOut):
+def do_work(queueIn, queueOut, kill_queue):
     """
     Consume games, play them, then put their results in the output queue.
     """
     while True:
         try:
+            if not kill_queue.empty():
+                break
             number, config = queueIn.get()
             logger.info("Running game %d." % number)
             res = (number, play_game(config))
@@ -262,10 +268,10 @@ def do_work(queueIn, queueOut):
         except MemoryError:
             raise
         except:
-            logger.info("Done.")
             break
+    logger.info("Done.")
 
-def write(queue, db_name):
+def write(queue, db_name, kill_queue):
     while True:
         try:
             number, res = queue.get()
@@ -275,7 +281,9 @@ def write(queue, db_name):
             mw_res.write_db("%s_mw" % db_name)
             del women_res
             del mw_res
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError, e:
+            print e
+            kill_queue.put(None)
             raise
         except:
             break
@@ -305,11 +313,12 @@ def kw_experiment(kwargs, file_name):
     num_consumers = multiprocessing.cpu_count()
     #Make tasks
     jobs = multiprocessing.Queue(num_consumers)
+    kill_queue = multiprocessing.Queue(1)
     results = multiprocessing.Queue()
-    producer = multiprocessing.Process(target = make_work, args = (jobs, kwargs, num_consumers))
+    producer = multiprocessing.Process(target = make_work, args = (jobs, kwargs, num_consumers, kill_queue))
     producer.start()
-    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results)) for i in range(num_consumers)]
-    writProc = multiprocessing.Process(target = write, args = (results, file_name))
+    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results, kill_queue)) for i in range(num_consumers)]
+    writProc = multiprocessing.Process(target = write, args = (results, file_name, kill_queue))
     writProc.start()
 
     for p in calcProc:
@@ -319,8 +328,10 @@ def kw_experiment(kwargs, file_name):
             p.join()
         except KeyboardInterrupt:
             for p in calcProc:
-                jobs.put(None)
-            jobs.close()
+                p.terminate()
+            producer.terminate()
+            writProc.terminate()
+            sys.exit(1)
     results.put(None)
     writProc.join()
     while True:
