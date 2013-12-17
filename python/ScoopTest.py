@@ -59,7 +59,7 @@ def kw_experiment(kwargs, file_name):
     results = multiprocessing.Queue()
     producer = multiprocessing.Process(target = make_work, args = (jobs, kwargs, num_consumers))
     producer.start()
-    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results)) for i in range(num_consumers - 1)]
+    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results)) for i in range(num_consumers))
     writProc = multiprocessing.Process(target = write, args = (results, file_name))
     writProc.start()
 
