@@ -59,6 +59,7 @@ class CarryingInformationGame(CarryingReferralGame):
         women_res = self.measures_women.dump(None, self.rounds, self, None)
         mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
         women_memories = []
+        mw_memories = []
         for i in range(rounds):
             players = [women.pop() for j in range(num_midwives)]
             random.shuffle(midwives)
@@ -88,7 +89,7 @@ class CarryingInformationGame(CarryingReferralGame):
             # Share information
             LOG.debug("Worker %s prepping share." % (worker))
             #Midwives
-            self.share_midwives(midwives)
+            self.share_midwives(midwives, mw_memories)
 
             #Women
             self.share_women(women, women_memories)
@@ -101,32 +102,33 @@ class CarryingInformationGame(CarryingReferralGame):
         LOG.debug("Worker %s completed a game." % (worker))
         return women_res, mw_res
 
-    def share_midwives(self, midwives):
+    def share_midwives(self, midwives, mw_memories):
         #Collect memories
-            mw_memories = map(lambda x: x.shareable, midwives)
+            mw_memories += map(lambda x: x.shareable, midwives)
             mw_memories = filter(lambda x: x is not None, mw_memories)
             #print mw_memories
             #Sort them according to the threshold sign
             if self.mw_share_bias == 0:
                 random.shuffle(mw_memories)
             elif copysign(1, self.mw_share_bias) == 1:
-                mw_memories.sort(key=operator.itemgetter(1), reverse=True)
+                mw_memories.sort(key=operator.itemgetter(0), reverse=True)
             elif copysign(1, self.mw_share_bias) == -1:
-                mw_memories.sort(key=operator.itemgetter(1))
+                mw_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
-            mw_memories = self.n_most(self.mw_share_bias, mw_memories)
+            #mw_memories = self.n_most(self.mw_share_bias, mw_memories)
             #print mw_memories
             #Choose one by weighted random choice
-            #memory = self.weighted_random_choice(mw_memories)
+            memory = self.weighted_random_choice(mw_memories, self.mw_share_bias)
+            memories = [memory]
             #print "Memory is", memory, "worst was", mw_memories[len(mw_memories) - 1]
-            for memory in mw_memories:
+            for memory in memories:
                 possibles = filter(lambda x: hash(x) != memory[0], midwives)
                 #Share it
-                self.disseminate_midwives(memory[2], self.share_to(possibles, self.mw_share_width))
+                self.disseminate_midwives(memory[1], self.share_to(possibles, self.mw_share_width))
                 #And null it
                 lucky = filter(lambda x: hash(x) == memory[0], midwives)[0]
                 lucky.shareable = None
-            del mw_memories
+            #del mw_memories
 
     def share_women(self, women, women_memories):
         #Sort them according to the threshold sign
@@ -137,14 +139,14 @@ class CarryingInformationGame(CarryingReferralGame):
             elif copysign(1, self.women_share_bias) == -1:
                 women_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
-            memories = self.n_most(self.women_share_bias, women_memories)
+            #memories = self.n_most(self.women_share_bias, women_memories)
             #Choose one by weighted random choice
-            #memory = self.weighted_random_choice(tmp_memories)
+            memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
             #Share it
             for memory in memories:
                 self.disseminate_women(memory[1], self.share_to(women, self.women_share_width))
                 #And null it
-                women_memories.remove(memory)
+                #women_memories.remove(memory)
 
     def disseminate_midwives(self, memory, recepients):
         LOG.debug("Sharing a memory to midwives.")
@@ -177,9 +179,14 @@ class CarryingInformationGame(CarryingReferralGame):
         k = int(round(size * fraction))
         return random.sample(pop, k)
 
-    def weighted_random_choice(self, choices):
-        total = sum(w for c, w in choices)
-        r = random.uniform(0, total)
+    def weighted_random_choice(self, choices, weight):
+        total = sum(w for w, c in choices)
+        low = min(map(lambda x: x[1], choices))
+        high = max(map(lambda x: x[1], choices))
+        mid = -low if weight < 0 else high
+        mid *= weight
+        #r = random.uniform(0, total)
+        r = random.triangular(low, high, mid)
         upto = 0
         for c, w in choices:
             if upto + w > r:

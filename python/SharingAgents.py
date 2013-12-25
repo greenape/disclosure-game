@@ -22,7 +22,7 @@ class SharingResponder(RecognitionResponder):
         super(SharingResponder, self).remember(signaller, signal, response)
         if response == 1 or signaller.is_finished:
             payoff_sum = sum(map(lambda x: self.payoffs[signaller.player_type][x[1]], self.signal_memory[hash(signaller)]))
-            self.shareable = (hash(self), payoff_sum, (signaller.player_type, list(self.signal_memory[hash(signaller)])))
+            self.shareable = (payoff_sum, (hash(self), (signaller.player_type, list(self.signal_memory[hash(signaller)]))))
 
 class SharingSignaller(BayesianSignaller):
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
