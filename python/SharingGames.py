@@ -115,10 +115,10 @@ class CarryingInformationGame(CarryingReferralGame):
             elif copysign(1, self.mw_share_bias) == -1:
                 mw_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
-            #mw_memories = self.n_most(self.mw_share_bias, mw_memories)
+            memories = self.n_most(self.mw_share_bias, mw_memories)
             #print mw_memories
             #Choose one by weighted random choice
-            memory = self.weighted_random_choice(mw_memories, self.mw_share_bias)
+            #memory = self.weighted_random_choice(mw_memories, self.mw_share_bias)
             memories = [memory]
             #print "Memory is", memory, "worst was", mw_memories[len(mw_memories) - 1]
             for memory in memories:
@@ -139,9 +139,9 @@ class CarryingInformationGame(CarryingReferralGame):
             elif copysign(1, self.women_share_bias) == -1:
                 women_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
-            #memories = self.n_most(self.women_share_bias, women_memories)
+            memories = self.n_most(self.women_share_bias, women_memories)
             #Choose one by weighted random choice
-            memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
+            #memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
             #Share it
             for memory in memories:
                 self.disseminate_women(memory[1], self.share_to(women, self.women_share_width))
