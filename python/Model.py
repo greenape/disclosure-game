@@ -156,7 +156,7 @@ class Signaller(Agent):
         except IndexError:
             return self.current_type_distribution()
 
-    def signal_referral_beliefs():
+    def signal_referral_beliefs(self):
         rounds = self.rounds
         if signaller is not None:
             signaller_type = signaller.player_type
@@ -207,6 +207,7 @@ class Signaller(Agent):
             n_k = self.type_matches[player_type]
             n = sum(self.type_matches.values())
             alpha_dot = sum(self.type_weights)
+            del estimate [:]
             estimate.append((alpha_k + n_k) / float(alpha_dot + n))
 
         # Update signal-response beliefs
