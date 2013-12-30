@@ -278,8 +278,8 @@ class BayesianSignaller(Signaller):
        #print "Type %d woman evaluating signals." % self.player_type
         for signal in shuffled(self.signals):
             signal_risk = self.risk(signal, opponent)
-            self.risk_log[signal].append(signal_risk)
-            self.risk_log_general[signal].append(self.risk(signal, None))
+            #self.risk_log[signal].append(signal_risk)
+            #self.risk_log_general[signal].append(self.risk(signal, None))
            #print "Risk for signal %d is %f. Best so far is signal %d at %f." % (signal, signal_risk, best[0], best[1])
             if signal_risk < best[1]:
                 best = (signal, signal_risk)
@@ -395,6 +395,7 @@ class BayesianResponder(Responder):
 
 
 class Game(object):
+    # b > m > n
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),

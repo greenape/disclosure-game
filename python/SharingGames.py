@@ -119,7 +119,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #print mw_memories
             #Choose one by weighted random choice
             #memory = self.weighted_random_choice(mw_memories, self.mw_share_bias)
-            memories = [memory]
+            #memories = [memory]
             #print "Memory is", memory, "worst was", mw_memories[len(mw_memories) - 1]
             for memory in memories:
                 possibles = filter(lambda x: hash(x) != memory[0], midwives)
