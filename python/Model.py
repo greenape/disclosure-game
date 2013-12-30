@@ -240,7 +240,7 @@ class Signaller(Agent):
                 alpha_dot = sum(self.response_weights[signal])
                 prob = (alpha_k + n_k) / float(alpha_dot + n)
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
-
+                del belief[:]
                 belief.append(prob)
 
     def log_signal(self, signal, opponent=None):
@@ -333,6 +333,7 @@ class Responder(Agent):
                #print "n_k = %d" % n_k
                 prob = (alpha_k + n_k) / float(alpha_dot + n)
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
+                del self.signal_belief[signal_i][player_type][:]
                 self.signal_belief[signal_i][player_type].append(prob)
 
     def current_beliefs(self):
