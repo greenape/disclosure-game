@@ -95,12 +95,12 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         Make a judgement about somebody based on
         the signal they sent based on expe
         """
-        super(LexicographicSignaller, self).do_signal(opponent)
+        super(ProspectTheorySignaller, self).do_signal(opponent)
         best = (random.randint(0, 2), -9999999)
         for signal in Model.shuffled(self.signals):
             act_risk = self.cpt_value(self.collect_prospects(signal))
-            self.risk_log[signal].append(act_risk)
-            self.risk_log_general[signal].append(act_risk)
+            #self.risk_log[signal].append(act_risk)
+            #self.risk_log_general[signal].append(act_risk)
             if act_risk > best[1]:
                 best = (signal, act_risk)
         self.signal_log.pop()
@@ -261,6 +261,16 @@ class SharingPayoffProspectResponder(SharingResponder, PayoffProspectResponder):
     """
 
 class SharingPayoffProspectSignaller(SharingSignaller, PayoffProspectSignaller):
+    """
+    A payoff reasoner that shares info updates.
+    """
+
+class SharingProspectResponder(SharingResponder, ProspectTheoryResponder):
+    """
+    A payoff reasoner that shares info updates.
+    """
+
+class SharingProspectSignaller(SharingSignaller, ProspectTheorySignaller):
     """
     A payoff reasoner that shares info updates.
     """

@@ -56,14 +56,16 @@ class CarryingGame(Model.Game):
         birthed = []
         random.shuffle(women)
         num_midwives = len(midwives)
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        women_res = self.measures_women.dump(None, self.rounds, self, None)
+        mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
         for i in range(rounds):
             players = [women.pop() for j in range(num_midwives)]
             random.shuffle(midwives)
             map(self.play_round, players, midwives)
             for x in midwives:
                 x.finished += 1
+            women_res = self.measures_women.dump(players, i, self, women_res)
+            mw_res = self.measures_midwives.dump(midwives, i, self, mw_res)
             for woman in players:
                 if self.all_played([woman], 12):
                     woman.is_finished = True
@@ -81,15 +83,13 @@ class CarryingGame(Model.Game):
                     woman.finished += 1
             #if scoop_on:
             #    scoop.logger.info("Worker %s played %d rounds." % (scoop.worker[0], i))
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+
         del women
         del midwives
-        women_res.write_db("%s_women" % file_name)
-        mw_res.write_db("%s_mw" % file_name)
+
         if scoop_on:
             scoop.logger.info("Worker %s completed a game." % (scoop.worker[0]))
-        return None
+        return women_res, mw_res
 
 class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
     def __unicode__(self):
@@ -103,8 +103,8 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
         birthed = []
         random.shuffle(women)
         num_midwives = len(midwives)
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
+        women_res = self.measures_women.dump(None, self.rounds, self, None)
+        mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
 
         caseloads = {}
         num_women = len(women)
@@ -125,6 +125,8 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
             map(self.play_round, players, midwives)
             for x in midwives:
                 x.finished += 1
+            women_res = self.measures_women.dump(players, i, self, women_res)
+            mw_res = self.measures_midwives.dump(midwives, i, self, mw_res)
             for j in range(len(players)):
                 woman = players[j]
                 women = caseloads[midwives[j]]
@@ -144,16 +146,12 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
                     woman.finished += 1
             if scoop_on:
                 scoop.logger.info("Worker %s played %d rounds." % (scoop.worker[0], i))
-        women = reduce(lambda x, y: x + y, caseloads.values())
-        women_res = self.measures_women.dump(women, self.rounds, self)
-        mw_res = self.measures_midwives.dump(midwives, self.rounds, self)
         del women
         del midwives
-        women_res.write_db("%s_women" % file_name)
-        mw_res.write_db("%s_mw" % file_name)
+        
         if scoop_on:
             scoop.logger.info("Worker %s completed a game." % (scoop.worker[0]))
-        return None
+        return women_res, mw_res
 
 
 class CarryingReferralGame(CarryingGame, ReferralGame):

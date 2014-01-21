@@ -24,7 +24,7 @@ class CarryingInformationGame(CarryingReferralGame):
     """
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
-     type_weights=[[20., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
+     type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
      measures_midwives=measures_midwives(), params=None, mw_share_width=0, mw_share_bias=-1, women_share_width=0, women_share_bias=0.99,
      num_appointments=12):
         super(CarryingInformationGame, self).__init__(baby_payoff, no_baby_payoff, mid_baby_payoff, referral_cost, harsh_high,
@@ -103,9 +103,9 @@ class CarryingInformationGame(CarryingReferralGame):
         return women_res, mw_res
 
     def share_midwives(self, midwives, mw_memories):
+            return
         #Collect memories
-            mw_memories += map(lambda x: x.shareable, midwives)
-            mw_memories = filter(lambda x: x is not None, mw_memories)
+            mw_memories += filter(lambda x: x is not None, map(lambda x: x.shareable, midwives))
             #print mw_memories
             #Sort them according to the threshold sign
             if self.mw_share_bias == 0:
@@ -115,11 +115,11 @@ class CarryingInformationGame(CarryingReferralGame):
             elif copysign(1, self.mw_share_bias) == -1:
                 mw_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
-            memories = self.n_most(self.mw_share_bias, mw_memories)
+            #memories = self.n_most(self.mw_share_bias, mw_memories)
             #print mw_memories
             #Choose one by weighted random choice
             #memory = self.weighted_random_choice(mw_memories, self.mw_share_bias)
-            #memories = [memory]
+            memories = [self.weighted_random_choice(mw_memories, self.mw_share_bias)]
             #print "Memory is", memory, "worst was", mw_memories[len(mw_memories) - 1]
             for memory in memories:
                 possibles = filter(lambda x: hash(x) != memory[0], midwives)
@@ -131,6 +131,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #del mw_memories
 
     def share_women(self, women, women_memories):
+            return
         #Sort them according to the threshold sign
             if self.women_share_bias == 0:
                 random.shuffle(women_memories)
@@ -139,9 +140,9 @@ class CarryingInformationGame(CarryingReferralGame):
             elif copysign(1, self.women_share_bias) == -1:
                 women_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
-            memories = self.n_most(self.women_share_bias, women_memories)
+            #memories = self.n_most(self.women_share_bias, women_memories)
             #Choose one by weighted random choice
-            #memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
+            memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
             #Share it
             for memory in memories:
                 self.disseminate_women(memory[1], self.share_to(women, self.women_share_width))
@@ -180,16 +181,17 @@ class CarryingInformationGame(CarryingReferralGame):
         return random.sample(pop, k)
 
     def weighted_random_choice(self, choices, weight):
-        total = sum(w for w, c in choices)
+        random.shuffle(choices)
         low = min(map(lambda x: x[1], choices))
         high = max(map(lambda x: x[1], choices))
-        mid = -low if weight < 0 else high
-        mid *= weight
-        #r = random.uniform(0, total)
-        r = random.triangular(low, high, mid)
+        total = sum(w**weight for w, c in choices)
+        #mid = -low if weight < 0 else high
+        #mid *= weight
+        r = random.uniform(0, total)
+        #r = random.triangular(low, high, mid)
         upto = 0
         for c, w in choices:
-            if upto + w > r:
+            if upto + w**weight > r:
                 return c
             upto += w
 

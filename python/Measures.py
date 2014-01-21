@@ -60,6 +60,7 @@ class NumRounds(Measure):
             return 0.
         return sum(map(lambda woman: woman.finished - woman.started, women)) / float(len(women))
 
+
 class Referred(Measure):
     """
     Return the fraction of players referred this round.
@@ -116,14 +117,14 @@ class TypeReferralBreakdown(Measure):
     If midwife_type is None, then this is for all midwife types.
     """
     def measure(self, roundnum, women, game):
-        women = filter(lambda x: 1 in x.response_log, women)
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
         if self.midwife_type is not None:
             women = filter(lambda x: x.type_log[len(x.type_log) - 1] == self.midwife_type, women)
-        num_women = float(len(women))
         if self.signal is not None:
             women = filter(lambda x: x.signal_log[len(x.signal_log) - 1] == self.signal, women)
+        num_women = float(len(women))
+        women = filter(lambda x: 1 in x.response_log, women)
         signalled = len(women)
         if num_women == 0:
             return 0.
@@ -181,7 +182,7 @@ class TypeFrequency(Measure):
     Return the frequency of this type in the population at this round.
     """
     def measure(self, roundnum, women, game):
-        women = self.filter_present(women, roundnum)
+        
         types = map(lambda x: x.player_type, women)
         frequencies = collections.Counter(types)
         total = sum(frequencies.values())

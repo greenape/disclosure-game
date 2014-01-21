@@ -11,6 +11,7 @@ from SharingGames import *
 from Dolls import *
 import multiprocessing
 from Measures import *
+from AbstractMeasures import *
 import itertools
 from collections import OrderedDict
 import argparse
@@ -61,7 +62,7 @@ def arguments():
         choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
         'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
         'PayoffProspectSignaller', 'SharingBayesianPayoffSignaller', 'SharingLexicographicSignaller',
-        'SharingPayoffProspectSignaller', 'SharingSignaller'],
+        'SharingPayoffProspectSignaller', 'SharingSignaller', 'SharingProspectSignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
@@ -71,7 +72,7 @@ def arguments():
         'PayoffProspectResponder', 'SharingPayoffProspectResponder',
         'RecognitionResponder', 'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
         'PayoffProspectResponder', 'RecognitionPayoffProspectResponder',
-        'SharingResponder'], dest="responders")
+        'SharingResponder', 'SharingProspectResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
@@ -95,6 +96,8 @@ def arguments():
         default=None, help="A file containing a pickled list of kwarg dictionaries to be run.")
     parser.add_argument('--individual-measures', dest='indiv', action="store_true",
         help="Take individual outcome measures instead of group level.", default=False)
+    parser.add_argument('--abstract-measures', dest='abstract', action="store_true",
+        help="Take measures intended for the extended abstract.", default=False)
 
     args = parser.parse_args()
     file_name = "%s/%s" % (args.dir, args.file_name)
@@ -109,6 +112,9 @@ def arguments():
     if args.indiv:
         kwargs['measures_midwives'] = indiv_measures_mw()
         kwargs['measures_women'] = indiv_measures_women()
+    if args.abstract:
+        kwargs['measures_midwives'] = abstract_measures_mw()
+        kwargs['measures_women'] = abstract_measures_women()
     kwargs = [kwargs]
     if args.kwargs is not None:
         try:

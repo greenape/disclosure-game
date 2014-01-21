@@ -393,6 +393,7 @@ class BayesianResponder(Responder):
                 best = (response, act_risk)
         self.response_log.append(best[0])
         self.rounds += 1
+        print "Player type is %d, decision is %d" % (opponent.player_type, best[0])
         return best[0]
 
 
