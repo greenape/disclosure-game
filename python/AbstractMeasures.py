@@ -30,7 +30,7 @@ class HonestyMeasure(Measure):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
         women = filter(lambda x: x.rounds == self.signal + 1, women)
-        women = filter(lambda x: x.player_type == x.signal_log[len(x.signal_log) - 1], women)
+        women = filter(lambda x: x.player_type in x.signal_log, women)
         women = filter(lambda x: hash(x) not in self.counted, women)
         self.counted.update(map(hash, women))
         self.count += len(women)
@@ -50,7 +50,7 @@ class RefCount(Measure):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
         women = filter(lambda x: x.rounds == self.signal + 1, women)
-        women = filter(lambda x: 1 == x.response_log[len(x.response_log) - 1], women)
+        women = filter(lambda x: 1 in x.response_log, women)
         women = filter(lambda x: hash(x) not in self.counted, women)
         self.counted.update(map(hash, women))
         self.count += len(women)
