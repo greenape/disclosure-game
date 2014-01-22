@@ -29,7 +29,7 @@ class HonestyMeasure(Measure):
     def measure(self, roundnum, women, game):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
-        women = filter(lambda x: x.rounds == self.signal + 1, women)
+        women = filter(lambda x: x.rounds == self.signal, women)
         women = filter(lambda x: x.player_type in x.signal_log, women)
         women = filter(lambda x: hash(x) not in self.counted, women)
         self.counted.update(map(hash, women))
@@ -49,7 +49,7 @@ class RefCount(Measure):
     def measure(self, roundnum, women, game):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
-        women = filter(lambda x: x.rounds == self.signal + 1, women)
+        women = filter(lambda x: x.rounds == self.signal, women)
         women = filter(lambda x: 1 in x.response_log, women)
         women = filter(lambda x: hash(x) not in self.counted, women)
         self.counted.update(map(hash, women))
@@ -86,9 +86,9 @@ def abstract_measures_women():
     measures['round'] = Appointment()
     for i in range(3):
         measures["type_%d_pop" % i] = PopCount(player_type = i)
-        for j in range(12):
-            measures["type_%d_round_%d_ref" % (i, j)] = CumulativeRefCount(player_type=i, signal=j)
-            measures["type_%d_round_%d_honesty" % (i, j)] = CumulativeHonestyCount(player_type=i, signal=j)
+        for j in range(11):
+            measures["type_%d_round_%d_ref" % (i, j)] = CumulativeRefCount(player_type=i, signal=j+1)
+            measures["type_%d_round_%d_honesty" % (i, j)] = CumulativeHonestyCount(player_type=i, signal=j+1)
     return Measures(measures)
 
 def abstract_measures_mw():
