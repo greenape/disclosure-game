@@ -6,7 +6,7 @@ class ReferralGame(Game):
         is only revealed after a referral, which ends the game.
         """
         def name(self):
-                return "referral"
+                return "referral_no_inform"
 
         def play_round(self, signaller, receiver):
                 """ Play a round of this game between the
@@ -29,7 +29,7 @@ class ReferralGame(Game):
                         signaller.is_finished = True
                 elif signaller.rounds == self.num_appointments:
                         signaller.is_finished = True
-                        receiver.update_beliefs(receive_payoff, signaller, signal)
+                        #receiver.update_beliefs(receive_payoff, signaller, signal)
 
 
 class CaseloadReferralGame(CaseloadGame, ReferralGame):
