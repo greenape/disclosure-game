@@ -60,7 +60,7 @@ class CumulativeRefCount(Measure):
     def __init__(self, player_type=None, midwife_type=None, signal=None):
         super(CumulativeRefCount, self).__init__(player_type, midwife_type, signal)
         counted = set()
-        self.counters = [RefCount(player_type, midwife_type, x, counted) for x in range(signal)]
+        self.counters = [RefCount(player_type, midwife_type, x + 1, counted) for x in range(signal)]
 
     """
     Return the number of women referred upto an appointment.
@@ -72,7 +72,7 @@ class CumulativeHonestyCount(Measure):
     def __init__(self, player_type=None, midwife_type=None, signal=None):
         super(CumulativeHonestyCount, self).__init__(player_type, midwife_type, signal)
         counted = set()
-        self.counters = [HonestyMeasure(player_type, midwife_type, x, counted) for x in range(signal)]
+        self.counters = [HonestyMeasure(player_type, midwife_type, x + 1, counted) for x in range(signal)]
 
     """
     Return the number of women referred upto an appointment.
@@ -86,9 +86,9 @@ def abstract_measures_women():
     measures['round'] = Appointment()
     for i in range(3):
         measures["type_%d_pop" % i] = PopCount(player_type = i)
-        for j in range(11):
-            measures["type_%d_round_%d_ref" % (i, j)] = CumulativeRefCount(player_type=i, signal=j+1)
-            measures["type_%d_round_%d_honesty" % (i, j)] = CumulativeHonestyCount(player_type=i, signal=j+1)
+        for j in range(1,12):
+            measures["type_%d_round_%d_ref" % (i, j)] = CumulativeRefCount(player_type=i, signal=j)
+            measures["type_%d_round_%d_honesty" % (i, j)] = CumulativeHonestyCount(player_type=i, signal=j)
     return Measures(measures)
 
 def abstract_measures_mw():
