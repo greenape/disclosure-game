@@ -146,13 +146,13 @@ class RecognitionResponder(BayesianResponder):
         else:
             self.signal_memory[hash(signaller)].append((signal, response))
 
-    def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
+    def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         """
         Update beliefs, and do so retrospectively for as many signal-response
         pairs as we have for this signaller.
         """
         if signaller is None:
-            return super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
+            return super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal, weight)
         #Need to work with an artificial response log while bulk updating
         tmp_response_log = self.response_log
         mem = self.signal_memory.pop(hash(signaller), [])
@@ -160,6 +160,6 @@ class RecognitionResponder(BayesianResponder):
             signal, response = mem.pop()
             payoff = self.payoffs[signaller.player_type][response]
             self.response_log = [response]
-            super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal)
+            super(RecognitionResponder, self).update_beliefs(payoff, signaller, signal, weight)
 
         self.response_log = tmp_response_log

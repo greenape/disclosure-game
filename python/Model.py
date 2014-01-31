@@ -189,7 +189,7 @@ class Signaller(Agent):
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
                 self.signal_belief[signal_i][player_type].append(prob)
 
-    def update_beliefs(self, response, midwife, payoff, midwife_type=None):
+    def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
         if payoff is not None:
             self.payoff_log.append(payoff)
         rounds = self.rounds
@@ -200,7 +200,7 @@ class Signaller(Agent):
             self.type_log.append(midwife.player_type)
             if midwife_type is None:
                 midwife_type = midwife.player_type
-            self.type_matches[midwife_type] += 1
+            self.type_matches[midwife_type] += weight
 
         for player_type, estimate in self.type_distribution.items():
             alpha_k = self.type_weights[player_type]
@@ -216,7 +216,7 @@ class Signaller(Agent):
             self.response_log.append(response)
             #self.response_matches[response] += 1.
             signal = self.signal_log[len(self.signal_log) - 1]
-            self.response_signal_matches[signal][response] += 1.
+            self.response_signal_matches[signal][response] += weight
 
         #response_matches = {}
         #for response in self.responses:
@@ -244,8 +244,8 @@ class Signaller(Agent):
                 del belief[:]
                 belief.append(prob)
 
-    def log_signal(self, signal, opponent=None):
-        self.signal_matches[signal] += 1
+    def log_signal(self, signal, opponent=None, weight=1.):
+        self.signal_matches[signal] += weight
         self.signal_log.append(signal)
 
 
@@ -304,12 +304,12 @@ class Responder(Agent):
         self.payoffs = payoffs
         self.update_beliefs(None, None, None)
 
-    def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
+    def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         rounds = self.rounds
         if signaller is not None:
             signaller_type = signaller.player_type
             #self.type_matches[signaller_type] += 1
-            self.signal_type_matches[signal][signaller_type] += 1
+            self.signal_type_matches[signal][signaller_type] += weight
         if payoff is not None:
             self.payoff_log.append(payoff)
 
@@ -325,7 +325,7 @@ class Responder(Agent):
                #print "alpha_k = %f" % alpha_k
                 alpha_dot = sum(self.type_weights[signal_i])
                #print "Num alternatives = %d" % alpha_dot
-                n = self.signal_matches[signal_i]
+                n = sum(self.signal_type_matches[signal_i].values())
                #print "n = %d" % n
 
                 #matched_pairs = zip(type_matches[player_type], signal_matches)

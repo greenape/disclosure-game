@@ -12,8 +12,8 @@ class BayesianPayoffSignaller(LexicographicSignaller):
     A class of agent that reasons on a signals -> payoffs basis.
     """
 
-    def update_beliefs(self, response, midwife, payoff, midwife_type=None):
-        super(BayesianPayoffSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
+    def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
+        super(BayesianPayoffSignaller, self).update_beliefs(response, midwife, payoff, midwife_type, weight)
         for signal, payoffs in self.payoff_belief.items():
             for payoff, belief in payoffs.items():
                 n_k = self.payoff_count[signal][payoff]
@@ -48,9 +48,9 @@ class BayesianPayoffResponder(LexicographicResponder):
     def __str__(self):
         return "bayes_payoff"
 
-    def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
+    def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         super(BayesianPayoffResponder, self).update_beliefs(
-            payoff, signaller, signal, signaller_type)
+            payoff, signaller, signal, signaller_type, weight)
         for signal, responses in self.payoff_belief.items():
             for response, payoffs in responses.items():
                 for payoff, belief in payoffs.items():

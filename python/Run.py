@@ -94,8 +94,8 @@ def arguments():
         default=expanduser("~"), nargs="?")
     parser.add_argument('--pickled-arguments', dest='kwargs', type=str, nargs='?',
         default=None, help="A file containing a pickled list of kwarg dictionaries to be run.")
-    parser.add_argument('--individual-measures', dest='indiv', action="store_true",
-        help="Take individual outcome measures instead of group level.", default=False)
+    #parser.add_argument('--individual-measures', dest='indiv', action="store_true",
+    #    help="Take individual outcome measures instead of group level.", default=False)
     parser.add_argument('--abstract-measures', dest='abstract', action="store_true",
         help="Take measures intended for the extended abstract.", default=False)
 
@@ -109,9 +109,9 @@ def arguments():
     kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested, 'file_name':file_name}
     if args.women is not None:
         kwargs['women_weights'] = args.women
-    if args.indiv:
-        kwargs['measures_midwives'] = indiv_measures_mw()
-        kwargs['measures_women'] = indiv_measures_women()
+    #if args.indiv:
+    #    kwargs['measures_midwives'] = indiv_measures_mw()
+    #    kwargs['measures_women'] = indiv_measures_women()
     if args.abstract:
         kwargs['measures_midwives'] = abstract_measures_mw()
         kwargs['measures_women'] = abstract_measures_women()
@@ -274,6 +274,7 @@ def do_work(queueIn, queueOut, kill_queue):
             del config
         except MemoryError:
             raise
+            break
         except:
             raise
             break
@@ -293,6 +294,7 @@ def write(queue, db_name, kill_queue):
             print e
             kill_queue.put(None)
             raise
+            break
         except:
             break
 
@@ -345,6 +347,7 @@ def kw_experiment(kwargs, file_name):
     while True:
         if jobs.get() is None:
             break
+        print "waiting.."
     producer.join()
 
 

@@ -25,19 +25,19 @@ class CarryingInformationGame(CarryingReferralGame):
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
-     measures_midwives=measures_midwives(), params=None, mw_share_width=0, mw_share_bias=-1, women_share_width=0, women_share_bias=0.99,
+     measures_midwives=measures_midwives(), params=None, mw_share_prob=0, mw_share_bias=-1, women_share_prob=0, women_share_bias=0.99,
      num_appointments=12):
         super(CarryingInformationGame, self).__init__(baby_payoff, no_baby_payoff, mid_baby_payoff, referral_cost, harsh_high,
             harsh_mid, harsh_low, mid_high, mid_mid, mid_low, low_high, low_mid, low_low, randomise_payoffs, type_weights,
             rounds, measures_women, measures_midwives, params)
-        self.parameters['mw_share_width'] = mw_share_width
+        self.parameters['mw_share_prob'] = mw_share_prob
         self.parameters['mw_share_bias'] = mw_share_bias
-        self.parameters['women_share_width'] = women_share_width
+        self.parameters['women_share_prob'] = women_share_prob
         self.parameters['women_share_bias'] = women_share_bias
         self.mw_share_bias = mw_share_bias
-        self.mw_share_width = mw_share_width
+        self.mw_share_prob = mw_share_prob
         self.women_share_bias = women_share_bias
-        self.women_share_width = women_share_width
+        self.women_share_prob = women_share_prob
         self.num_appointments = num_appointments
 
     def __str__(self):
@@ -78,7 +78,7 @@ class CarryingInformationGame(CarryingReferralGame):
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
-                    if self.women_share_width > 0 and abs(self.women_share_bias) < 1:
+                    if self.women_share_prob > 0 and abs(self.women_share_bias) < 1:
                         women_memories.append(woman.get_memory())
                     for midwife in midwives:
                         midwife.signal_memory.pop(hash(woman), None)
@@ -124,7 +124,7 @@ class CarryingInformationGame(CarryingReferralGame):
             for memory in memories:
                 possibles = filter(lambda x: hash(x) != memory[0], midwives)
                 #Share it
-                self.disseminate_midwives(memory[1], self.share_to(possibles, self.mw_share_width))
+                self.disseminate_midwives(memory[1], self.share_to(possibles, self.mw_share_prob))
                 #And null it
                 lucky = filter(lambda x: hash(x) == memory[0], midwives)[0]
                 lucky.shareable = None
@@ -145,7 +145,7 @@ class CarryingInformationGame(CarryingReferralGame):
             memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
             #Share it
             for memory in memories:
-                self.disseminate_women(memory[1], self.share_to(women, self.women_share_width))
+                self.disseminate_women(memory[1], self.share_to(women, self.women_share_prob))
                 #And null it
                 #women_memories.remove(memory)
 
@@ -159,7 +159,7 @@ class CarryingInformationGame(CarryingReferralGame):
         for recepient in recepients:
             for signal, response in signals:
                 recepient.remember(tmp_signaller, signal, response)
-                recepient.update_beliefs(None, tmp_signaller, signal, signaller_type=player_type)
+                recepient.exogenous_update(None, tmp_signaller, signal, signaller_type=player_type)
 
     def disseminate_women(self, memory, recepients):
         LOG.debug("Sharing a memory to women.")
@@ -263,7 +263,7 @@ class CaseloadSharingGame(CarryingInformationGame):
                     new_woman.finished = i
                     women.insert(0, new_woman)
                     LOG.debug("Inserted them.")
-                    if self.women_share_width > 0 and abs(self.women_share_bias) < 1:
+                    if self.women_share_prob > 0 and abs(self.women_share_bias) < 1:
                         women_memories.append(woman.get_memory())
                     LOG.debug("Collected memories.")
                     for midwife in midwives:

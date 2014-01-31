@@ -48,16 +48,19 @@ class LexicographicSignaller(BayesianSignaller):
         sorted_dict = sorted(self.payoff_count[signal].items(), key=operator.itemgetter(1), reverse=True)
         return sorted_dict[min(n, len(sorted_dict) - 1)][0]
 
-    def update_beliefs(self, response, midwife, payoff, midwife_type=None):
+    def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
         #super(LexicographicSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
         if payoff is not None:
             try:
-                self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] += 1
+                self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] += weight
             except KeyError:
                 # Must be an impossible payoff add it anyway?
-                self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] = 1
+                self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] = weight
         if response is not None:
             self.response_log.append(response)
+        if midwife is not None:
+            # Log true type for bookkeeping
+            self.type_log.append(midwife.player_type)
 
     def do_signal(self, opponent=None):
         #super(LexicographicSignaller, self).do_signal(opponent)
@@ -118,10 +121,10 @@ class LexicographicResponder(BayesianResponder):
         super(LexicographicResponder, self).init_payoffs(payoffs, type_weights)
 
 
-    def update_beliefs(self, payoff, signaller, signal, signaller_type=None):
+    def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         if payoff is not None:
             #print self.payoff_count, signal, payoff, self.response_log[len(self.response_log) - 1]
-            self.payoff_count[signal][self.response_log[len(self.response_log) - 1]][payoff] += 1
+            self.payoff_count[signal][self.response_log[len(self.response_log) - 1]][payoff] += weight
         #super(LexicographicResponder, self).update_beliefs(payoff, signaller, signal, signaller_type)
 
     def frequent(self, signal, response, n, signaller=None):
