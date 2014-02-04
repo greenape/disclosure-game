@@ -85,6 +85,9 @@ sobol.R
 
 test.R
 
+*.db
+*.fuckit
+*.pickle
 test2.R
 
 *.gz
@@ -94,3 +97,9 @@ results/caseload_params.csv.gz
 results/caseload_women.csv.gz
 
 python/random_test.py
+*.html
+louvin/*
+
+python/test.py
+
+r/tmp.R
