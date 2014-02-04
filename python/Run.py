@@ -26,7 +26,14 @@ import sys
 import logging
 
 logger = multiprocessing.log_to_stderr()
+fh = logging.FileHandler('debug.log')
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(levelname)s/%(processName)s] %(message)s')
+fh.setFormatter(formatter)
+#logger.addHandler(fh)
 logger.setLevel(logging.INFO)
+
+version = 0.53
 
 def load_kwargs(file_name):
     
@@ -135,7 +142,7 @@ def arguments():
 
 
 def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
-    signaller=True):
+    signaller=True, player_args={}):
     women = []
     player_type = 0
     for weight in weights:
@@ -145,9 +152,9 @@ def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
                 if signaller:
                     women.append(DollSignaller(player_type=player_type, child_fn=constructor))
                 else:
-                    women.append(constructor(player_type=player_type))    
+                    women.append(constructor(player_type=player_type, **player_args))    
             else:
-                women.append(constructor(player_type=player_type))
+                women.append(constructor(player_type=player_type, **player_args))
         player_type += 1
     while len(women) < num:
         player_type = 0
@@ -155,12 +162,13 @@ def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
             if signaller:
                 women.append(DollSignaller(player_type=player_type, child_fn=constructor))
             else:
-                women.append(constructor(player_type=player_type))    
+                women.append(constructor(player_type=player_type, **player_args))    
         else:
-            women.append(constructor(player_type=player_type))
+            women.append(constructor(player_type=player_type, **player_args))
     return women
 
-def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds):
+def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds,
+    signaller_args, responder_args):
     params = OrderedDict()
     params['game'] = str(game)
     params['decision_rule_responder'] = responder_rule
@@ -173,6 +181,10 @@ def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game,
     params['women_1'] = women_weights[1]
     params['women_2'] = women_weights[2]
     params['max_rounds'] = rounds
+    for k, v in signaller_args.items():
+        params['signaller_%s' % k] = v
+    for k, v in responder_args.items():
+        params['responder_%s' % k] = v
 
     for i in range(3):
         for j in range(3):
@@ -184,7 +196,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     runs=1, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
     women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
-    nested=False, mw_priors=None, file_name=""):
+    nested=False, mw_priors=None, file_name="", responder_args={}, signaller_args={}):
 
     if game is None:
         game = Game()
@@ -193,7 +205,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
     game.measures_midwives = measures_midwives
     game.measures_women = measures_women
-    params = params_dict(str(signaller_fn()), str(responder_fn()), mw_weights, women_weights, game, rounds)
+    params = params_dict(str(signaller_fn()), str(responder_fn()), mw_weights, women_weights, game, rounds,
+        signaller_args, responder_args)
     for key, value in params.items():
         game.parameters[key] = value
     game.rounds = rounds
@@ -209,7 +222,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         #logger.info "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
-        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested)
+        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested, player_args=signaller_args)
         #logger.info "made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
@@ -220,7 +233,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         if women_modifier is not None:
             women_modifier(women)
         #logger.info("Set priors.")
-        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False)
+        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False, player_args=responder_args)
         #logger.info("Made agents.")
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)
@@ -353,6 +366,7 @@ def kw_experiment(kwargs, file_name):
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
+    logger.info("Version %f" % version)
     logger.info("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
     logger.info("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))

@@ -151,15 +151,15 @@ def synthetic_caseload():
 def mw_sharing_experiment():
     kwargs = []
     for x in itertools.product((y/10. for y in range(0, 11)), repeat=2):
-        kwarg = {'game_args': {'mw_share_width':x[0], 'mw_share_bias':-x[1]}}
+        kwarg = {'game_args': {'mw_share_prob':x[0]}, 'responder_args':{'share_weight':x[1]}}
         kwargs.append(kwarg)
     return kwargs
 
 def w_sharing_experiment():
     kwargs = []
     for x in itertools.product((y/10. for y in range(0, 11)), repeat=2):
-        kwarg = {'game_args': {'mw_share_width':0, 'mw_share_bias':1,
-            'women_share_width':x[0], 'women_share_bias':-x[1]}}
+        kwarg = {'game_args': {'mw_share_prob':0, 'mw_share_bias':1,
+            'women_share_prob':x[0]}, 'signaller_args':{'share_weight':x[1]}}
         kwargs.append(kwarg)
     return kwargs
 

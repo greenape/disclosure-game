@@ -25,7 +25,7 @@ class CarryingInformationGame(CarryingReferralGame):
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
-     measures_midwives=measures_midwives(), params=None, mw_share_prob=0, mw_share_bias=-1, women_share_prob=0, women_share_bias=0.99,
+     measures_midwives=measures_midwives(), params=None, mw_share_prob=0, mw_share_bias=-.99, women_share_prob=0, women_share_bias=0.99,
      num_appointments=12):
         super(CarryingInformationGame, self).__init__(baby_payoff, no_baby_payoff, mid_baby_payoff, referral_cost, harsh_high,
             harsh_mid, harsh_low, mid_high, mid_mid, mid_low, low_high, low_mid, low_low, randomise_payoffs, type_weights,
@@ -89,7 +89,7 @@ class CarryingInformationGame(CarryingReferralGame):
             # Share information
             LOG.debug("Worker %s prepping share." % (worker))
             #Midwives
-            self.share_midwives(midwives, mw_memories)
+            self.share_midwives(midwives)
 
             #Women
             self.share_women(women, women_memories)
@@ -102,50 +102,61 @@ class CarryingInformationGame(CarryingReferralGame):
         LOG.debug("Worker %s completed a game." % (worker))
         return women_res, mw_res
 
-    def share_midwives(self, midwives, mw_memories):
-            return
+    def share_midwives(self, midwives):
+        for midwife in midwives:
+            memory = midwife.shareable
+            midwife.shareable = None
+            p = random.random()
+            LOG.debug("p=%f, threshold is %f" % (p, self.mw_share_prob))
+            if p < self.mw_share_prob and memory is not None:
+                LOG.debug("Sharing %s" % str(memory))
+                possibles = filter(lambda x: hash(x) != hash(midwife), midwives)
+                self.disseminate_midwives(memory[1][1], possibles)
+
         #Collect memories
-            mw_memories += filter(lambda x: x is not None, map(lambda x: x.shareable, midwives))
+            #mw_memories += filter(lambda x: x is not None, map(lambda x: x.shareable, midwives))
             #print mw_memories
             #Sort them according to the threshold sign
-            if self.mw_share_bias == 0:
-                random.shuffle(mw_memories)
-            elif copysign(1, self.mw_share_bias) == 1:
-                mw_memories.sort(key=operator.itemgetter(0), reverse=True)
-            elif copysign(1, self.mw_share_bias) == -1:
-                mw_memories.sort(key=operator.itemgetter(0))
+            #if self.mw_share_bias == 0:
+            #    random.shuffle(mw_memories)
+            #elif copysign(1, self.mw_share_bias) == 1:
+            #    mw_memories.sort(key=operator.itemgetter(0), reverse=True)
+            #elif copysign(1, self.mw_share_bias) == -1:
+            #    mw_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
             #memories = self.n_most(self.mw_share_bias, mw_memories)
             #print mw_memories
             #Choose one by weighted random choice
             #memory = self.weighted_random_choice(mw_memories, self.mw_share_bias)
-            memories = [self.weighted_random_choice(mw_memories, self.mw_share_bias)]
+            #memories = [self.weighted_random_choice(mw_memories, self.mw_share_bias)]
             #print "Memory is", memory, "worst was", mw_memories[len(mw_memories) - 1]
-            for memory in memories:
-                possibles = filter(lambda x: hash(x) != memory[0], midwives)
-                #Share it
-                self.disseminate_midwives(memory[1], self.share_to(possibles, self.mw_share_prob))
-                #And null it
-                lucky = filter(lambda x: hash(x) == memory[0], midwives)[0]
-                lucky.shareable = None
+            #for memory in memories:
+            #    possibles = filter(lambda x: hash(x) != memory[0], midwives)
+            #    #Share it
+            #    self.disseminate_midwives(memory[1], self.share_to(possibles, self.mw_share_prob))
+            #    #And null it
+            #    lucky = filter(lambda x: hash(x) == memory[0], midwives)[0]
+            #    lucky.shareable = None
             #del mw_memories
 
     def share_women(self, women, women_memories):
-            return
+            #return
         #Sort them according to the threshold sign
-            if self.women_share_bias == 0:
-                random.shuffle(women_memories)
-            elif copysign(1, self.women_share_bias) == 1:
-                women_memories.sort(key=operator.itemgetter(0), reverse=True)
-            elif copysign(1, self.women_share_bias) == -1:
-                women_memories.sort(key=operator.itemgetter(0))
+            #if self.women_share_bias == 0:
+            #    random.shuffle(women_memories)
+            #elif copysign(1, self.women_share_bias) == 1:
+            #    women_memories.sort(key=operator.itemgetter(0), reverse=True)
+            #elif copysign(1, self.women_share_bias) == -1:
+            #    women_memories.sort(key=operator.itemgetter(0))
             #Weight them by position in the sort
             #memories = self.n_most(self.women_share_bias, women_memories)
             #Choose one by weighted random choice
-            memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
+            #memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
             #Share it
-            for memory in memories:
-                self.disseminate_women(memory[1], self.share_to(women, self.women_share_prob))
+            while len(women_memories) > 0:
+                memory = women_memories.pop()
+                if random.random() > self.women_share_prob:
+                    self.disseminate_women(memory[1], women)
                 #And null it
                 #women_memories.remove(memory)
 
@@ -154,7 +165,9 @@ class CarryingInformationGame(CarryingReferralGame):
         if memory is None or len(recepients) == 0:
             return
         player_type, signals = memory
-        #print "Sharing to midwives.", memory
+        LOG.debug("Sharing to midwives: %s" % str(memory))
+        if len(memory[1]) > 1:
+            LOG.debug("Memory chain length %d" % len(memory[1]))
         tmp_signaller = type(recepients[0])(player_type=player_type)
         for recepient in recepients:
             for signal, response in signals:
@@ -239,7 +252,7 @@ class CaseloadSharingGame(CarryingInformationGame):
         LOG.debug("Assigned caseloads.")
         for i in range(rounds):
             players = [caseloads[midwife].pop() for midwife in midwives]
-            random.shuffle(midwives)
+            #random.shuffle(midwives)
             LOG.debug("Playing a round.")
             map(self.play_round, players, midwives)
             for x in midwives:
@@ -283,8 +296,9 @@ class CaseloadSharingGame(CarryingInformationGame):
             #Midwives
             try:
                 self.share_midwives(midwives)
-            except:
+            except e:
                 LOG.debug("Sharing to midwives failed.")
+                LOG.debug(e)
 
             #Women
             try:

@@ -1,6 +1,16 @@
 import random
 from Measures import measures_midwives, measures_women
 from collections import OrderedDict
+try:
+    import scoop
+    scoop.worker
+    scoop_on = True
+    LOG = scoop.logger
+except:
+    scoop_on = False
+    import multiprocessing
+    LOG = multiprocessing.get_logger()
+    pass
 
 def random_expectations(depth=0, breadth=3, low=1, high=10):
     result = []
@@ -393,7 +403,7 @@ class BayesianResponder(Responder):
                 best = (response, act_risk)
         self.response_log.append(best[0])
         self.rounds += 1
-        print "Player type is %d, decision is %d" % (opponent.player_type, best[0])
+        #print "Player type is %d, decision is %d" % (opponent.player_type, best[0])
         return best[0]
 
 
@@ -506,6 +516,7 @@ class Game(object):
         for woman in women:
             if(woman.rounds < rounds) and not woman.is_finished:
                 return False
+            LOG.debug("Player %d finished after %d rounds." % (hash(woman), woman.rounds))
         return True
 
     def play_round(self, signaller, receiver):
