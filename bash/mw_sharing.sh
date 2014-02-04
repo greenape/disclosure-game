@@ -17,6 +17,9 @@ GAME[6]='-s SharingPayoffProspectSignaller -r SharingPayoffProspectResponder -p 
 GAME[7]='-s SharingSignaller -r SharingResponder'
 GAME[8]='-s SharingSignaller -r SharingResponder -p 0.85 0.1 0.05'
 
+GAME[9]='-s SharingProspectSignaller -r SharingProspectResponder'
+GAME[10]='-s SharingProspectSignaller -r SharingProspectResponder -p 0.85 0.1 0.05'
+
 cd disclosure-game/python
 ulimit -n 512
 module load python
