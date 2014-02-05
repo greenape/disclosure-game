@@ -123,7 +123,7 @@ class LexicographicResponder(BayesianResponder):
 
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         if payoff is not None:
-            #print self.payoff_count, signal, payoff, self.response_log[len(self.response_log) - 1]
+            #print self.payoff_count, signal, payoff, self.response_log[len(self.response_log) - 1], weight
             self.payoff_count[signal][self.response_log[len(self.response_log) - 1]][payoff] += weight
         #super(LexicographicResponder, self).update_beliefs(payoff, signaller, signal, signaller_type)
 

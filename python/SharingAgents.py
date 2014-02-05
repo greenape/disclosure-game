@@ -19,6 +19,7 @@ class SharingResponder(RecognitionResponder):
         return "sharing_%s" % super(SharingResponder, self).__str__()
 
     def exogenous_update(self, payoff, signaller, signal, signaller_type=None):
+        #print "Exogenous update"
         self.update_beliefs(payoff, signaller, signal, signaller_type, self.share_weight)
 
     def remember(self, signaller, signal, response):

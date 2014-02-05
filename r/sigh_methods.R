@@ -1,93 +1,93 @@
 require(sqldf)
 require(ggplot2)
 
-num_rounds_type <- function(df, type, x, y) {
-    s = eval(parse(text=sprintf("subset(df, df$type_%d_finished > 0)", type)))
-    #df <- subset(df, filter > 0)
+num_rounds_type <- function(dataset, type, x, y) {
+    s = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_finished > 0)", type)))
+    #dataset <- subset(dataset, filter > 0)
     # Average number of rounds played
-    #x = eval(parse(text=sprintf("df$%s",x)))
-    #y = eval(parse(text=sprintf("df$%s",y)))
+    #x = eval(parse(text=sprintf("dataset$%s",x)))
+    #y = eval(parse(text=sprintf("dataset$%s",y)))
     fill = sprintf("rounds_played_type_%d", type)
     z = data.frame(s[c(x,y,fill)])
     names(z)[names(z)==x] <- "x"
     names(z)[names(z)==y] <- "y"
     names(z)[names(z)==fill] <- "fill"
-    #df <- aggregate(df, by=list(x, y), FUN=mean)
+    z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
     c <- ggplot(z, aes(x=x, y=y))
     return(c + geom_tile(aes(fill=fill)))
 }
 
-payoffs_type <- function(df, type, x, y) {
+payoffs_type <- function(dataset, type, x, y) {
     # Average payoff accrued
-    s = eval(parse(text=sprintf("subset(df, df$type_%d_finished > 0)", type)))
-    #df <- subset(df, filter > 0)
+    s = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_finished > 0)", type)))
+    #dataset <- subset(dataset, filter > 0)
     fill = sprintf("accrued_payoffs_type_%d", type)
     z = data.frame(s[c(x,y,fill)])
     names(z)[names(z)==x] <- "x"
     names(z)[names(z)==y] <- "y"
     names(z)[names(z)==fill] <- "fill"
-    #fill = eval(parse(text=sprintf("df$accrued_payoffs_type_%d", type)))
-    #df <- aggregate(df, by=list(x, y), FUN=mean)
+    #fill = eval(parse(text=sprintf("dataset$accrued_payoffs_type_%d", type)))
+    z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
     c <- ggplot(z, aes(x=x, y=y))
     return(c + geom_tile(aes(fill=fill)))
 }
 
-signals_type <- function(df, type, signal, x, y) {
+signals_type <- function(dataset, type, signal, x, y) {
     # Levelplot of average signal frequency across whole game
     # Include only rounds where at least some of that type played
     # Type 0
-    #s = eval(parse(text=sprintf("subset(df, df$type_%d_frequency > 0)", type)))
-    s <- df
-    #df <- subset(df, filter > 0)
+    #s = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_frequency > 0)", type)))
+    s <- dataset
+    #dataset <- subset(dataset, filter > 0)
     # Average payoff accrued
     fill = sprintf("type_%d_signal_%d", type, signal)
     z = data.frame(s[c(x,y,fill)])
     names(z)[names(z)==x] <- "x"
     names(z)[names(z)==y] <- "y"
     names(z)[names(z)==fill] <- "fill"
-    #fill = eval(parse(text=sprintf("df$type_%d_signal_%d", type, signal)))
-    #df <- aggregate(df, by=list(x, y), FUN=mean)
+    #fill = eval(parse(text=sprintf("dataset$type_%d_signal_%d", type, signal)))
+    z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
     c <- ggplot(z, aes(x=x, y=y))
     return(c + geom_tile(aes(fill=fill)))
 }
 
-honesty_type <- function(df, type, x, y) {
+honesty_type <- function(dataset, type, x, y) {
     # Levelplot of normalised average absolute signal distance.
     # Include only rounds where at least some of that type played
     # Type 0
-    df = eval(parse(text=sprintf("subset(df, df$type_%d_frequency > 0)", type)))
-    #df <- subset(df, filter > 0)
+    dataset = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_frequency > 0)", type)))
+    #dataset <- subset(dataset, filter > 0)
     # Average payoff accrued
-    x = eval(parse(text=sprintf("df$%s",x)))
-    y = eval(parse(text=sprintf("df$%s",y)))
+    x = eval(parse(text=sprintf("dataset$%s",x)))
+    y = eval(parse(text=sprintf("dataset$%s",y)))
     for(signal in 0:2) {
-         fill = eval(parse(text=sprintf("df$type_%d_signal_%d", type, signal)))
+         fill = eval(parse(text=sprintf("dataset$type_%d_signal_%d", type, signal)))
     }
-    #df <- aggregate(df, by=list(x, y), FUN=mean)
-    c <- ggplot(df, aes(x=x, y=y))
+    #dataset <- aggregate(dataset, by=list(x, y), FUN=mean)
+    c <- ggplot(dataset, aes(x=x, y=y))
     return(c + geom_tile(aes(fill=fill)))
 }
 
 
 load <- function(x) {
-    df <- sqldf("select * from results", dbname=x)
-    params <- sqldf("select * from parameters", dbname=x)
-    df <- merge(x=df, y=params, by.x="hash", by.y="hash", all.x=TRUE)
+    dataset <- sqldataset("select * from results", dbname=x)
+    params <- sqldataset("select * from parameters", dbname=x)
+    dataset <- merge(x=dataset, y=params, by.x="hash", by.y="hash", all.x=TRUE)
     print(sprintf("Loaded %s", x))
-    return(df)
+    return(dataset)
 }
 
-num_rounds <- function(df) {
+num_rounds <- function(dataset) {
     # Average number of rounds played over time for all types
     # Include only rounds where at least some of that type finished
     # Type 0
-    s <- subset(df, df$type_0_finished > 0)
+    s <- subset(dataset, dataset$type_0_finished > 0)
     d <- data.frame(s[c('appointment','rounds_played_type_0')])
     names(d)[names(d)=="rounds_played_type_0"] <- "num_rounds"
     d$player_type <- "Light"
     print("Light.")
     # Type 1
-    s <- subset(df, df$type_1_finished > 0)
+    s <- subset(dataset, dataset$type_1_finished > 0)
     e <- data.frame(s[c('appointment', 'rounds_played_type_1')])
     e$player_type <- "Moderate"
     names(e)[names(e)=="rounds_played_type_1"] <- "num_rounds"
@@ -95,7 +95,7 @@ num_rounds <- function(df) {
     print("Mod.")
     rm(e)
     # Type 2
-    s <- subset(df, df$type_2_finished > 0)
+    s <- subset(dataset, dataset$type_2_finished > 0)
     e <- data.frame(s[c('appointment', 'rounds_played_type_2')])
     e$player_type <- "Heavy"
     names(e)[names(e)=="rounds_played_type_2"] <- "num_rounds"
@@ -107,11 +107,11 @@ num_rounds <- function(df) {
     return(c)
 }
 
-signals_by_type <- function(df, type) {
+signals_by_type <- function(dataset, type) {
     # Include only rounds where at least some of that type played
     # Type 0
-    df = eval(parse(text=sprintf("subset(df, df$type_%d_frequency > 0)", type)))
-    #df <- subset(df, filter > 0)
+    dataset = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_frequency > 0)", type)))
+    #dataset <- subset(dataset, filter > 0)
     data = "type_%d_signal_%d"
     a = sprintf(data, type, 0)
     b = sprintf(data, type, 1)
@@ -136,9 +136,9 @@ signals_by_type <- function(df, type) {
 }
 
 load <- function(x) {
-    df <- sqldf("select * from results", dbname=x)
+    dataset <- sqldf("select * from results where appointment=999", dbname=x)
     params <- sqldf("select * from parameters", dbname=x)
-    df <- merge(x=df, y=params, by.x="hash", by.y="hash", all.x=TRUE)
+    dataset <- merge(x=dataset, y=params, by.x="hash", by.y="hash", all.x=TRUE)
     print(sprintf("Loaded %s", x))
-    return(df)
+    return(dataset)
 }
