@@ -24,4 +24,4 @@ cd disclosure-game/python
 ulimit -n 512
 module load python
 #source /home/jg1g12/hpc/bin/activate
-python Run.py -R 25 ${GAME[$PBS_ARRAYID]} --pickled-arguments mw_sharing.args -f ${PBS_ARRAYID}_mw_sharing -i 1000 -d /scratch/jg1g12 -g CarryingInformationGame CaseloadSharingGame 
+python Run.py -R 25 ${GAME[$PBS_ARRAYID]} --pickled-arguments mw_sharing.args -f ${PBS_ARRAYID}_mw_sharing -i 1000 -d /scratch/jg1g12 -g CarryingInformationGame 

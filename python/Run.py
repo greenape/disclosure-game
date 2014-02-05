@@ -26,12 +26,6 @@ import sys
 import logging
 
 logger = multiprocessing.log_to_stderr()
-fh = logging.FileHandler('debug.log')
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter('[%(levelname)s/%(processName)s] %(message)s')
-fh.setFormatter(formatter)
-#logger.addHandler(fh)
-logger.setLevel(logging.INFO)
 
 version = 0.53
 
@@ -66,7 +60,7 @@ def arguments():
                    dest="games")
     parser.add_argument('-s','--signallers', type=str, nargs='*',
         help='A signaller type.', default=["BayesianSignaller"],
-        choices=['BayesianSignaller', 'RecognitionSignaller', 'AmbiguitySignaller',
+        choices=['BayesianSignaller', 'RecognitionSignaller',
         'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
         'PayoffProspectSignaller', 'SharingBayesianPayoffSignaller', 'SharingLexicographicSignaller',
         'SharingPayoffProspectSignaller', 'SharingSignaller', 'SharingProspectSignaller'],
@@ -74,7 +68,7 @@ def arguments():
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
         choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
-        'AmbiguityResponder', 'LexicographicResponder', 'BayesianPayoffResponder',
+        'LexicographicResponder', 'BayesianPayoffResponder',
         'SharingBayesianPayoffResponder', 'SharingLexicographicResponder',
         'PayoffProspectResponder', 'SharingPayoffProspectResponder',
         'RecognitionResponder', 'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
@@ -87,11 +81,9 @@ def arguments():
         help="Number of rounds each woman plays for.",
         default=100)
     parser.add_argument('-f','--file', dest='file_name', default="", type=str,
-        help="File name prefix for csv output.")
+        help="File name prefix for output.")
     parser.add_argument('-t', '--test', dest='test_only', action="store_true", 
         help="Sets test mode on, and doesn't actually run the simulations.")
-    parser.add_argument('-n', '--nested_agents', dest="nested", action="store_true",
-        help="Use nested agents to recognise opponents.")
     parser.add_argument('-p', '--prop_women', dest='women', nargs=3, type=float,
         help="Proportions of type 0, 1, 2 women as decimals.")
     parser.add_argument('-c', '--combinations', dest='combinations', action="store_true",
@@ -105,15 +97,31 @@ def arguments():
     #    help="Take individual outcome measures instead of group level.", default=False)
     parser.add_argument('--abstract-measures', dest='abstract', action="store_true",
         help="Take measures intended for the extended abstract.", default=False)
+    parser.add_argument('--log-level', dest='log_level', type=str, choices=['debug',
+        'info', 'warniing', 'error'], default='info', nargs="?")
+    parser.add_argument('--log-file', dest='log_file', type=str, default='')
 
     args = parser.parse_args()
+
+    numeric_level = getattr(logging, args.log_level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % log_level)
+
+    logger.setLevel(numeric_level)
+    if args.log_file != "":
+        fh = logging.FileHandler(log_file)
+        fh.setLevel(numeric_level)
+        formatter = logging.Formatter('[%(levelname)s/%(processName)s] %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
     file_name = "%s/%s" % (args.dir, args.file_name)
     games = map(eval, args.games)
     if args.combinations:
         players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     else:
         players = zip(map(eval, args.signallers), map(eval, args.responders))
-    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':args.nested, 'file_name':file_name}
+    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':False, 'file_name':file_name}
     if args.women is not None:
         kwargs['women_weights'] = args.women
     #if args.indiv:
