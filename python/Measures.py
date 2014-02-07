@@ -4,7 +4,7 @@ from Results import *
 import itertools
 
 class Measures(object):
-    def __init__(self, measures, dump_after=0):
+    def __init__(self, measures, dump_after=999):
         self.measures = measures
         self.dump_after = dump_after
 
@@ -395,19 +395,19 @@ def measures_women():
     measures = OrderedDict()
     measures['appointment'] = Appointment()
     measures['finished'] = TypeFinished()
-    measures['accrued_payoffs'] = AccruedPayoffs()
+    #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
         measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
         measures["type_%d_finished" % i] = TypeFinished(player_type=i)
-        measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
+        #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
         measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
-        measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
+        #measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
         for j in range(3):
             measures["type_%d_signal_%d" % (i, j)] = TypeSignalBreakdown(player_type=i, signal=j)
-            measures["type_%d_mw_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, midwife_type=j)
-            measures["type_%d_sig_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, signal=j)
-            for k in range(3):
-                measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
+            #measures["type_%d_mw_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, midwife_type=j)
+            #measures["type_%d_sig_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, signal=j)
+            #for k in range(3):
+            #    measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
     return Measures(measures, 999)
 
 def measures_midwives():
@@ -419,10 +419,10 @@ def measures_midwives():
     #measures['false_positives'] = FalsePositive()
     measures['false_negatives_upto'] = FalseNegativeUpto()
     #measures['false_negatives'] = FalseNegative()
-    measures['accrued_payoffs'] = AccruedPayoffs()
+    #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
-        measures['signal_%d_frequency' % i] = SignalExperience(signal=i)
-        measures['type_%d_frequency' % i] = TypeExperience(player_type=i)
+        #measures['signal_%d_frequency' % i] = SignalExperience(signal=i)
+        #measures['type_%d_frequency' % i] = TypeExperience(player_type=i)
         measures['type_%d_right_calls_upto' % i] = RightCallUpto(midwife_type=i)
         #measures['type_%d_right_calls' % i] = RightCall(midwife_type=i)
         measures['type_%d_false_positives_upto' % i] = FalsePositiveUpto(midwife_type=i)
@@ -430,5 +430,5 @@ def measures_midwives():
         measures['type_%d_false_negatives_upto' % i] = FalseNegativeUpto(midwife_type=i)
         #measures['type_%d_false_negatives' % i] = FalseNegative(midwife_type=i)
         measures['type_%d_misses' % i] = TypedFalseNegativeUpto(player_type=i)
-        measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
+        #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
     return Measures(measures, 999)

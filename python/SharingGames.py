@@ -43,7 +43,7 @@ class CarryingInformationGame(CarryingReferralGame):
     def __str__(self):
         return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
 
-    @profile
+    €@profile
     def play_game(self, players, file_name=""):
         try:
             worker = scoop.worker[0]
