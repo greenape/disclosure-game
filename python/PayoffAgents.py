@@ -33,8 +33,8 @@ class BayesianPayoffSignaller(LexicographicSignaller):
        #print "Type %d woman evaluating signals." % self.player_type
         for signal in shuffled(self.signals):
             signal_risk = self.risk(signal, opponent)
-            self.risk_log[signal].append(signal_risk)
-            self.risk_log_general[signal].append(self.risk(signal, None))
+            #self.risk_log[signal].append(signal_risk)
+            #self.risk_log_general[signal].append(self.risk(signal, None))
             #print "Risk for signal %d is %f. Best so far is signal %d at %f." % (signal, signal_risk, best[0], best[1])
             if signal_risk < best[1]:
                 best = (signal, signal_risk)
