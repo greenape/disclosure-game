@@ -43,6 +43,7 @@ class CarryingInformationGame(CarryingReferralGame):
     def __str__(self):
         return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
 
+    @profile
     def play_game(self, players, file_name=""):
         try:
             worker = scoop.worker[0]
@@ -102,6 +103,7 @@ class CarryingInformationGame(CarryingReferralGame):
         LOG.debug("Worker %s completed a game." % (worker))
         return women_res, mw_res
 
+    #@profile
     def share_midwives(self, midwives):
         for midwife in midwives:
             memory = midwife.shareable
@@ -160,6 +162,7 @@ class CarryingInformationGame(CarryingReferralGame):
                 #And null it
                 #women_memories.remove(memory)
 
+    #@profile
     def disseminate_midwives(self, memory, recepients):
         LOG.debug("Sharing a memory to midwives.")
         if memory is None or len(recepients) == 0:
@@ -217,7 +220,7 @@ class CaseloadSharingGame(CarryingInformationGame):
     def __str__(self):
         return "caseload_%s" % super(CaseloadSharingGame, self).__unicode__()
 
-
+    
     def play_game(self, players, file_name=""):
         try:
             worker = scoop.worker[0]

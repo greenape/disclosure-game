@@ -8,6 +8,7 @@ class ReferralGame(Game):
         def name(self):
                 return "referral_no_inform"
 
+        #@profile
         def play_round(self, signaller, receiver):
                 """ Play a round of this game between the
                 two players.

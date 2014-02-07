@@ -60,7 +60,7 @@ class Agent(object):
         self.payoffs = None
         self.social_payoffs = None
         self.baby_payoffs = None
-        self.signal_matches = dict([(y, 0.) for y in signals])
+        self.signal_matches = dict.fromkeys(signals, 0.)#dict([(y, 0.) for y in signals])
         self.finished = 0
         self.started = 0
         self.is_finished = False
@@ -72,19 +72,19 @@ class Signaller(Agent):
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
         # Given own type, there are always 6 possible payoffs for a given signal.
         # 2 for each of the three midwife types, per signal.
-        self.response_belief = self.response_belief_dict(signals, responses)
-        self.type_distribution = dict([(signal, []) for signal in signals])
-        self.type_matches = dict([(signal, 0.) for signal in signals])
+        self.response_belief = self.response_signal_dict(signals, responses)
+        self.type_distribution = {s:[] for s in signals}#dict([(signal, []) for signal in signals])
+        self.type_matches = dict.fromkeys(signals, 0.)#dict([(signal, 0.) for signal in signals])
         self.response_signal_matches = self.response_signal_dict(signals, responses)
-        self.risk_log = dict([(signal, []) for signal in signals])
-        self.risk_log_general = dict([(signal, []) for signal in signals])
+        #self.risk_log = dict([(signal, []) for signal in signals])
+        #self.risk_log_general = dict([(signal, []) for signal in signals])
         super(Signaller, self).__init__(player_type, signals, responses)
 
     def response_signal_dict(self, signals, responses):
-        return dict([(signal, dict([(response, 0.) for response in responses])) for signal in signals])
+        return {s:dict.fromkeys(responses, 0.) for s in signals}
 
     def response_belief_dict(self, signals, responses):
-        return dict([(signal, dict([(response, []) for response in responses])) for signal in signals])
+        return {s:{k:[] for k in responses} for s in signals}#dict([(signal, dict([(response, []) for response in responses])) for signal in signals])
 
     def init_payoffs(self, baby_payoffs, social_payoffs, type_weights=[1., 1., 1.], 
                      response_weights=[[1., 1.], [1., 1.], [1., 2.]]):
@@ -166,39 +166,6 @@ class Signaller(Agent):
         except IndexError:
             return self.current_type_distribution()
 
-    def signal_referral_beliefs(self):
-        rounds = self.rounds
-        if signaller is not None:
-            signaller_type = signaller.player_type
-            self.type_log.append(signaller_type)
-            #self.type_matches[signaller_type] += 1
-            self.signal_type_matches[self.signal_log[rounds - 1]][signaller_type] += 1
-        if payoff is not None:
-            self.payoff_log.append(payoff)
-
-        #type_matches = {}
-        #for player_type in self.signals:
-        #    type_matches[player_type] = [x == player_type for x in self.type_log]
-
-        for signal_i, types in self.signal_belief.items():
-            for player_type, belief in types.items():
-                #signal_matches = [x == signal_i for x in self.signal_log]
-               #print "Updating P(%d|%d).." % (player_type, signal_i)
-                alpha_k = self.type_weights[signal_i][player_type]
-               #print "alpha_k = %f" % alpha_k
-                alpha_dot = sum(self.type_weights[signal_i])
-               #print "Num alternatives = %d" % alpha_dot
-                n = self.signal_matches[signal_i]
-               #print "n = %d" % n
-
-                #matched_pairs = zip(type_matches[player_type], signal_matches)
-                #signal_type_matches = [a and b for a, b in matched_pairs]
-                n_k = self.signal_type_matches[signal_i][player_type]
-               #print "n_k = %d" % n_k
-                prob = (alpha_k + n_k) / float(alpha_dot + n)
-               #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
-                self.signal_belief[signal_i][player_type].append(prob)
-
     def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
         if payoff is not None:
             self.payoff_log.append(payoff)
@@ -212,13 +179,15 @@ class Signaller(Agent):
                 midwife_type = midwife.player_type
             self.type_matches[midwife_type] += weight
 
-        for player_type, estimate in self.type_distribution.items():
+        alpha_dot = sum(self.type_weights)
+        for player_type, estimate in self.type_distribution.iteritems():
             alpha_k = self.type_weights[player_type]
             n_k = self.type_matches[player_type]
             n = sum(self.type_matches.values())
-            alpha_dot = sum(self.type_weights)
-            del estimate [:]
-            estimate.append((alpha_k + n_k) / float(alpha_dot + n))
+            
+            #del estimate [:]
+            #estimate.append((alpha_k + n_k) / float(alpha_dot + n))
+            self.type_distribution[player_type] = (alpha_k + n_k) / float(alpha_dot + n)
 
         # Update signal-response beliefs
 
@@ -232,10 +201,10 @@ class Signaller(Agent):
         #for response in self.responses:
         #    response_matches[response] = [x == response for x in self.response_log]
 
-        for signal, responses in self.response_belief.items():
+        for signal, responses in self.response_belief.iteritems():
             #signal_matches = [x == signal for x in self.signal_log]
-
-            for response, belief in responses.items():
+            alpha_dot = sum(self.response_weights[signal])
+            for response, belief in responses.iteritems():
                 #matched_pairs = zip(response_matches[response], signal_matches)
                 #response_signal_matches = [a and b for a, b in matched_pairs]
 
@@ -248,11 +217,13 @@ class Signaller(Agent):
 
                 #P(response) in this state of the world
                 alpha_k = self.response_weights[signal][response]
-                alpha_dot = sum(self.response_weights[signal])
+                #alpha_dot = sum(self.response_weights[signal])
                 prob = (alpha_k + n_k) / float(alpha_dot + n)
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
-                del belief[:]
-                belief.append(prob)
+                #del belief[:]
+                #belief.append(prob)
+                responses[response] = prob
+
 
     def log_signal(self, signal, opponent=None, weight=1.):
         self.signal_matches[signal] += weight
@@ -274,13 +245,13 @@ class BayesianSignaller(Signaller):
         Compute the bayes risk of sending this signal.
         """
         signal_risk = 0.
-        for player_type, type_belief in self.current_type_distribution().items():
-            for response, response_belief in self.current_response_belief()[signal].items():
+        for player_type, type_belief in self.type_distribution.items():
+            for response, response_belief in self.response_belief[signal].items():
                 payoff = self.baby_payoffs[response] + self.social_payoffs[player_type][signal]
-                payoff = self.loss(payoff)
+                #payoff = self.loss(payoff)
                 #print "Believe payoff will be",payoff,"with confidence",payoff_belief
                 #print "Risk is",payoff,"*",payoff_belief
-                signal_risk += payoff * response_belief * type_belief
+                signal_risk += -payoff * response_belief * type_belief
        #print "R(%d|x)=%f" % (signal, signal_risk)
         return signal_risk
 
@@ -303,8 +274,8 @@ class Responder(Agent):
 
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
         # Belief that a particular signal means a state
-        self.signal_belief = dict([(y, dict([(x, []) for x in signals])) for y in signals])
-        self.signal_type_matches = dict([(y, dict([(x, 0.) for x in signals])) for y in signals])
+        self.signal_belief = {s:dict.fromkeys(signals, 0.) for s in signals} #dict([(y, dict([(x, []) for x in signals])) for y in signals])
+        self.signal_type_matches = {s:dict.fromkeys(signals, 0.) for s in signals} #dict([(y, dict([(x, 0.) for x in signals])) for y in signals])
 
         super(Responder, self).__init__(player_type, signals, responses)
 
@@ -314,6 +285,7 @@ class Responder(Agent):
         self.payoffs = payoffs
         self.update_beliefs(None, None, None)
 
+    #@profile
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         rounds = self.rounds
         if signaller is not None:
@@ -327,25 +299,27 @@ class Responder(Agent):
         #for player_type in self.signals:
         #    type_matches[player_type] = [x == player_type for x in self.type_log]
 
-        for signal_i, types in self.signal_belief.items():
-            for player_type, belief in types.items():
+        for signal_i, types in self.signal_belief.iteritems():
+            alpha_dot = sum(self.type_weights[signal_i])
+            n = sum(self.signal_type_matches[signal_i].values())
+            for player_type, belief in types.iteritems():
                 #signal_matches = [x == signal_i for x in self.signal_log]
                #print "Updating P(%d|%d).." % (player_type, signal_i)
                 alpha_k = self.type_weights[signal_i][player_type]
                #print "alpha_k = %f" % alpha_k
-                alpha_dot = sum(self.type_weights[signal_i])
+                #alpha_dot = sum(self.type_weights[signal_i])
                #print "Num alternatives = %d" % alpha_dot
-                n = sum(self.signal_type_matches[signal_i].values())
+                #n = sum(self.signal_type_matches[signal_i].values())
                #print "n = %d" % n
 
                 #matched_pairs = zip(type_matches[player_type], signal_matches)
                 #signal_type_matches = [a and b for a, b in matched_pairs]
                 n_k = self.signal_type_matches[signal_i][player_type]
                #print "n_k = %d" % n_k
-                prob = (alpha_k + n_k) / float(alpha_dot + n)
+                prob = (alpha_k + n_k) / (alpha_dot + n)
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
-                del self.signal_belief[signal_i][player_type][:]
-                self.signal_belief[signal_i][player_type].append(prob)
+                #del self.signal_belief[signal_i][player_type][:]
+                self.signal_belief[signal_i][player_type] = prob
 
     def current_beliefs(self):
         """ Return the current beliefs about signals.
@@ -379,7 +353,7 @@ class BayesianResponder(Responder):
         act_risk = 0.
 
        #print "Assessing risk for action",act,"given signal",signal
-        for player_type, type_belief in self.current_beliefs()[signal].items():
+        for player_type, type_belief in self.signal_belief[signal].items():
             payoff = self.loss(self.payoffs[player_type][act])
            #print "Believe true type is",player_type,"with confidence",type_belief
            #print "Risk is",payoff,"*",type_belief

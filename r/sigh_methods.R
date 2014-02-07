@@ -13,8 +13,8 @@ num_rounds_type <- function(dataset, type, x, y) {
     names(z)[names(z)==y] <- "y"
     names(z)[names(z)==fill] <- "fill"
     z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
-    c <- ggplot(z, aes(x=x, y=y))
-    return(c + geom_tile(aes(fill=fill)))
+    c <- ggplot(z, aes(x=x, y=y, z=fill))
+    return(c + geom_tile())
 }
 
 payoffs_type <- function(dataset, type, x, y) {
@@ -28,8 +28,8 @@ payoffs_type <- function(dataset, type, x, y) {
     names(z)[names(z)==fill] <- "fill"
     #fill = eval(parse(text=sprintf("dataset$accrued_payoffs_type_%d", type)))
     z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
-    c <- ggplot(z, aes(x=x, y=y))
-    return(c + geom_tile(aes(fill=fill)))
+    c <- ggplot(z, aes(x=x, y=y, z=fill))
+    return(c + geom_tile())
 }
 
 signals_type <- function(dataset, type, signal, x, y) {
@@ -47,8 +47,8 @@ signals_type <- function(dataset, type, signal, x, y) {
     names(z)[names(z)==fill] <- "fill"
     #fill = eval(parse(text=sprintf("dataset$type_%d_signal_%d", type, signal)))
     z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
-    c <- ggplot(z, aes(x=x, y=y))
-    return(c + geom_tile(aes(fill=fill)))
+    c <- ggplot(z, aes(x=x, y=y, z=fill))
+    return(c + geom_tile())
 }
 
 honesty_type <- function(dataset, type, x, y) {
@@ -135,8 +135,9 @@ signals_by_type <- function(dataset, type) {
     return(c)
 }
 
-load <- function(x) {
-    dataset <- sqldf("select * from results where appointment=999", dbname=x)
+load <- function(x, appointment=999) {
+    query = sprintf("select * from results where appointment=%d", appointment)
+    dataset <- sqldf(query, dbname=x)
     params <- sqldf("select * from parameters", dbname=x)
     dataset <- merge(x=dataset, y=params, by.x="hash", by.y="hash", all.x=TRUE)
     print(sprintf("Loaded %s", x))

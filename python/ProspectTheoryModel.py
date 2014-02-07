@@ -49,14 +49,15 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
             payoff = -math.log(-payoff)
         return payoff
 
+    #@profile
     def collect_prospects(self, signal):
         """
         Compute the cumulative prospect theory value of this signal
         based on the estimated probalities at this appointment.
         """
         prospects = []
-        for player_type, type_belief in self.current_type_distribution().items():
-            for response, response_belief in self.current_response_belief()[signal].items():
+        for player_type, type_belief in self.type_distribution.items():
+            for response, response_belief in self.response_belief[signal].items():
                 total_belief = response_belief*type_belief
                 payoff = self.baby_payoffs[response] + self.social_payoffs[player_type][signal]
                 prospects.append((payoff, total_belief))
@@ -64,6 +65,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         prospects.reverse()
         return prospects
 
+    #@profile
     def cpt_value(self, prospects):
         """
         Compute the cumulative prospect theory value of this set of
@@ -181,7 +183,7 @@ class ProspectTheoryResponder(Model.BayesianResponder):
         and sort them in descending order of payoff.
         """
         prospects = []
-        for player_type, type_belief in self.current_beliefs()[signal].items():
+        for player_type, type_belief in self.signal_belief[signal].items():
             payoff = self.payoffs[player_type][response]
             prospects.append((payoff, type_belief))
         prospects.sort()
