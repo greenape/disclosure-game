@@ -25,7 +25,7 @@ for(x in files) {
 
         c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight))
         png(sprintf("%s/women_sharing_right_calls_%s_%s_%s.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))
-        print(c + geom_tile(aes(fill=all_right_calls_upto, width=0.1, height=0.1)))
+        print(c + geom_tile(aes(fill=all_right_calls_upto)))
         dev.off()
 
         png(sprintf("%s/women_sharing_false_positives_%s_%s_%s.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1]))

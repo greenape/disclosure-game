@@ -103,3 +103,7 @@ louvin/*
 python/test.py
 
 r/tmp.R
+
+*.lprof
+
+*.prof

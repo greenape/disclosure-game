@@ -5,4 +5,4 @@
 
 cd disclosure-game/r
 module load R/3.0.0
-Rscript crunch.R "/scratch/jg1g12" "/home/jg1g12/disclosure-game/figures" "/home/jg1g12/R/R-packages"
+Rscript crunch.R "/scratch/jg1g12" "/home/jg1g12/disclosure-game/figures" 999 999 "/home/jg1g12/R/R-packages"
