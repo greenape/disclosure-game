@@ -2,8 +2,8 @@ require(ggplot2)
 library(sqldf)
 source("sigh_methods.R")
 
-#files = c("/Users/jg1g12/Downloads/1_mw_sharing_mw.db", "/Users/jg1g12/Downloads/2_mw_sharing_mw.db", "/Users/jg1g12/Downloads/3_mw_sharing_mw.db", "/Users/jg1g12/Downloads/4_mw_sharing_mw.db", "/Users/jg1g12/Downloads/5_mw_sharing_mw.db", "/Users/jg1g12/Downloads/6_mw_sharing_mw.db", "/Users/jg1g12/Downloads/7_mw_sharing_mw.db", "/Users/jg1g12/Downloads/8_mw_sharing_mw.db")
-files = c("/Users/jg1g12/Downloads/5_mw_sharing_mw.db", "/Users/jg1g12/Downloads/2_mw_sharing_mw.db")
+#files = c("/Users/jg1g12/Downloads/1_mw_sharing_mw.db", "/Users/jg1g12/Downloads/2_mw_sharing_mw.db", "/Users/jg1g12/Downloads/3_mw_sharing_mw.db", "/Users/jg1g12/Downloads/4_mw_sharing_mw.db", "/Users/jg1g12/Downloads/5_mw_sharing_mw.db", "/Users/jg1g12/Downloads/6_mw_sharing_mw.db", "/Users/jg1g12/Downloads/7_mw_sharing_mw.db", "/Users/jg1g12/Downloads/8_mw_sharing_mw.db", "/Users/jg1g12/Downloads/9_mw_sharing_mw.db", "/Users/jg1g12/Downloads/10_mw_sharing_mw.db")
+#files = c("/Users/jg1g12/Downloads/5_mw_sharing_mw.db", "/Users/jg1g12/Downloads/2_mw_sharing_mw.db")
 for(x in files) {
 	df <- sqldf("select type_2_misses, accrued_payoffs, all_right_calls_upto, false_positives, false_negatives_upto, hash from results where appointment=999", dbname=sprintf(x, 1))
 	params <- sqldf("select decision_rule_signaller, women_0, decision_rule_responder, game, mw_share_prob, responder_share_weight, mw_1, mw_2, hash from parameters", dbname=x)
@@ -49,7 +49,7 @@ for(x in files) {
 	rm(df)
 }
 
-#files = c("/Users/jg1g12/Downloads/1_mw_sharing_women.db", "/Users/jg1g12/Downloads/2_mw_sharing_women.db", "/Users/jg1g12/Downloads/3_mw_sharing_women.db", "/Users/jg1g12/Downloads/4_mw_sharing_women.db", "/Users/jg1g12/Downloads/5_mw_sharing_women.db", "/Users/jg1g12/Downloads/6_mw_sharing_women.db")
+#files = c("/Users/jg1g12/Downloads/1_mw_sharing_women.db", "/Users/jg1g12/Downloads/2_mw_sharing_women.db", "/Users/jg1g12/Downloads/3_mw_sharing_women.db", "/Users/jg1g12/Downloads/4_mw_sharing_women.db", "/Users/jg1g12/Downloads/5_mw_sharing_women.db", "/Users/jg1g12/Downloads/6_mw_sharing_women.db", "/Users/jg1g12/Downloads/7_mw_sharing_women.db", "/Users/jg1g12/Downloads/8_mw_sharing_women.db", "/Users/jg1g12/Downloads/9_mw_sharing_women.db", "/Users/jg1g12/Downloads/10_mw_sharing_women.db")
 files = c("/Users/jg1g12/Downloads/5_mw_sharing_women.db", "/Users/jg1g12/Downloads/2_mw_sharing_women.db")
 for(x in files) {
     df <- load(x)

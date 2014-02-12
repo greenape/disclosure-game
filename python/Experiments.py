@@ -160,13 +160,18 @@ def mw_sharing_experiment(resolution=0.1, chunksize=None):
     results.append(kwargs)
     return results
 
-def w_sharing_experiment():
+def w_sharing_experiment(resolution=0.1, chunksize=None):
     kwargs = []
-    for x in itertools.product((y/10. for y in range(0, 11)), repeat=2):
+    results = []
+    for x in itertools.product((y*resolution for y in range(0, int(1/resolution) + 1) ), repeat=2):
         kwarg = {'game_args': {'mw_share_prob':0, 'mw_share_bias':1,
             'women_share_prob':x[0]}, 'signaller_args':{'share_weight':x[1]}}
         kwargs.append(kwarg)
-    return kwargs
+        if chunksize is not None and len(kwargs) >= chunksize:
+            results.append(kwargs)
+            kwargs = []
+    results.append(kwargs)
+    return results
 
 
 

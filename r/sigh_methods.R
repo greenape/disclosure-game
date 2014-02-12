@@ -13,7 +13,7 @@ num_rounds_type <- function(dataset, type, x, y) {
     names(z)[names(z)==y] <- "y"
     names(z)[names(z)==fill] <- "fill"
     z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
-    c <- ggplot(z, aes(x=x, y=y, z=fill))
+    c <- ggplot(z, aes(x=x, y=y, z=fill, fill=fill))
     return(c + geom_tile())
 }
 
@@ -28,7 +28,7 @@ payoffs_type <- function(dataset, type, x, y) {
     names(z)[names(z)==fill] <- "fill"
     #fill = eval(parse(text=sprintf("dataset$accrued_payoffs_type_%d", type)))
     z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
-    c <- ggplot(z, aes(x=x, y=y, z=fill))
+    c <- ggplot(z, aes(x=x, y=y, z=fill, fill=fill))
     return(c + geom_tile())
 }
 
@@ -47,7 +47,7 @@ signals_type <- function(dataset, type, signal, x, y) {
     names(z)[names(z)==fill] <- "fill"
     #fill = eval(parse(text=sprintf("dataset$type_%d_signal_%d", type, signal)))
     z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
-    c <- ggplot(z, aes(x=x, y=y, z=fill))
+    c <- ggplot(z, aes(x=x, y=y, z=fill, fill=fill))
     return(c + geom_tile())
 }
 

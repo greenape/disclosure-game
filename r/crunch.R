@@ -42,17 +42,17 @@ for(x in files) {
 		dev.off()
 
 		png(sprintf("%s/mw_sharing_false_positives_%s_%s_%s_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=false_positives))
+		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=false_positives, fill=false_positives))
 		print(c + geom_tile())
 		dev.off()
 
 		png(sprintf("%s/mw_sharing_false_negatives_%s_%s_%s_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=false_negatives_upto))
+		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=false_negatives_upto, fill=false_negatives_upto))
 		print(c + geom_tile())
 		dev.off()
 
 		png(sprintf("%s/mw_sharing_type_2_misses_%s_%s_%s_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=type_2_misses))
+		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=type_2_misses, fill=type_2_misses))
 		print(c + geom_tile())
 		dev.off()
 
@@ -127,22 +127,22 @@ for(x in files) {
         d$game = game
 
         png(sprintf("%s/women_sharing_right_calls_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=all_right_calls_upto))
+        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=all_right_calls_upto, fill=all_right_calls_upto))
         print(c + geom_tile())
         dev.off()
 
         png(sprintf("%s/women_sharing_false_positives_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_positives))
+        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_positives, fill=false_positives))
         print(c + geom_tile())
         dev.off()
 
         png(sprintf("%s/women_sharing_false_negatives_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_negatives_upto))
+        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_negatives_upto, fill=false_negatives_upto))
         print(c + geom_tile())
         dev.off()
 
         png(sprintf("%s/women_sharing_type_2_misses_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=type_2_misses))
+        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=type_2_misses, fill=type_2_misses))
         print(c + geom_tile())
         dev.off()
 
