@@ -96,8 +96,14 @@ class Signaller(Agent):
         self.social_payoffs = social_payoffs
         self.type_weights = type_weights
         self.response_weights = response_weights
+
+        # Front load alpha_dot values
+        for signal, responses in self.response_signal_matches.iteritems():
+            for response, count in responses.iteritems():
+                self.response_signal_matches[signal][response] = response_weights[signal][response]
         #Response per signal per type
-        self.update_beliefs(None, None, None)
+        self.update_counts(None, None, None)
+        self.update_beliefs()
 
     def current_response_belief(self):
         """
@@ -166,10 +172,10 @@ class Signaller(Agent):
         except IndexError:
             return self.current_type_distribution()
 
-    def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
+    def update_counts(self, response, midwife, payoff, midwife_type=None, weight=1.):
         if payoff is not None:
             self.payoff_log.append(payoff)
-        rounds = self.rounds
+        #rounds = self.rounds
 
         # Update type beliefs
         if midwife is not None:
@@ -179,50 +185,33 @@ class Signaller(Agent):
                 midwife_type = midwife.player_type
             self.type_matches[midwife_type] += weight
 
-        alpha_dot = sum(self.type_weights)
-        for player_type, estimate in self.type_distribution.iteritems():
-            alpha_k = self.type_weights[player_type]
-            n_k = self.type_matches[player_type]
-            n = sum(self.type_matches.values())
-            
-            #del estimate [:]
-            #estimate.append((alpha_k + n_k) / float(alpha_dot + n))
-            self.type_distribution[player_type] = (alpha_k + n_k) / float(alpha_dot + n)
-
-        # Update signal-response beliefs
-
         if response is not None:
             self.response_log.append(response)
             #self.response_matches[response] += 1.
             signal = self.signal_log[len(self.signal_log) - 1]
             self.response_signal_matches[signal][response] += weight
 
-        #response_matches = {}
-        #for response in self.responses:
-        #    response_matches[response] = [x == response for x in self.response_log]
+   #@profile
+    def update_beliefs(self):
 
-        for signal, responses in self.response_belief.iteritems():
-            #signal_matches = [x == signal for x in self.signal_log]
-            alpha_dot = sum(self.response_weights[signal])
-            for response, belief in responses.iteritems():
-                #matched_pairs = zip(response_matches[response], signal_matches)
-                #response_signal_matches = [a and b for a, b in matched_pairs]
+        #alpha_dot = sum(self.type_weights)
+        n = float(sum(self.type_matches.values()) + sum(self.type_weights))
+        for player_type, estimate in self.type_distribution.iteritems():
+            alpha_k = self.type_weights[player_type]
+            n_k = self.type_matches[player_type]
+            
+            #del estimate [:]
+            #estimate.append((alpha_k + n_k) / float(alpha_dot + n))
+            self.type_distribution[player_type] = (alpha_k + n_k) / n
 
-                n_k = self.response_signal_matches[signal][response]
-
-                # Rounds where we sent this signal
-                n = float(self.signal_matches[signal])
-
-                #print "Payoff-Signal matches", signal_payoff_matches
-
-                #P(response) in this state of the world
-                alpha_k = self.response_weights[signal][response]
-                #alpha_dot = sum(self.response_weights[signal])
-                prob = (alpha_k + n_k) / float(alpha_dot + n)
-               #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
-                #del belief[:]
-                #belief.append(prob)
-                responses[response] = prob
+        # Update signal-response beliefs
+        
+        for signal, responses in self.response_signal_matches.iteritems():
+            # alpha_dot + n
+            n = float(sum(responses.values()))
+            # Count is alpha_k + n_k
+            for response, count in responses.iteritems():
+                self.response_belief[signal][response] = count / n#prob
 
 
     def log_signal(self, signal, opponent=None, weight=1.):
@@ -285,7 +274,7 @@ class Responder(Agent):
         self.payoffs = payoffs
         self.update_beliefs(None, None, None)
 
-    #@profile
+    ##@profile
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         rounds = self.rounds
         if signaller is not None:

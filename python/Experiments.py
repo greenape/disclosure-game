@@ -4,11 +4,11 @@ from ReferralGame import *
 from RecognitionGame import *
 from CarryingGame import *
 from RecognitionAgents import *
-from AmbiguityAgents import *
+#from AmbiguityAgents import *
 from HeuristicAgents import *
 from PayoffAgents import *
 from SharingGames import *
-from Dolls import *
+#from Dolls import *
 from multiprocessing import Pool, Queue
 from Measures import *
 import multiprocessing

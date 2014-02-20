@@ -107,3 +107,5 @@ r/tmp.R
 *.lprof
 
 *.prof
+
+*.jargs

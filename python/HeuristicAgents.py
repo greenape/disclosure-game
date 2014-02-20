@@ -12,6 +12,7 @@ class LexicographicSignaller(BayesianSignaller):
     def __str__(self):
         return "lexicographic"
 
+    #@profile
     def init_payoffs(self, baby_payoffs, social_payoffs, type_weights=[1., 1., 1.],
                      response_weights=[[1., 1.], [1., 1.], [1., 2.]]):
         #Payoff counter
@@ -21,7 +22,7 @@ class LexicographicSignaller(BayesianSignaller):
             for payoff in social_payoffs[signal]:
                 for baby_payoff in baby_payoffs[self.player_type]:
                     self.payoff_count[signal][payoff + baby_payoff] = 0
-                    self.payoff_belief[signal][payoff + baby_payoff] = []
+                    self.payoff_belief[signal][payoff + baby_payoff] = 0.
         self.depth = 0
         for signal, payoffs in self.payoff_count.items():
             self.depth = max(len(payoffs), self.depth)
@@ -48,8 +49,7 @@ class LexicographicSignaller(BayesianSignaller):
         sorted_dict = sorted(self.payoff_count[signal].items(), key=operator.itemgetter(1), reverse=True)
         return sorted_dict[min(n, len(sorted_dict) - 1)][0]
 
-    def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
-        #super(LexicographicSignaller, self).update_beliefs(response, midwife, payoff, midwife_type)
+    def update_counts(self, response, midwife, payoff, midwife_type=None, weight=1.):
         if payoff is not None:
             try:
                 self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] += weight
@@ -61,6 +61,11 @@ class LexicographicSignaller(BayesianSignaller):
         if midwife is not None:
             # Log true type for bookkeeping
             self.type_log.append(midwife.player_type)
+
+    #@profile
+    def update_beliefs(self):
+        return None
+        #self.update_counts(response, midwife, payoff, midwife_type, weight)
 
     def do_signal(self, opponent=None):
         #super(LexicographicSignaller, self).do_signal(opponent)
@@ -98,6 +103,7 @@ class LexicographicResponder(BayesianResponder):
     def __str__(self):
         return "lexicographic"
 
+    #@profile
     def init_payoffs(self, payoffs, type_weights=[[10., 2., 1.], [1., 10., 1.], [1., 1., 10.]]):
         self.payoff_count = dict([(y, dict([(x, {}) for x in self.responses])) for y in self.signals])
         self.payoff_belief = dict([(y, dict([(x, {}) for x in self.responses])) for y in self.signals])
@@ -110,7 +116,7 @@ class LexicographicResponder(BayesianResponder):
                     payoff = payoffs[player_type][response]
                     if payoff not in self.payoff_count[signal][response]:
                         self.payoff_count[signal][response][payoff] = type_weights[signal][player_type]
-                        self.payoff_belief[signal][response][payoff] = []
+                        self.payoff_belief[signal][response][payoff] = 0.
                     else:
                         #print self.payoff_count
                         self.payoff_count[signal][response][payoff] += type_weights[signal][player_type]
@@ -120,7 +126,7 @@ class LexicographicResponder(BayesianResponder):
                 self.depth = max(len(payoff), self.depth)
         super(LexicographicResponder, self).init_payoffs(payoffs, type_weights)
 
-
+    #@profile
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         if payoff is not None:
             #print self.payoff_count, signal, payoff, self.response_log[len(self.response_log) - 1], weight

@@ -17,6 +17,60 @@ num_rounds_type <- function(dataset, type, x, y) {
     return(c + geom_tile())
 }
 
+rounds_dist <- function(dataset, x, y) {
+    #s = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_finished > 0)", type)))
+    #dataset <- subset(dataset, filter > 0)
+    # Average number of rounds played
+    #x = eval(parse(text=sprintf("dataset$%s",x)))
+    #y = eval(parse(text=sprintf("dataset$%s",y)))
+    #fill = sprintf("rounds_played_type_%d", type)
+    a = (12 - df$rounds_played_type_0)^2
+    b = (1 - df$rounds_played_type_1)^2
+    c = (1 - df$rounds_played_type_2)^2
+    za = data.frame(dataset[c(x,y)])
+    za$fill = a#scale(a, center = FALSE)
+    zb = data.frame(dataset[c(x,y)])
+    zb$fill = b#scale(b, center = FALSE)
+    zc = data.frame(dataset[c(x,y)])
+    zc$fill = c#scale(c, center = FALSE)
+    z = rbind(za, zb, zc)
+    z$fill = scale(z$fill, center = FALSE)
+
+    names(z)[names(z)==x] <- "x"
+    names(z)[names(z)==y] <- "y"
+    #names(z)[names(z)==fill] <- "fill"
+    z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
+    c <- ggplot(z, aes(x=x, y=y, z=fill, fill=fill))
+    return(c + geom_tile())
+}
+
+rounds_diff <- function(dataset, x, y) {
+    #s = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_finished > 0)", type)))
+    #dataset <- subset(dataset, filter > 0)
+    # Average number of rounds played
+    #x = eval(parse(text=sprintf("dataset$%s",x)))
+    #y = eval(parse(text=sprintf("dataset$%s",y)))
+    #fill = sprintf("rounds_played_type_%d", type)
+    a = df$rounds_played_type_0
+    b = (a - df$rounds_played_type_1)
+    c = (a - df$rounds_played_type_2)
+    #za = data.frame(dataset[c(x,y)])
+    #za$fill = a#scale(a, center = FALSE)
+    zb = data.frame(dataset[c(x,y)])
+    zb$fill = b#scale(b, center = FALSE)
+    zc = data.frame(dataset[c(x,y)])
+    zc$fill = c#scale(c, center = FALSE)
+    z = rbind(zb, zc)
+
+    names(z)[names(z)==x] <- "x"
+    names(z)[names(z)==y] <- "y"
+    #names(z)[names(z)==fill] <- "fill"
+    z <- aggregate(z, by=list(z$x, z$y), FUN=mean)
+    #z$fill = scale(z$fill, center = FALSE)
+    c <- ggplot(z, aes(x=x, y=y, z=fill, fill=fill))
+    return(c + geom_tile())
+}
+
 payoffs_type <- function(dataset, type, x, y) {
     # Average payoff accrued
     s = eval(parse(text=sprintf("subset(dataset, dataset$type_%d_finished > 0)", type)))

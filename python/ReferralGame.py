@@ -8,7 +8,7 @@ class ReferralGame(Game):
         def name(self):
                 return "referral_no_inform"
 
-        #@profile
+        ##@profile
         def play_round(self, signaller, receiver):
                 """ Play a round of this game between the
                 two players.
@@ -21,7 +21,8 @@ class ReferralGame(Game):
                 receive_payoff = self.midwife_payoff[signaller.player_type][act]
 
                 #Signaller learns the true type
-                signaller.update_beliefs(act, receiver, signal_payoff)
+                signaller.update_counts(act, receiver, signal_payoff)
+                signaller.update_beliefs()
                 signaller.accrued_payoffs += signal_payoff
                 receiver.accrued_payoffs += receive_payoff
                 #But the responder doesn't unless they referred

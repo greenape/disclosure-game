@@ -47,7 +47,7 @@ class SharingSignaller(BayesianSignaller):
     def exogenous_update(self, signal, response, tmp_signaller, payoff, midwife_type=None):
         self.log_signal(signal, tmp_signaller, self.share_weight)
         self.exogenous.append((tmp_signaller.player_type, signal, response, payoff))
-        self.update_beliefs(response, tmp_signaller, payoff, midwife_type, self.share_weight)
+        self.update_counts(response, tmp_signaller, payoff, midwife_type, self.share_weight)
 
     def get_memory(self):
         memories = zip(self.type_log, self.signal_log, self.response_log, self.payoff_log)

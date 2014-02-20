@@ -63,6 +63,30 @@ class NumRounds(Measure):
         return sum(map(lambda woman: woman.finished - woman.started, women)) / float(len(women))
 
 
+class NumRoundsCumulative(Measure):
+    def __init__(self, player_type=None, midwife_type=None, signal=None, counted=set()):
+        super(NumRoundsCumulative, self).__init__(player_type, midwife_type, signal)
+        self.count = 0
+        self.rounds = 0.
+        self.counted = counted
+
+    """
+    Return the cumulative average number of rounds played by a type.
+    """
+    def measure(self, roundnum, women, game):
+        if self.player_type is not None:
+            women = filter(lambda x: x.player_type == self.player_type, women)
+        women = filter(lambda x: x.is_finished, women)
+
+        women = filter(lambda x: hash(x) not in self.counted, women)
+        self.counted.update(map(hash, women))
+        self.count += len(women)
+        self.rounds += sum(map(lambda woman: woman.finished - woman.started, women))
+        if self.count == 0:
+            return 0.
+        return self.rounds / self.count
+
+
 class Referred(Measure):
     """
     Return the fraction of players referred this round.
@@ -400,6 +424,7 @@ def measures_women():
         measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
         measures["type_%d_finished" % i] = TypeFinished(player_type=i)
         #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
+        measures['rounds_played_type_%d_upto' % i] = NumRoundsCumulative(player_type=i)
         measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
         #measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
         for j in range(3):
@@ -410,6 +435,7 @@ def measures_women():
             #    measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
     return Measures(measures, 999)
 
+##@profile
 def measures_midwives():
     measures = OrderedDict()
     measures['appointment'] = Appointment()
@@ -429,6 +455,6 @@ def measures_midwives():
         #measures['type_%d_false_positives' % i] = FalsePositive(midwife_type=i)
         measures['type_%d_false_negatives_upto' % i] = FalseNegativeUpto(midwife_type=i)
         #measures['type_%d_false_negatives' % i] = FalseNegative(midwife_type=i)
-        measures['type_%d_misses' % i] = TypedFalseNegativeUpto(player_type=i)
+        #measures['type_%d_misses' % i] = TypedFalseNegativeUpto(player_type=i)
         #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
     return Measures(measures, 999)

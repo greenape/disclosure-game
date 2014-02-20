@@ -49,7 +49,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
             payoff = -math.log(-payoff)
         return payoff
 
-    #@profile
+    ##@profile
     def collect_prospects(self, signal):
         """
         Compute the cumulative prospect theory value of this signal
@@ -65,7 +65,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         prospects.reverse()
         return prospects
 
-    #@profile
+    ##@profile
     def cpt_value(self, prospects):
         """
         Compute the cumulative prospect theory value of this set of

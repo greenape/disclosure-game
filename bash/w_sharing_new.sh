@@ -1,8 +1,7 @@
-#!/bin/bash
-#PBS -l walltime=48:00:00
+#!/bin/bash -vx
+#PBS -l walltime=60:00:00
 #PBS -l nodes=1:ppn=16
 #PBS -l pmem=1gb
-
 GAME[1]='-s SharingBayesianPayoffSignaller -r SharingBayesianPayoffResponder'
 
 GAME[2]='-s SharingLexicographicSignaller -r SharingLexicographicResponder'
@@ -24,4 +23,7 @@ GAME[10]='-s SharingProspectSignaller -r SharingProspectResponder -p 0.85 0.1 0.
 cd disclosure-game/python
 ulimit -n 512
 module load python
-${python} Run.py -R 1000 --abstract-measures -f ${PBS_ARRAYID}_abstract -i 1000 -d /scratch/jg1g12 -g CarryingInformationGame CaseloadSharingGame ${GAME[$PBS_ARRAYID]}
+#source /home/jg1g12/hpc/bin/activate
+dir=/scratch/jg1g12/${sig}_${resp}
+mkdir ${dir}
+python Run.py -R 100 -s ${sig} -r ${resp} --pickled-arguments ../experiment_args/w_sharing_${PBS_ARRAYID}.args -f ${PBS_ARRAYID}_w_sharing -i 1000 -d ${dir} -g ${game} 

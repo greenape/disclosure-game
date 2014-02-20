@@ -11,20 +11,22 @@ class BayesianPayoffSignaller(LexicographicSignaller):
     """
     A class of agent that reasons on a signals -> payoffs basis.
     """
-
-    def update_beliefs(self, response, midwife, payoff, midwife_type=None, weight=1.):
-        super(BayesianPayoffSignaller, self).update_beliefs(response, midwife, payoff, midwife_type, weight)
-        for signal, payoffs in self.payoff_belief.items():
-            for payoff, belief in payoffs.items():
+    #@profile
+    def update_beliefs(self):
+        #super(BayesianPayoffSignaller, self).update_beliefs(response, midwife, payoff, midwife_type, weight)
+        for signal, payoffs in self.payoff_belief.iteritems():
+            n = float(sum(self.payoff_count[signal].values()))
+            for payoff, belief in payoffs.iteritems():
                 n_k = self.payoff_count[signal][payoff]
-                n = sum(self.payoff_count[signal].values())
-                del belief[:]
-                belief.append(n_k / float(n))
+                #el belief[:]
+                #belief.append(n_k / float(n))
+                self.payoff_belief[signal][payoff] = n_k / n
+
 
     def risk(self, signal, opponent):
         risk = 0.
-        for payoff, belief in self.payoff_belief[signal].items():
-            belief = belief[len(belief) - 1]
+        for payoff, belief in self.payoff_belief[signal].iteritems():
+            #belief = belief[len(belief) - 1]
             risk += belief*self.loss(payoff)
         return risk
 
@@ -48,17 +50,19 @@ class BayesianPayoffResponder(LexicographicResponder):
     def __str__(self):
         return "bayes_payoff"
 
+    #@profile
     def update_beliefs(self, payoff, signaller, signal, signaller_type=None, weight=1.):
         super(BayesianPayoffResponder, self).update_beliefs(
             payoff, signaller, signal, signaller_type, weight)
-        for signal, responses in self.payoff_belief.items():
-            for response, payoffs in responses.items():
-                for payoff, belief in payoffs.items():
+        for signal, responses in self.payoff_belief.iteritems():
+            for response, payoffs in responses.iteritems():
+                n = float(sum(self.payoff_count[signal][response].values()))
+                for payoff, belief in payoffs.iteritems():
                     #print self.payoff_count
                     n_k = self.payoff_count[signal][response][payoff]
-                    n = sum(self.payoff_count[signal][response].values())
-                    del belief[:]
-                    belief.append(n_k / float(n))
+                    #del belief[:]
+                    #belief.append(n_k / float(n))
+                    self.payoff_belief[signal][response][payoff] = n_k / n
 
     def risk(self, act, signal, opponent):
         """
@@ -68,9 +72,9 @@ class BayesianPayoffResponder(LexicographicResponder):
         act_risk = 0.
 
        #print "Assessing risk for action",act,"given signal",signal
-        for payoff, belief in self.payoff_belief[signal][act].items():
+        for payoff, belief in self.payoff_belief[signal][act].iteritems():
             payoff = self.loss(payoff)
-            belief = belief[len(belief) - 1]
+            #belief = belief[len(belief) - 1]
            #print "Believe true type is",player_type,"with confidence",type_belief
            #print "Risk is",payoff,"*",type_belief
             act_risk += payoff*belief

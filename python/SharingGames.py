@@ -157,12 +157,13 @@ class CarryingInformationGame(CarryingReferralGame):
             #Share it
             while len(women_memories) > 0:
                 memory = women_memories.pop()
-                if random.random() > self.women_share_prob:
+                if random.random() < self.women_share_prob:
                     self.disseminate_women(memory[1], women)
                 #And null it
                 #women_memories.remove(memory)
+            map(lambda x: x.update_beliefs(), women)
 
-    #@profile
+    ##@profile
     def disseminate_midwives(self, memory, recepients):
         LOG.debug("Sharing a memory to midwives.")
         if memory is None or len(recepients) == 0:
@@ -177,16 +178,17 @@ class CarryingInformationGame(CarryingReferralGame):
                 recepient.remember(tmp_signaller, signal, response)
                 recepient.exogenous_update(None, tmp_signaller, signal, signaller_type=player_type)
 
+   #@profile
     def disseminate_women(self, memory, recepients):
         LOG.debug("Sharing a memory to women.")
         #print "Sharing to women.", memory
         if memory is None:
             return
-        for recepient in recepients:
-            for mem in memory:
-                pt, signal, response, payoff = mem
-                tmp_signaller = type(recepients[0])(player_type=pt)
-                recepient.exogenous_update(signal, response, tmp_signaller, payoff, midwife_type=pt)
+        for mem in memory:
+            pt, signal, response, payoff = mem
+            tmp_signaller = type(recepients[0])(player_type=pt)
+            map(lambda x: x.exogenous_update(signal, response, tmp_signaller, payoff, midwife_type=pt), recepients)
+
 
     def share_to(self, pop, fraction):
         """
