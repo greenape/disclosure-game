@@ -244,7 +244,7 @@ class PayoffProspectResponder(ProspectTheoryResponder, BayesianPayoffResponder):
         """
         prospects = []
         for payoff, belief in self.payoff_belief[signal][response].items():
-            belief = belief[len(belief) - 1]
+            #belief = belief[len(belief) - 1]
             prospects.append((payoff, belief))
         prospects.sort()
         prospects.reverse()
