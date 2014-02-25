@@ -37,7 +37,8 @@ ignore <- function() {
 }
 
 #files = c("%s/1_mw_sharing_mw.db", "%s/2_mw_sharing_mw.db", "%s/3_mw_sharing_mw.db", "%s/4_mw_sharing_mw.db", "%s/5_mw_sharing_mw.db", "%s/6_mw_sharing_mw.db", "%s/7_mw_sharing_mw.db", "%s/8_mw_sharing_mw.db", "%s/9_mw_sharing_mw.db", "%s/10_mw_sharing_mw.db")
-files = c("%s/sharing_mw.db", "%s/prospect_mw.db", "%s/payoff_mw.db")
+files = c("%s/sharing_mw.db", "%s/prospect_mw.db", "%s/payoff_mw.db", "%s/lexic_mw.db", "%s/payoff_prospect_mw.db")
+#files = c("%s/prospect_mw.db", "%s/payoff_mw.db", "%s/lexic_mw.db")#, "%s/payoff_prospect_mw.db")
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
@@ -64,7 +65,7 @@ for(x in files) {
 
 		png(sprintf("%s/mw_sharing_false_negatives_%s_%s_%s_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
 		c <- ggplot(d, aes(x=mw_share_prob, y=responder_share_weight, z=false_negatives_upto, fill=false_negatives_upto))
-		print(c + geom_tile() + scale_fill_gradient(limits = c(0, 1.0)))
+		print(c + geom_tile())# + scale_fill_gradient(limits = c(0, 1.0)))
 		dev.off()
 
 		png(sprintf("%s/mw_sharing_false_positives_%s_%s_%s_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
@@ -85,7 +86,8 @@ for(x in files) {
 
 #files = c("%s/1_mw_sharing_women.db", "%s/2_mw_sharing_women.db", "%s/3_mw_sharing_women.db", "%s/4_mw_sharing_women.db", "%s/5_mw_sharing_women.db", "%s/6_mw_sharing_women.db", "%s/7_mw_sharing_women.db", "%s/8_mw_sharing_women.db", "%s/9_mw_sharing_women.db", "%s/10_mw_sharing_women.db")
 #files = c("%s/5_mw_sharing_women.db", "%s/2_mw_sharing_women.db")
-files = c("%s/sharing_w.db", "%s/prospect_w.db", "%s/payoff_w.db")
+files = c("%s/sharing_w.db", "%s/prospect_w.db", "%s/payoff_w.db", "%s/lexic_w.db", "%s/payoff_prospect_w.db")
+#files = c("%s/prospect_w.db", "%s/payoff_w.db", "%s/lexic_w.db")#, "%s/payoff_prospect_w.db")
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
