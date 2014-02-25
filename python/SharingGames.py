@@ -18,9 +18,8 @@ except:
 class CarryingInformationGame(CarryingReferralGame):
     """
     A game type identical with the carrying referral game, but where some information
-    is shared on each round, according to a parameter controlling what percentage of the
-    population to share to (chosen at random), and how biased towards sharing 'dramatic'
-    information people are.
+    is shared on each round. Sharing is controlled by the share_prob parameters which
+    are the probability that any given memory is shared.
     """
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,

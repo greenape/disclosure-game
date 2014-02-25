@@ -96,34 +96,34 @@ def proportions_experiment():
         kwargs.append(kwarg)
     return kwargs
 
-def naive_partition():
+def naive_partition(resolution=0.1):
+    """
+    Generator that yields combinations of three numbers that sum to
+    one.
+    """
     parts = []
-    for x in itertools.product(xrange(0, 101, 5), repeat=3):
+    for x in itertools.product(xrange(0, 101, int(100 * resolution)), repeat=3):
         if sum(x) == 100:
-            parts.append(map(lambda y: y / 100., x))
-    return parts
+            yield map(lambda y: y / 100., x)
+            #parts.append(map(lambda y: y / 100., x))
+    #return parts
 
-def naive_women_proportions():
+def naive_proportions(key='women_weights', resolution=0.1, chunksize=None):
     """
-    Sample space for type proportions.
+    Produces a list of lists of kwargs for type proportions split into
+    chunks.
     """
-    w = naive_partition()
+    w = naive_partition(resolution)
     kwargs = []
+    results = []
     for x in w:
-        kwarg = {'women_weights':x}
+        kwarg = {key:x}
         kwargs.append(kwarg)
-    return kwargs
-
-def naive_mw_proportions():
-    """
-    Sample space for type proportions.
-    """
-    w = naive_partition()
-    kwargs = []
-    for x in w:
-        kwarg = {'mw_weights':x}
-        kwargs.append(kwarg)
-    return kwargs
+        if chunksize is not None and len(kwargs) >= chunksize:
+            results.append(kwargs)
+            kwargs = []
+    results.append(kwargs)
+    return results
 
 def priors_experiment():
     """
@@ -172,6 +172,14 @@ def w_sharing_experiment(resolution=0.1, chunksize=None):
             kwargs = []
     results.append(kwargs)
     return results
+
+def args_write(args, directory, name):
+    for i in xrange(len(args)):
+        target = "%s/%s_%d.args" % (directory, name, i)
+        print "Writing %s" % target
+        f = open(target, "wb")
+        cPickle.dump(args[i], f)
+        f.close()
 
 
 

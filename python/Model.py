@@ -13,6 +13,10 @@ except:
     pass
 
 def random_expectations(depth=0, breadth=3, low=1, high=10):
+    """
+    Generate depth x breadth array of random numbers where each row sums to
+    high, with a minimum of low.
+    """
     result = []
     if depth == 0:
         initial = high + 1
@@ -173,6 +177,10 @@ class Signaller(Agent):
             return self.current_type_distribution()
 
     def update_counts(self, response, midwife, payoff, midwife_type=None, weight=1.):
+        """
+        Update the counts of midwife types observed, payoffs received, and responses
+        to signals. Counts are incremented by weight, which defaults to 1.
+        """
         if payoff is not None:
             self.payoff_log.append(payoff)
         #rounds = self.rounds
@@ -193,6 +201,10 @@ class Signaller(Agent):
 
    #@profile
     def update_beliefs(self):
+        """
+        Update the agent's beliefs about the distribution of midwife types, and
+        responses to signals.
+        """
 
         #alpha_dot = sum(self.type_weights)
         n = float(sum(self.type_matches.values()) + sum(self.type_weights))
@@ -215,6 +227,9 @@ class Signaller(Agent):
 
 
     def log_signal(self, signal, opponent=None, weight=1.):
+        """
+        Record a signal.
+        """
         self.signal_matches[signal] += weight
         self.signal_log.append(signal)
 

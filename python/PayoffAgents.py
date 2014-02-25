@@ -46,6 +46,10 @@ class BayesianPayoffSignaller(LexicographicSignaller):
 
 
 class BayesianPayoffResponder(LexicographicResponder):
+    """
+    Class of responder that reasons based on a straight responses imply payoffs
+    basis.
+    """
 
     def __str__(self):
         return "bayes_payoff"

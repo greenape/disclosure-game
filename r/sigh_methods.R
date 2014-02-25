@@ -51,9 +51,9 @@ rounds_diff <- function(dataset, x, y) {
     #x = eval(parse(text=sprintf("dataset$%s",x)))
     #y = eval(parse(text=sprintf("dataset$%s",y)))
     #fill = sprintf("rounds_played_type_%d", type)
-    a = df$rounds_played_type_0
-    b = (a - df$rounds_played_type_1)
-    c = (a - df$rounds_played_type_2)
+    a = df$rounds_played_type_0_upto
+    b = (a - df$rounds_played_type_1_upto)
+    c = (a - df$rounds_played_type_2_upto)
     #za = data.frame(dataset[c(x,y)])
     #za$fill = a#scale(a, center = FALSE)
     zb = data.frame(dataset[c(x,y)])

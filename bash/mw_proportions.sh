@@ -1,5 +1,5 @@
-#!/bin/bash
-#PBS -l walltime=48:00:00
+#!/bin/bash -vx
+#PBS -l walltime=60:00:00
 #PBS -l nodes=1:ppn=16
 #PBS -l pmem=1gb
 GAME[1]='-g CarryingInformationGame CaseloadSharingGame -s SharingBayesianPayoffSignaller -r SharingBayesianPayoffResponder'
@@ -22,4 +22,7 @@ cd disclosure-game/python
 ulimit -n 512
 module load python
 #source /home/jg1g12/hpc/bin/activate
-python Run.py -R 25 ${GAME[$PBS_ARRAYID]} --pickled-arguments mw_proportions.args -f ${PBS_ARRAYID}_mw_proportions -i 1000 -d /scratch/jg1g12
+#python Run.py -R 25 ${GAME[$PBS_ARRAYID]} --pickled-arguments mw_proportions.args -f ${PBS_ARRAYID}_mw_proportions -i 1000 -d /scratch/jg1g12
+dir=/scratch/jg1g12/${sig}_${resp}
+mkdir ${dir}
+${python} Run.py -R 100 -s ${sig} -r ${resp} --pickled-arguments ../experiment_args/mw_proportions_${PBS_ARRAYID}.args -f ${PBS_ARRAYID}_mw_proportions -i 1000 -d ${dir} -g ${game} 
