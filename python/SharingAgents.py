@@ -11,12 +11,12 @@ class SharingResponder(RecognitionResponder):
     which is weighted according to the share_weight parameter.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1],
-        share_weight=0.):
+        share_weight=0., seed=None):
         # Memory available for sharing
         self.shareable = None
         #Weight given to other's info
         self.share_weight = share_weight
-        super(SharingResponder, self).__init__(player_type, signals, responses)
+        super(SharingResponder, self).__init__(player_type, signals, responses, seed=seed)
 
     def __str__(self):
         return "sharing_%s" % super(SharingResponder, self).__str__()
@@ -45,12 +45,12 @@ class SharingSignaller(BayesianSignaller):
     shared with others, and can use the memories of others to update beliefs.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1],
-        share_weight=0.):
+        share_weight=0., seed=None):
         # Exogenous memories
         self.exogenous = []
         #Weight given to other's info
         self.share_weight = share_weight
-        super(SharingSignaller, self).__init__(player_type, signals, responses)
+        super(SharingSignaller, self).__init__(player_type, signals, responses, seed=seed)
 
     def __str__(self):
         return "sharing_%s" % super(SharingSignaller, self).__str__()

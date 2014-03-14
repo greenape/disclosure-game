@@ -26,7 +26,7 @@ class CarryingInformationGame(CarryingReferralGame):
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
      measures_midwives=measures_midwives(), params=None, mw_share_prob=0, mw_share_bias=-.99, women_share_prob=0, women_share_bias=0.99,
-     num_appointments=12, seed=None):
+     num_appointments=12, seed=None, signaller_args={}, responder_args={}):
         super(CarryingInformationGame, self).__init__(baby_payoff, no_baby_payoff, mid_baby_payoff, referral_cost, harsh_high,
             harsh_mid, harsh_low, mid_high, mid_mid, mid_low, low_high, low_mid, low_low, randomise_payoffs, type_weights,
             rounds, measures_women, measures_midwives, params, seed)
@@ -39,6 +39,8 @@ class CarryingInformationGame(CarryingReferralGame):
         self.women_share_bias = women_share_bias
         self.women_share_prob = women_share_prob
         self.num_appointments = num_appointments
+        self.signaller_args = signaller_args
+        self.responder_args = responder_args
 
     def __str__(self):
         return "sharing_%s" % super(CarryingInformationGame, self).__unicode__()
@@ -74,9 +76,9 @@ class CarryingInformationGame(CarryingReferralGame):
                 if self.all_played([woman], self.num_appointments):
                     woman.is_finished = True
                     # Add a new naive women back into the mix
-                    new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
+                    new_woman = self.random_player(player_dist, woman, self.signaller_args)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(random=self.random), [random_expectations(breadth=2, random=self.random) for x in range(3)])
+                        random_expectations(random=self.player_random), [random_expectations(breadth=2, random=self.player_random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
@@ -178,12 +180,20 @@ class CarryingInformationGame(CarryingReferralGame):
         for recepient in recepients:
             #tmp_mem = deepcopy(recepient.signal_belief)
             #assert hash(tmp_signaller) not in recepient.signal_memory
+            #print "Exogenous update."
+            #tmp_1 = deepcopy(recepient)
+
             for signal, response in signals:
                 #foo = 1
                 recepient.remember(tmp_signaller, signal, response, False)
                 recepient.exogenous_update(None, tmp_signaller, signal, signaller_type=player_type)
             #assert hash(tmp_signaller) not in recepient.signal_memory
             #assert tmp_mem == recepient.signal_belief
+            #print "Are now.."
+            #assert tmp_1.signal_type_matches == recepient.signal_type_matches
+            #assert tmp_1.signal_belief == recepient.signal_belief
+            #assert tmp_1.signal_memory == recepient.signal_memory
+            #assert tmp_1.random.random() == recepient.random.random()
 
    #@profile
     def disseminate_women(self, memory, recepients):
@@ -266,9 +276,9 @@ class CaseloadSharingGame(CarryingInformationGame):
                     LOG.debug("Adding a new player")
                     woman.is_finished = True
                     # Add a new naive women back into the mix
-                    new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
+                    new_woman = self.random_player(player_dist, woman, self.signaller_args)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(random=self.random), [random_expectations(breadth=2, random=self.random) for x in range(3)])
+                        random_expectations(random=sself.player_random), [random_expectations(breadth=2, random=self.player_random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)

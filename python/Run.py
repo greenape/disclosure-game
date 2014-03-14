@@ -154,6 +154,7 @@ def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
     signaller=True, player_args={}, random=Random()):
     women = []
     player_type = 0
+    player_args = deepcopy(player_args)
     player_args['seed'] = random.random()
     for weight in weights:
         for i in range(int(round(weight*num))):
@@ -215,6 +216,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
 
     game.measures_midwives = measures_midwives
     game.measures_women = measures_women
+    game.signaller_args = signaller_args
+    game.responder_args = responder_args
     params = params_dict(str(signaller_fn()), str(responder_fn()), mw_weights, women_weights, game, rounds,
         signaller_args, responder_args)
     for key, value in params.items():
@@ -222,7 +225,8 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     game.rounds = rounds
     random = Random()
     if seeds is None:
-        seeds = [random.random() for x in range(runs)]
+        #seeds = [random.random() for x in range(runs)]
+        seeds = range(runs)
     player_pairs = []
     #for i in range(runs):
     i =  0
@@ -246,7 +250,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
             women_modifier(women)
         #logger.info("Set priors.")
         #print responder_args
-        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False, player_args=responder_args)
+        mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False, player_args=responder_args, random=random)
         #logger.info("Made agents.")
         for midwife in mw:
             midwife.init_payoffs(game.midwife_payoff, game.type_weights)

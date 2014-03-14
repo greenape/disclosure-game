@@ -14,7 +14,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         self.l = l
         self.delta = delta
         self.beta = beta
-        super(ProspectTheorySignaller, self).__init__(player_type, signals, responses, seed)
+        super(ProspectTheorySignaller, self).__init__(player_type, signals, responses, seed=seed)
 
     def weighting(self, probability, power):
         return pow(probability, power) / pow(pow(probability, power) + pow(1. - probability, power), 1. / power)
@@ -142,7 +142,7 @@ class ProspectTheoryResponder(Model.BayesianResponder):
         self.l = l
         self.delta = delta
         self.beta = beta
-        super(ProspectTheoryResponder, self).__init__(player_type, signals, responses, seed)
+        super(ProspectTheoryResponder, self).__init__(player_type, signals, responses, seed=seed)
 
     def weighting(self, probability, power):
         return pow(probability, power) / pow(pow(probability, power) + pow(1. - probability, power), 1. / power)
