@@ -1,6 +1,5 @@
 import Model
 import math
-import random
 from PayoffAgents import *
 from RecognitionAgents import *
 
@@ -9,13 +8,13 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
     A responder which makes decision using cumulative prospect theory.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], 
-        alpha=.88, beta=.88, l=2.25, gamma=.61, delta=.69):
+        alpha=.88, beta=.88, l=2.25, gamma=.61, delta=.69, seed=None):
         self.alpha = alpha
         self.gamma = gamma
         self.l = l
         self.delta = delta
         self.beta = beta
-        super(ProspectTheorySignaller, self).__init__(player_type, signals, responses)
+        super(ProspectTheorySignaller, self).__init__(player_type, signals, responses, seed)
 
     def weighting(self, probability, power):
         return pow(probability, power) / pow(pow(probability, power) + pow(1. - probability, power), 1. / power)
@@ -98,8 +97,8 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         the signal they sent based on expe
         """
         super(ProspectTheorySignaller, self).do_signal(opponent)
-        best = (random.randint(0, 2), -9999999)
-        for signal in Model.shuffled(self.signals):
+        best = (self.random.randint(0, 2), -9999999)
+        for signal in Model.shuffled(self.signals, self.random):
             act_risk = self.cpt_value(self.collect_prospects(signal))
             #self.risk_log[signal].append(act_risk)
             #self.risk_log_general[signal].append(act_risk)
@@ -137,13 +136,13 @@ class ProspectTheoryResponder(Model.BayesianResponder):
     Weighting is some function that takes the probability p and returns a weighted version of it.
     """
     def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1],
-        alpha=.88, beta=.88, l=2.25, gamma=.61, delta=.69):
+        alpha=.88, beta=.88, l=2.25, gamma=.61, delta=.69, seed=None):
         self.alpha = alpha
         self.gamma = gamma
         self.l = l
         self.delta = delta
         self.beta = beta
-        super(ProspectTheoryResponder, self).__init__(player_type, signals, responses)
+        super(ProspectTheoryResponder, self).__init__(player_type, signals, responses, seed)
 
     def weighting(self, probability, power):
         return pow(probability, power) / pow(pow(probability, power) + pow(1. - probability, power), 1. / power)
@@ -221,8 +220,8 @@ class ProspectTheoryResponder(Model.BayesianResponder):
         """
         super(ProspectTheoryResponder, self).respond(signal, opponent)
 
-        best = (random.randint(0, 1), -9999999)
-        for response in Model.shuffled(self.responses):
+        best = (self.random.randint(0, 1), -9999999)
+        for response in Model.shuffled(self.responses, self.random):
             act_risk = self.cpt_value(self.collect_prospects(response, signal))
             if act_risk > best[1]:
                 best = (response, act_risk)

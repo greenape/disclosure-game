@@ -20,7 +20,9 @@ class BayesianPayoffSignaller(LexicographicSignaller):
                 n_k = self.payoff_count[signal][payoff]
                 #el belief[:]
                 #belief.append(n_k / float(n))
-                self.payoff_belief[signal][payoff] = n_k / n
+                self.payoff_belief[signal][payoff] = 0.
+                if n > 0:
+                    self.payoff_belief[signal][payoff] = n_k / n
 
 
     def risk(self, signal, opponent):
@@ -31,9 +33,9 @@ class BayesianPayoffSignaller(LexicographicSignaller):
         return risk
 
     def do_signal(self, opponent=None):
-        best = (random.randint(0, 2), 9999999)
+        best = (self.random.randint(0, 2), 9999999)
        #print "Type %d woman evaluating signals." % self.player_type
-        for signal in shuffled(self.signals):
+        for signal in shuffled(self.signals, self.random):
             signal_risk = self.risk(signal, opponent)
             #self.risk_log[signal].append(signal_risk)
             #self.risk_log_general[signal].append(self.risk(signal, None))
@@ -91,8 +93,8 @@ class BayesianPayoffResponder(LexicographicResponder):
         the signal they sent by minimising bayesian risk.
         """
         super(BayesianPayoffResponder, self).respond(signal, opponent)
-        best = (random.randint(0, 1), 9999999)
-        for response in shuffled(self.responses):
+        best = (self.random.randint(0, 1), 9999999)
+        for response in shuffled(self.responses, self.random):
             act_risk = self.risk(response, signal, opponent)
             if act_risk < best[1]:
                 best = (response, act_risk)

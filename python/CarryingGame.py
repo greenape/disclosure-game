@@ -1,6 +1,5 @@
 import Model
 from Model import random_expectations
-import random
 from ReferralGame import *
 import collections
 try:
@@ -20,7 +19,7 @@ class CarryingGame(Model.Game):
         Generate a random player, based on the probabilities
         provided by roulette.
         """
-        draw = random.random()
+        draw = self.random.random()
         bracket = 0.
         for i in range(len(probabilities)):
             bracket += probabilities[i]
@@ -54,13 +53,13 @@ class CarryingGame(Model.Game):
 
         rounds = self.rounds
         birthed = []
-        random.shuffle(women)
+        self.random.shuffle(women)
         num_midwives = len(midwives)
         women_res = self.measures_women.dump(None, self.rounds, self, None)
         mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
         for i in range(rounds):
             players = [women.pop() for j in range(num_midwives)]
-            random.shuffle(midwives)
+            self.random.shuffle(midwives)
             map(self.play_round, players, midwives)
             for x in midwives:
                 x.finished += 1
@@ -72,7 +71,7 @@ class CarryingGame(Model.Game):
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+                        random_expectations(random=self.random), [random_expectations(breadth=2, random=self.random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
@@ -101,7 +100,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
 
         rounds = self.rounds
         birthed = []
-        random.shuffle(women)
+        self.random.shuffle(women)
         num_midwives = len(midwives)
         women_res = self.measures_women.dump(None, self.rounds, self, None)
         mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
@@ -110,7 +109,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
         num_women = len(women)
         num_midwives = len(midwives)
         load = num_women / num_midwives
-        random.shuffle(women)
+        self.random.shuffle(women)
         for midwife in midwives:
             caseloads[midwife] = []
             for i in range(load):
@@ -118,7 +117,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
 
         # Assign leftovers at random
         while len(women) > 0:
-            caseloads[random.choice(midwives)].append(women.pop())
+            caseloads[self.random.choice(midwives)].append(women.pop())
 
         for i in range(rounds):
             players = [caseloads[midwife].pop() for midwife in midwives]
@@ -135,7 +134,7 @@ class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+                        random_expectations(random=self.random), [random_expectations(breadth=2, random=self.random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)

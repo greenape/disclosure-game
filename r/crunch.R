@@ -113,8 +113,9 @@ for(x in files) {
 }
 }
 
-files = c("%s/1_women_sharing_mw.db", "%s/2_women_sharing_mw.db", "%s/3_women_sharing_mw.db", "%s/4_women_sharing_mw.db", "%s/5_women_sharing_mw.db", "%s/6_women_sharing_mw.db", "%s/7_women_sharing_mw.db", "%s/8_women_sharing_mw.db", "%s/9_women_sharing_mw.db", "%s/10_women_sharing_mw.db")
-#files = c("%s/5_women_sharing_mw.db", "%s/2_women_sharing_mw.db")
+#files = c("%s/1_women_sharing_mw.db", "%s/2_women_sharing_mw.db", "%s/3_women_sharing_mw.db", "%s/4_women_sharing_mw.db", "%s/5_women_sharing_mw.db", "%s/6_women_sharing_mw.db", "%s/7_women_sharing_mw.db", "%s/8_women_sharing_mw.db", "%s/9_women_sharing_mw.db", "%s/10_women_sharing_mw.db")
+files = c("%s/w_payoff_mw.db", "%s/w_lexic_mw.db")
+#files = c("%s/w_sharing_mw.db", "%s/w_prospect_mw.db", "%s/w_payoff_mw.db", "%s/w_lexic_mw.db", "%s/w_payoff_prospect_mw.db")
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
@@ -139,17 +140,12 @@ for(x in files) {
         dev.off()
 
         png(sprintf("%s/women_sharing_false_positives_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_positives, fill=false_positives))
+        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_positives_upto, fill=false_positives_upto))
         print(c + geom_tile())
         dev.off()
 
         png(sprintf("%s/women_sharing_false_negatives_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
         c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=false_negatives_upto, fill=false_negatives_upto))
-        print(c + geom_tile())
-        dev.off()
-
-        png(sprintf("%s/women_sharing_type_2_misses_%s_%s_%s_round_%d.png", dir, as.character(d$decision_rule_signaller)[1], as.character(d$decision_rule_responder)[1], as.character(d$game)[1], appn))
-        c <- ggplot(d, aes(x=women_share_prob, y=signaller_share_weight, z=type_2_misses, fill=type_2_misses))
         print(c + geom_tile())
         dev.off()
 
@@ -164,8 +160,8 @@ for(x in files) {
 }
 }
 
-files = c("%s/1_women_sharing_women.db", "%s/2_women_sharing_women.db", "%s/3_women_sharing_women.db", "%s/4_women_sharing_women.db", "%s/5_women_sharing_women.db", "%s/6_women_sharing_women.db", "%s/7_women_sharing_women.db", "%s/8_women_sharing_women.db", "%s/9_women_sharing_women.db", "%s/10_women_sharing_women.db")
-
+#files = c("%s/w_sharing_w.db", "%s/w_prospect_w.db", "%s/w_payoff_w.db", "%s/w_lexic_w.db", "%s/w_payoff_prospect_w.db")
+files = c("%s/w_payoff_w.db", "%s/w_lexic_w.db")
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
@@ -179,23 +175,10 @@ for(x in files) {
             if(d$women_0 > 0.8) {
                 dir = sprintf("%s/alspac", dir)
             }
-
-            for(j in 0:2) {
-                png(sprintf("%s/women_sharing_num_rounds_%s_%s_type_%d_women_round_%d.png", dir, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j, appn))
-                c = num_rounds_type(d, j, "women_share_prob", "signaller_share_weight")
-                print(c)
-                dev.off()
-                #png(sprintf("%s/women_sharing_payoffs_%s_%s_type_%d_women_round_%d.png", dir, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j, appn))
-                #c = payoffs_type(d, j, "women_share_prob", "signaller_share_weight")
-                #print(c)
-                #dev.off()
-                for(k in 0:2) {
-                    png(sprintf("%s/women_sharing_signal_%d_%s_%s_type_%d_women_round_%d.png", dir, k, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], j, appn))
-                    c = signals_type(d, j, k, "women_share_prob", "signaller_share_weight")
-                    print(c)
-                    dev.off()
-                }
-            }
+            png(sprintf("%s/women_sharing_num_rounds_%s_%s_round_%d.png", dir, as.character(d$game)[1], as.character(d$decision_rule_signaller)[1], appn))
+            c = rounds_diff(df, "women_share_prob", "signaller_share_weight")
+            print(c)
+            dev.off()
             rm(d)
     }
     print("Made figures.")

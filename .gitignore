@@ -1,4 +1,5 @@
 *.dot
+writing/
 *.csv.gz
 *.gz
 *.lyx
@@ -109,3 +110,5 @@ r/tmp.R
 *.prof
 
 *.jargs
+
+*.js

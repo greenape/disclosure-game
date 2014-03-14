@@ -2,7 +2,11 @@ from Model import *
 from RecognitionAgents import RecognitionResponder
 from SharingAgents import *
 import operator
-import random
+from random import Random
+
+def weighted_random_choice(choices, weights, random=Random()):
+        population = [val for val, cnt in zip(choices, weights) for i in range(int(cnt))]
+        return random.choice(population)
 
 class LexicographicSignaller(BayesianSignaller):
     """
@@ -29,7 +33,7 @@ class LexicographicSignaller(BayesianSignaller):
         # Psuedocounts go in
         for signal in self.signals:
             breadth = len(self.payoff_count[signal])
-            weights = random_expectations(breadth=breadth, high=random.randint(breadth, 10))
+            weights = random_expectations(breadth=breadth, high=self.random.randint(breadth, 10), random=self.random)
             i = 0
             for payoff in self.payoff_count[signal].keys():
                 self.payoff_count[signal][payoff] = weights[i]
@@ -40,6 +44,37 @@ class LexicographicSignaller(BayesianSignaller):
             #        self.payoff_count[signal][payoff] += type_weights[player_type] + response_weights[signal][response]
         super(LexicographicSignaller, self).init_payoffs(baby_payoffs, social_payoffs, type_weights,
             response_weights)
+
+    def init_payoffs_(self, baby_payoffs, social_payoffs, type_weights=[1., 1., 1.],
+                     response_weights=[[1., 1.], [1., 1.], [1., 1.]], num=10):
+        """
+        An alternative way of generating priors by using the provided weights
+        as weightings for random encounters.
+        """
+        #Payoff counter
+        self.payoff_count = dict([(signal, {}) for signal in self.signals])
+        self.payoff_belief = dict([(signal, {}) for signal in self.signals])
+        for signal in self.signals:
+            for payoff in social_payoffs[signal]:
+                for baby_payoff in baby_payoffs[self.player_type]:
+                    self.payoff_count[signal][payoff + baby_payoff] = 0
+                    self.payoff_belief[signal][payoff + baby_payoff] = 0.
+        self.depth = 0
+        for signal, payoffs in self.payoff_count.items():
+            self.depth = max(len(payoffs), self.depth)
+        for i in xrange(num):
+            # Choose a random signal
+            signal = self.random.choice(self.signals)
+            # A weighted response
+            response = weighted_random_choice(self.responses, response_weights[signal], self.random)
+            # A weighted choice of type
+            player_type = weighted_random_choice(self.signals, type_weights, self.random)
+            # Payoffs
+            payoff = baby_payoffs[self.player_type][response] + social_payoffs[signal][player_type]
+            self.payoff_count[signal][payoff] += 1
+        super(LexicographicSignaller, self).init_payoffs(baby_payoffs, social_payoffs, type_weights,
+            response_weights)
+        
 
     def frequent(self, signal, n, responder=None):
         """
@@ -69,9 +104,10 @@ class LexicographicSignaller(BayesianSignaller):
 
     def do_signal(self, opponent=None):
         #super(LexicographicSignaller, self).do_signal(opponent)
-        signals = shuffled(self.signals)
+        signals = shuffled(self.signals, self.random)
         n = 0
         # Reduce to possible
+        best = self.random.choice(signals)
         while n < self.depth:
             mappings = {}
             # N most frequent outcome of each signal
@@ -124,6 +160,35 @@ class LexicographicResponder(BayesianResponder):
         for signal, responses in self.payoff_count.items():
             for response, payoff in responses.items():
                 self.depth = max(len(payoff), self.depth)
+        super(LexicographicResponder, self).init_payoffs(payoffs, type_weights)
+
+    def init_payoffs_(self, payoffs, type_weights=[[10., 2., 1.], [1., 10., 1.], [1., 1., 10.]], num=10):
+        self.payoff_count = dict([(y, dict([(x, {}) for x in self.responses])) for y in self.signals])
+        self.payoff_belief = dict([(y, dict([(x, {}) for x in self.responses])) for y in self.signals])
+        #This is a bit more fiddly. Psuedo counts are for meanings..
+        for signal in self.signals:
+            #total = sum(type_weights[signal])
+            for player_type in self.signals:
+                #freq = type_weights[signal][player_type] / float(total)
+                for response in self.responses:
+                    payoff = payoffs[player_type][response]
+                    if payoff not in self.payoff_count[signal][response]:
+                        self.payoff_count[signal][response][payoff] = 0
+                        self.payoff_belief[signal][response][payoff] = 0.
+        self.depth = 0
+        for signal, responses in self.payoff_count.items():
+            for response, payoff in responses.items():
+                self.depth = max(len(payoff), self.depth)
+        for i in xrange(num):
+            # Choose a random signal
+            signal = self.random.choice(self.signals)
+            # A weighted response
+            response = self.random.choice(self.responses)
+            # A weighted choice of type
+            player_type = weighted_random_choice(self.signals, type_weights[signal], random=self.random)
+            # Payoffs
+            payoff = payoffs[player_type][response]
+            self.payoff_count[signal][response][payoff] += 1
         super(LexicographicResponder, self).init_payoffs(payoffs, type_weights)
 
     #@profile

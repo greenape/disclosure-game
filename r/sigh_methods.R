@@ -122,15 +122,6 @@ honesty_type <- function(dataset, type, x, y) {
     return(c + geom_tile(aes(fill=fill)))
 }
 
-
-load <- function(x) {
-    dataset <- sqldataset("select * from results", dbname=x)
-    params <- sqldataset("select * from parameters", dbname=x)
-    dataset <- merge(x=dataset, y=params, by.x="hash", by.y="hash", all.x=TRUE)
-    print(sprintf("Loaded %s", x))
-    return(dataset)
-}
-
 num_rounds <- function(dataset) {
     # Average number of rounds played over time for all types
     # Include only rounds where at least some of that type finished

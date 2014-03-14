@@ -1,9 +1,10 @@
 from CarryingGame import CarryingReferralGame
-from Model import measures_women, measures_midwives, random_expectations
-import random
+from Model import measures_women, measures_midwives, random_expectations, Agent
+from random import Random
 from math import copysign
 import operator
 from collections import OrderedDict
+from copy import deepcopy
 try:
     import scoop
     scoop.worker
@@ -25,10 +26,10 @@ class CarryingInformationGame(CarryingReferralGame):
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
      measures_midwives=measures_midwives(), params=None, mw_share_prob=0, mw_share_bias=-.99, women_share_prob=0, women_share_bias=0.99,
-     num_appointments=12):
+     num_appointments=12, seed=None):
         super(CarryingInformationGame, self).__init__(baby_payoff, no_baby_payoff, mid_baby_payoff, referral_cost, harsh_high,
             harsh_mid, harsh_low, mid_high, mid_mid, mid_low, low_high, low_mid, low_low, randomise_payoffs, type_weights,
-            rounds, measures_women, measures_midwives, params)
+            rounds, measures_women, measures_midwives, params, seed)
         self.parameters['mw_share_prob'] = mw_share_prob
         self.parameters['mw_share_bias'] = mw_share_bias
         self.parameters['women_share_prob'] = women_share_prob
@@ -44,6 +45,7 @@ class CarryingInformationGame(CarryingReferralGame):
 
     #@profile
     def play_game(self, players, file_name=""):
+        #self.random.seed(1)
         try:
             worker = scoop.worker[0]
         except:
@@ -54,7 +56,7 @@ class CarryingInformationGame(CarryingReferralGame):
 
         rounds = self.rounds
         birthed = []
-        random.shuffle(women)
+        self.random.shuffle(women)
         num_midwives = len(midwives)
         women_res = self.measures_women.dump(None, self.rounds, self, None)
         mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
@@ -62,7 +64,7 @@ class CarryingInformationGame(CarryingReferralGame):
         mw_memories = []
         for i in range(rounds):
             players = [women.pop() for j in range(num_midwives)]
-            random.shuffle(midwives)
+            self.random.shuffle(midwives)
             map(self.play_round, players, midwives)
             for x in midwives:
                 x.finished += 1
@@ -74,7 +76,7 @@ class CarryingInformationGame(CarryingReferralGame):
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+                        random_expectations(random=self.random), [random_expectations(breadth=2, random=self.random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
@@ -107,7 +109,7 @@ class CarryingInformationGame(CarryingReferralGame):
         for midwife in midwives:
             memory = midwife.shareable
             midwife.shareable = None
-            p = random.random()
+            p = self.random.random()
             LOG.debug("p=%f, threshold is %f" % (p, self.mw_share_prob))
             if p < self.mw_share_prob and memory is not None:
                 LOG.debug("Sharing %s" % str(memory))
@@ -119,7 +121,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #print mw_memories
             #Sort them according to the threshold sign
             #if self.mw_share_bias == 0:
-            #    random.shuffle(mw_memories)
+            #    self.random.shuffle(mw_memories)
             #elif copysign(1, self.mw_share_bias) == 1:
             #    mw_memories.sort(key=operator.itemgetter(0), reverse=True)
             #elif copysign(1, self.mw_share_bias) == -1:
@@ -144,7 +146,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #return
         #Sort them according to the threshold sign
             #if self.women_share_bias == 0:
-            #    random.shuffle(women_memories)
+            #    self.random.shuffle(women_memories)
             #elif copysign(1, self.women_share_bias) == 1:
             #    women_memories.sort(key=operator.itemgetter(0), reverse=True)
             #elif copysign(1, self.women_share_bias) == -1:
@@ -156,7 +158,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #Share it
             while len(women_memories) > 0:
                 memory = women_memories.pop()
-                if random.random() < self.women_share_prob:
+                if self.random.random() < self.women_share_prob:
                     self.disseminate_women(memory[1], women)
                 #And null it
                 #women_memories.remove(memory)
@@ -172,10 +174,16 @@ class CarryingInformationGame(CarryingReferralGame):
         if len(memory[1]) > 1:
             LOG.debug("Memory chain length %d" % len(memory[1]))
         tmp_signaller = type(recepients[0])(player_type=player_type)
+        
         for recepient in recepients:
+            #tmp_mem = deepcopy(recepient.signal_belief)
+            #assert hash(tmp_signaller) not in recepient.signal_memory
             for signal, response in signals:
-                recepient.remember(tmp_signaller, signal, response)
+                #foo = 1
+                recepient.remember(tmp_signaller, signal, response, False)
                 recepient.exogenous_update(None, tmp_signaller, signal, signaller_type=player_type)
+            #assert hash(tmp_signaller) not in recepient.signal_memory
+            #assert tmp_mem == recepient.signal_belief
 
    #@profile
     def disseminate_women(self, memory, recepients):
@@ -191,26 +199,11 @@ class CarryingInformationGame(CarryingReferralGame):
 
     def share_to(self, pop, fraction):
         """
-        Choose some percentage of the population to share to at random.
+        Choose some percentage of the population to share to at self.random.
         """
         size = len(pop)
         k = int(round(size * fraction))
-        return random.sample(pop, k)
-
-    def weighted_random_choice(self, choices, weight):
-        random.shuffle(choices)
-        low = min(map(lambda x: x[1], choices))
-        high = max(map(lambda x: x[1], choices))
-        total = sum(w**weight for w, c in choices)
-        #mid = -low if weight < 0 else high
-        #mid *= weight
-        r = random.uniform(0, total)
-        #r = random.triangular(low, high, mid)
-        upto = 0
-        for c, w in choices:
-            if upto + w**weight > r:
-                return c
-            upto += w
+        return self.random.sample(pop, k)
 
     def n_most(self, threshold, memories):
         num = int(round(len(memories)*(1 - abs(threshold))))
@@ -236,7 +229,7 @@ class CaseloadSharingGame(CarryingInformationGame):
 
         rounds = self.rounds
         birthed = []
-        random.shuffle(women)
+        self.random.shuffle(women)
         num_midwives = len(midwives)
         women_res = self.measures_women.dump(None, self.rounds, self, None)
         mw_res = self.measures_midwives.dump(None, self.rounds, self, None)
@@ -245,18 +238,18 @@ class CaseloadSharingGame(CarryingInformationGame):
         num_women = len(women)
         num_midwives = len(midwives)
         load = num_women / num_midwives
-        random.shuffle(women)
+        self.random.shuffle(women)
         for midwife in midwives:
             caseloads[midwife] = []
             for i in range(load):
                 caseloads[midwife].append(women.pop())
          # Assign leftovers at random
         while len(women) > 0:
-            caseloads[random.choice(midwives)].append(women.pop())
+            caseloads[self.random.choice(midwives)].append(women.pop())
         LOG.debug("Assigned caseloads.")
         for i in range(rounds):
             players = [caseloads[midwife].pop() for midwife in midwives]
-            #random.shuffle(midwives)
+            #self.random.shuffle(midwives)
             LOG.debug("Playing a round.")
             map(self.play_round, players, midwives)
             for x in midwives:
@@ -275,7 +268,7 @@ class CaseloadSharingGame(CarryingInformationGame):
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, woman)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+                        random_expectations(random=self.random), [random_expectations(breadth=2, random=self.random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)

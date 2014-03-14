@@ -24,10 +24,11 @@ from copy import deepcopy
 import sqlite3
 import sys
 import logging
+from random import Random
 
 logger = multiprocessing.log_to_stderr()
 
-version = 0.53
+version = 0.54
 
 def load_kwargs(file_name):
     
@@ -150,9 +151,10 @@ def arguments():
 
 
 def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
-    signaller=True, player_args={}):
+    signaller=True, player_args={}, random=Random()):
     women = []
     player_type = 0
+    player_args['seed'] = random.random()
     for weight in weights:
         for i in range(int(round(weight*num))):
             if len(women) == num: break
@@ -218,7 +220,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     for key, value in params.items():
         game.parameters[key] = value
     game.rounds = rounds
-
+    random = Random()
     if seeds is None:
         seeds = [random.random() for x in range(runs)]
     player_pairs = []
@@ -226,21 +228,24 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     i =  0
     while i < runs:
         # Parity across different conditions but random between runs.
-        random.seed(seeds[i])
+        random = Random(seeds[i])
+        game.random = Random(seeds[i])
+        #random.seed(1)
         #logger.info "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
         #Make players and initialise beliefs
-        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested, player_args=signaller_args)
+        women = make_players(signaller_fn, num=num_women, weights=women_weights, nested=nested, player_args=signaller_args, random=random)
         #logger.info "made %d women." % len(women)
         for j in range(len(women)):
             woman = women[j]
             if women_priors is not None:
                 woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, women_priors[j][0], women_priors[j][1])
             else:
-                woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(), [random_expectations(breadth=2) for x in range(3)])
+                woman.init_payoffs(game.woman_baby_payoff, game.woman_social_payoff, random_expectations(random=random), [random_expectations(breadth=2, random=random) for x in range(3)])
         if women_modifier is not None:
             women_modifier(women)
         #logger.info("Set priors.")
+        #print responder_args
         mw = make_players(responder_fn, num_midwives, weights=mw_weights, nested=nested, signaller=False, player_args=responder_args)
         #logger.info("Made agents.")
         for midwife in mw:
@@ -294,6 +299,10 @@ def do_work(queueIn, queueOut, kill_queue):
             queueOut.put(res)
             del config
         except MemoryError:
+            raise
+            break
+        except AssertionError:
+            kill_queue.put(None)
             raise
             break
         except:

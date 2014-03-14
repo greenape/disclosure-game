@@ -1,6 +1,7 @@
-import random
+from random import Random
 from Measures import measures_midwives, measures_women
 from collections import OrderedDict
+
 try:
     import scoop
     scoop.worker
@@ -12,7 +13,7 @@ except:
     LOG = multiprocessing.get_logger()
     pass
 
-def random_expectations(depth=0, breadth=3, low=1, high=10):
+def random_expectations(depth=0, breadth=3, low=1, high=10, random=Random()):
     """
     Generate depth x breadth array of random numbers where each row sums to
     high, with a minimum of low.
@@ -27,10 +28,14 @@ def random_expectations(depth=0, breadth=3, low=1, high=10):
         result.append(initial - low)
         random.shuffle(result)
     else:
-        result = [random_expectations(depth - 1, breadth, low, high) for x in range(breadth)]
+        result = [random_expectations(depth - 1, breadth, low, high, random) for x in range(breadth)]
     return result
 
-def shuffled(target):
+def weighted_random_choice(choices, weights, random=Random()):
+    population = [val for val, cnt in zip(choices, weights) for i in range(int(cnt))]
+    return random.choice(population)
+
+def shuffled(target, random=Random()):
     """
     Return a shuffled version of the argument
     """
@@ -52,7 +57,7 @@ class Agent(object):
     0 = do nothing
     1 = refer
     """
-    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
+    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], seed=None):
         self.player_type = player_type
         self.signals = signals
         self.responses = responses
@@ -69,11 +74,12 @@ class Agent(object):
         self.started = 0
         self.is_finished = False
         self.accrued_payoffs = 0
+        self.random = Random(seed)
 
 
 class Signaller(Agent):
 
-    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
+    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], seed=None):
         # Given own type, there are always 6 possible payoffs for a given signal.
         # 2 for each of the three midwife types, per signal.
         self.response_belief = self.response_signal_dict(signals, responses)
@@ -82,7 +88,7 @@ class Signaller(Agent):
         self.response_signal_matches = self.response_signal_dict(signals, responses)
         #self.risk_log = dict([(signal, []) for signal in signals])
         #self.risk_log_general = dict([(signal, []) for signal in signals])
-        super(Signaller, self).__init__(player_type, signals, responses)
+        super(Signaller, self).__init__(player_type, signals, responses, seed)
 
     def response_signal_dict(self, signals, responses):
         return {s:dict.fromkeys(responses, 0.) for s in signals}
@@ -106,6 +112,36 @@ class Signaller(Agent):
             for response, count in responses.iteritems():
                 self.response_signal_matches[signal][response] = response_weights[signal][response]
         #Response per signal per type
+        self.update_counts(None, None, None)
+        self.update_beliefs()
+
+    def init_payoffs_(self, baby_payoffs, social_payoffs, type_weights=[1., 1., 1.], 
+                     response_weights=[[1., 1.], [1., 1.], [1., 2.]], num=10):
+        """
+        An alternative way of generating priors by using the provided weights
+        as weightings for random encounters.
+        """
+        # Don't set up twice.
+        if self.baby_payoffs is not None:
+            return
+        #Only interested in payoffs for own type
+        self.baby_payoffs = baby_payoffs[self.player_type]
+        self.social_payoffs = social_payoffs
+        self.type_weights = [0., 0., 0.]
+        self.response_weights = response_weights
+
+        for i in xrange(num):
+            # Choose a random signal
+            signal = self.random.choice(self.signals)
+            # A weighted response
+            response = weighted_random_choice(self.responses, response_weights[signal], self.random)
+            # A weighted choice of type
+            player_type = weighted_random_choice(self.signals, type_weights, self.random)
+            # Payoffs
+            payoff = baby_payoffs[self.player_type][response] + social_payoffs[signal][player_type]
+            self.response_signal_matches[signal][response] += 1
+            self.type_weights[player_type] += 1
+        
         self.update_counts(None, None, None)
         self.update_beliefs()
 
@@ -214,7 +250,9 @@ class Signaller(Agent):
             
             #del estimate [:]
             #estimate.append((alpha_k + n_k) / float(alpha_dot + n))
-            self.type_distribution[player_type] = (alpha_k + n_k) / n
+            self.type_distribution[player_type] = 0.
+            if n > 0:
+                self.type_distribution[player_type] = (alpha_k + n_k) / n
 
         # Update signal-response beliefs
         
@@ -223,7 +261,9 @@ class Signaller(Agent):
             n = float(sum(responses.values()))
             # Count is alpha_k + n_k
             for response, count in responses.iteritems():
-                self.response_belief[signal][response] = count / n#prob
+                self.response_belief[signal][response] = 0.
+                if n > 0:
+                    self.response_belief[signal][response] = count / n#prob
 
 
     def log_signal(self, signal, opponent=None, weight=1.):
@@ -260,9 +300,9 @@ class BayesianSignaller(Signaller):
         return signal_risk
 
     def do_signal(self, opponent=None):
-        best = (random.randint(0, 2), 9999999)
+        best = (self.random.randint(0, 2), 9999999)
        #print "Type %d woman evaluating signals." % self.player_type
-        for signal in shuffled(self.signals):
+        for signal in shuffled(self.signals, self.random):
             signal_risk = self.risk(signal, opponent)
             #self.risk_log[signal].append(signal_risk)
             #self.risk_log_general[signal].append(self.risk(signal, None))
@@ -276,15 +316,24 @@ class BayesianSignaller(Signaller):
 
 class Responder(Agent):
 
-    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1]):
+    def __init__(self, player_type=1, signals=[0, 1, 2], responses=[0, 1], seed=None):
         # Belief that a particular signal means a state
         self.signal_belief = {s:dict.fromkeys(signals, 0.) for s in signals} #dict([(y, dict([(x, []) for x in signals])) for y in signals])
         self.signal_type_matches = {s:dict.fromkeys(signals, 0.) for s in signals} #dict([(y, dict([(x, 0.) for x in signals])) for y in signals])
 
-        super(Responder, self).__init__(player_type, signals, responses)
+        super(Responder, self).__init__(player_type, signals, responses, seed)
 
     def init_payoffs(self, payoffs, type_weights=[[10., 2., 1.], [1., 10., 1.], [1., 1., 10.]]):
         self.type_weights = type_weights
+        #Only interested in payoffs for own type
+        self.payoffs = payoffs
+        self.update_beliefs(None, None, None)
+
+    def init_payoffs_(self, payoffs, type_weights=[[10., 2., 1.], [1., 10., 1.], [1., 1., 10.]], num=25):
+        self.type_weights = [[0.]*3]*3
+        for i in xrange(num):
+            signal = self.random.choice(self.signals)
+            self.type_weights[signal][weighted_random_choice(self.signals, type_weights[signal])] += 1
         #Only interested in payoffs for own type
         self.payoffs = payoffs
         self.update_beliefs(None, None, None)
@@ -320,7 +369,9 @@ class Responder(Agent):
                 #signal_type_matches = [a and b for a, b in matched_pairs]
                 n_k = self.signal_type_matches[signal_i][player_type]
                #print "n_k = %d" % n_k
-                prob = (alpha_k + n_k) / (alpha_dot + n)
+                prob = 0.
+                if (alpha_dot + n) > 0:
+                    prob = (alpha_k + n_k) / (alpha_dot + n)
                #print "Probability = (%f + %d) / (%d + (%d - 1)) = %f" % (alpha_k, n_k, alpha_dot, n, prob)
                 #del self.signal_belief[signal_i][player_type][:]
                 self.signal_belief[signal_i][player_type] = prob
@@ -374,8 +425,8 @@ class BayesianResponder(Responder):
             self.type_log.append(opponent.player_type)
         self.signal_log.append(signal)
         self.signal_matches[signal] += 1.
-        best = (random.randint(0, 1), 9999999)
-        for response in shuffled(self.responses):
+        best = (self.random.randint(0, 1), 9999999)
+        for response in shuffled(self.responses, self.random):
             act_risk = self.risk(response, signal, opponent)
             if act_risk < best[1]:
                 best = (response, act_risk)
@@ -390,9 +441,10 @@ class Game(object):
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
-     measures_midwives=measures_midwives(), params=None):
+     measures_midwives=measures_midwives(), params=None, seed=None):
         """ A multistage game played by two agents.
         """
+        self.random = Random(seed)
         self.signal_log = []
         self.act_log = []
         self.disclosure_log = []
@@ -430,20 +482,20 @@ class Game(object):
 
     def random_payoffs(self):
 
-        self.payoffs["baby_payoff"] = random.randint(0, 100)
-        self.payoffs["no_baby_payoff"] = random.randint(-100, 0)
-        self.payoffs["mid_baby_payoff"] = random.randint(self.payoffs["no_baby_payoff"], 0)
-        self.payoffs["referral_cost"] = random.randint(self.payoffs["no_baby_payoff"], 0)
+        self.payoffs["baby_payoff"] = self.self.random.randint(0, 100)
+        self.payoffs["no_baby_payoff"] = self.random.randint(-100, 0)
+        self.payoffs["mid_baby_payoff"] = self.random.randint(self.payoffs["no_baby_payoff"], 0)
+        self.payoffs["referral_cost"] = self.random.randint(self.payoffs["no_baby_payoff"], 0)
 
-        self.payoffs["harsh_high"] = random.randint(self.payoffs["mid_baby_payoff"], 0)
-        self.payoffs["harsh_mid"] = random.randint(self.payoffs["harsh_high"], 0)
-        self.payoffs["harsh_low"] = random.randint(self.payoffs["harsh_mid"], 0)
-        self.payoffs["mid_high"] = random.randint(self.payoffs["harsh_low"], 0)
-        self.payoffs["mid_mid"] = random.randint(self.payoffs["mid_high"], 0)
-        self.payoffs["mid_low"] = random.randint(self.payoffs["mid_mid"], 0)
-        self.payoffs["low_high"] = random.randint(self.payoffs["mid_low"], 0)
-        self.payoffs["low_mid"] = random.randint(self.payoffs["low_high"], 0)
-        self.payoffs["low_low"] = random.randint(self.payoffs["low_mid"], 0)
+        self.payoffs["harsh_high"] = self.random.randint(self.payoffs["mid_baby_payoff"], 0)
+        self.payoffs["harsh_mid"] = self.random.randint(self.payoffs["harsh_high"], 0)
+        self.payoffs["harsh_low"] = self.random.randint(self.payoffs["harsh_mid"], 0)
+        self.payoffs["mid_high"] = self.random.randint(self.payoffs["harsh_low"], 0)
+        self.payoffs["mid_mid"] = self.random.randint(self.payoffs["mid_high"], 0)
+        self.payoffs["mid_low"] = self.random.randint(self.payoffs["mid_mid"], 0)
+        self.payoffs["low_high"] = self.random.randint(self.payoffs["mid_low"], 0)
+        self.payoffs["low_mid"] = self.random.randint(self.payoffs["low_high"], 0)
+        self.payoffs["low_low"] = self.random.randint(self.payoffs["low_mid"], 0)
 
     def init_payoffs(self):
         #Midwife payoffs
@@ -513,7 +565,8 @@ class Game(object):
         #self.act_log.append(act)
         signaller.accrued_payoffs += signal_payoff
         receiver.accrued_payoffs += receive_payoff
-        signaller.update_beliefs(act, receiver, signal_payoff)
+        signaller.update_counts(act, receiver, signal_payoff)
+        signaller.update_beliefs()
         receiver.update_beliefs(receive_payoff, signaller, signal)
         # Log honesty of signal
         #self.disclosure_log.append(signal == signaller.player_type)
@@ -523,10 +576,10 @@ class Game(object):
 
         rounds = self.rounds
         birthed = []
-        random.shuffle(women)
+        self.random.shuffle(women)
         while not self.all_played(women, rounds):
             woman = women.pop()
-            self.play_round(woman, random.choice(midwives))
+            self.play_round(woman, self.random.choice(midwives))
             if self.all_played([woman], rounds):
                 birthed.append(woman)
                 woman.is_finished = True
@@ -577,7 +630,7 @@ class CaseloadGame(Game):
         num_women = len(women)
         num_midwives = len(midwives)
         load = num_women / num_midwives
-        random.shuffle(women)
+        self.random.shuffle(women)
         for midwife in midwives:
             caseloads[midwife] = []
             for i in range(load):
@@ -585,7 +638,7 @@ class CaseloadGame(Game):
 
         # Assign leftovers at random
         while len(women) > 0:
-            caseloads[random.choice(midwives)].append(women.pop())
+            caseloads[self.random.choice(midwives)].append(women.pop())
 
         while not self.all_played_caseload(caseloads, rounds):
             for midwife, cases in caseloads.items():

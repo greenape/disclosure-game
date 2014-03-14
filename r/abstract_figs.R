@@ -35,7 +35,11 @@ honesty_plot <- function(x) {
 	e <- mush(x, col)
 	e$x = e$x / x$type_1_pop
 	e$group <- "Moderate"
-	d <- rbind(e, d)
+	col <- "type_0_round_%d_honesty"
+	f <- mush(x, col)
+	f$x = f$x / x$type_0_pop
+	f$group <- "Light"
+	d <- rbind(e, d, f)
 	c <- ggplot(d, aes(y=x, x=as.factor(appointment), linetype=group)) + xlab("Appointment") + ylab("Honest signals")
 	c <- c + stat_summary(fun.data = "mean_cl_boot", geom="smooth", aes(group=group))   +  theme_bw() + theme(text = element_text(family='CMU Serif',size=15)) + scale_linetype_discrete(name = "Drinking type")
 	return(c)

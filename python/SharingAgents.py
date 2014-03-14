@@ -1,5 +1,6 @@
 from RecognitionAgents import RecognitionResponder
 from Model import BayesianSignaller
+from copy import deepcopy
 
 class SharingResponder(RecognitionResponder):
     """
@@ -25,15 +26,15 @@ class SharingResponder(RecognitionResponder):
         Perform a weighted update of the agent's beliefs based on external
         information.
         """
-        #print "Exogenous update"
+
         self.update_beliefs(payoff, signaller, signal, signaller_type, self.share_weight)
 
-    def remember(self, signaller, signal, response):
+    def remember(self, signaller, signal, response, shareable=True):
         """
         Remember what was done in response to a signal.
         """
         super(SharingResponder, self).remember(signaller, signal, response)
-        if response == 1:
+        if shareable and response == 1:
             payoff_sum = sum(map(lambda x: self.payoffs[signaller.player_type][x[1]], self.signal_memory[hash(signaller)]))
             self.shareable = (payoff_sum, (hash(signaller), (signaller.player_type, list(self.signal_memory[hash(signaller)]))))
 
