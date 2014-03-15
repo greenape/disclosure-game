@@ -39,7 +39,7 @@ class CarryingGame(Model.Game):
                     new_player = type(player)(player_type=i, child_fn=player.child_fn, **args)
                     player = new_player
                 except AttributeError:
-                    player = type(player)(player_type=i, seed=self.random.random(), **args)
+                    player = type(player)(player_type=i, seed=self.player_random.random(), **args)
                 return player
         print "Whoops!",bracket,draw
 

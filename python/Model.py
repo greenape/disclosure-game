@@ -1,6 +1,8 @@
 from random import Random
 from Measures import measures_midwives, measures_women
 from collections import OrderedDict
+from itertools import count
+from copy import deepcopy
 
 try:
     import scoop
@@ -45,6 +47,7 @@ def shuffled(target, random=Random()):
 
 
 class Agent(object):
+    id_generator = count()
     """
     An agent who plays a game, according to their
     type, and some decision rule.
@@ -75,6 +78,19 @@ class Agent(object):
         self.is_finished = False
         self.accrued_payoffs = 0
         self.random = Random(seed)
+        self.ident = Agent.id_generator.next()
+
+    def __hash__(self):
+        return self.ident
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        result.ident = Agent.id_generator.next()
+        return result
 
 
 class Signaller(Agent):

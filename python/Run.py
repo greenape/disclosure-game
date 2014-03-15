@@ -234,6 +234,11 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
         # Parity across different conditions but random between runs.
         random = Random(seeds[i])
         game.random = Random(seeds[i])
+        try:
+          game.player_random = Random(game.random.random())
+        except AttributeError:
+          pass
+          
         #random.seed(1)
         #logger.info "Making run %d/%d on %s" % (i + 1, runs, file_name)
 
