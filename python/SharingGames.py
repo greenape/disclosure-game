@@ -278,7 +278,7 @@ class CaseloadSharingGame(CarryingInformationGame):
                     # Add a new naive women back into the mix
                     new_woman = self.random_player(player_dist, woman, self.signaller_args)#type(woman)(player_type=woman.player_type)
                     new_woman.init_payoffs(self.woman_baby_payoff, self.woman_social_payoff,
-                        random_expectations(random=sself.player_random), [random_expectations(breadth=2, random=self.player_random) for x in range(3)])
+                        random_expectations(random=self.player_random), [random_expectations(breadth=2, random=self.player_random) for x in range(3)])
                     new_woman.started = i
                     new_woman.finished = i
                     women.insert(0, new_woman)
