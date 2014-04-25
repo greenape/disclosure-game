@@ -93,10 +93,18 @@ class CarryingInformationGame(CarryingReferralGame):
             # Share information
             LOG.debug("Worker %s prepping share." % (worker))
             #Midwives
-            self.share_midwives(midwives)
+            try:
+                self.share_midwives(midwives)
+            except e:
+                LOG.debug("Sharing to midwives failed.")
+                LOG.debug(e)
 
             #Women
-            self.share_women(women, women_memories)
+            try:
+                self.share_women(women, women_memories)
+            except e:
+                LOG.debug("Sharing to women failed.")
+                LOG.debug(e)
 
             #if scoop_on:
             #    scoop.logger.debug("Worker %s played %d rounds." % (worker, i))
@@ -106,8 +114,24 @@ class CarryingInformationGame(CarryingReferralGame):
         LOG.debug("Worker %s completed a game." % (worker))
         return women_res, mw_res
 
+
+    def weighted_prob(self, high, low, weight, bias):
+        if bias > 0:
+            high, low = low, high
+        diff = high - low
+        return (weight - low) / float(diff)
+    
+    def threshold(self, weight, bias, base):
+        """
+        Bias of the coin deciding if this memory is shared
+        """
+        return base*(1-weight*abs(bias))
+
     #@profile
     def share_midwives(self, midwives):
+        #Worst outcome for a responder
+        worst = self.payoffs["no_baby_payoff"] * self.num_appointments
+        best = self.payoffs["baby_payoff"] * self.num_appointments
         for midwife in midwives:
             memory = midwife.shareable
             midwife.shareable = None
@@ -158,6 +182,9 @@ class CarryingInformationGame(CarryingReferralGame):
             #Choose one by weighted random choice
             #memories = [self.weighted_random_choice(tmp_memories, self.women_share_bias)]
             #Share it
+            #Worst outcome for a signaller
+            worst = (self.payoffs["harsh_high"] + self.payoffs["no_baby_payoff"]) * self.num_appointments
+            best = (self.payoffs["baby_payoff"] + self.payoffs["low_low"]) * self.num_appointments
             while len(women_memories) > 0:
                 memory = women_memories.pop()
                 if self.random.random() < self.women_share_prob:

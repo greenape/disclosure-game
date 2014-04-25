@@ -8,6 +8,7 @@ from RecognitionAgents import *
 from HeuristicAgents import *
 from PayoffAgents import *
 from SharingGames import *
+from RLAgents import RWSignaller, RWResponder
 #from Dolls import *
 import multiprocessing
 from Measures import *
@@ -25,6 +26,7 @@ import sqlite3
 import sys
 import logging
 from random import Random
+import time
 
 logger = multiprocessing.log_to_stderr()
 
@@ -64,7 +66,8 @@ def arguments():
         choices=['BayesianSignaller', 'RecognitionSignaller',
         'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
         'PayoffProspectSignaller', 'SharingBayesianPayoffSignaller', 'SharingLexicographicSignaller',
-        'SharingPayoffProspectSignaller', 'SharingSignaller', 'SharingProspectSignaller'],
+        'SharingPayoffProspectSignaller', 'SharingSignaller', 'SharingProspectSignaller',
+        'RWSignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
         help='A responder type.', default=["BayesianResponder"],
@@ -74,7 +77,7 @@ def arguments():
         'PayoffProspectResponder', 'SharingPayoffProspectResponder',
         'RecognitionResponder', 'RecognitionBayesianPayoffResponder', 'RecognitionLexicographicResponder',
         'PayoffProspectResponder', 'RecognitionPayoffProspectResponder',
-        'SharingResponder', 'SharingProspectResponder'], dest="responders")
+        'SharingResponder', 'SharingProspectResponder', 'RWResponder'], dest="responders")
     parser.add_argument('-R','--runs', dest='runs', type=int,
         help="Number of runs for each combination of players and games.",
         default=100)
@@ -400,7 +403,9 @@ def main():
     if test:
         logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
+        start = time.clock()
         experiment(file_name, games, players, kwargs=kwargs)
+        print "Ran in %f" % (time.clock() - start)
 
 if __name__ == "__main__":
     main()
