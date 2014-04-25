@@ -434,7 +434,7 @@ def measures_women():
             #measures["type_%d_sig_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, signal=j)
             #for k in range(3):
             #    measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
-    return Measures(measures, 999)
+    return Measures(measures, 0)
 
 ##@profile
 def measures_midwives():
@@ -458,4 +458,4 @@ def measures_midwives():
         #measures['type_%d_false_negatives' % i] = FalseNegative(midwife_type=i)
         #measures['type_%d_misses' % i] = TypedFalseNegativeUpto(player_type=i)
         #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
-    return Measures(measures, 999)
+    return Measures(measures, 0)
