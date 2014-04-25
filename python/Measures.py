@@ -4,9 +4,10 @@ from Results import *
 import itertools
 
 class Measures(object):
-    def __init__(self, measures, dump_after=999):
+    def __init__(self, measures, dump_after=0, dump_every=50):
         self.measures = measures
         self.dump_after = dump_after
+        self.dump_every = dump_every
 
     def keys(self):
         return self.measures.keys()
@@ -29,7 +30,7 @@ class Measures(object):
         if women is None:
             return results
         line = map(lambda x: x.measure(rounds, women, game), self.measures.values())
-        if rounds >= self.dump_after:
+        if rounds >= self.dump_after and (rounds % self.dump_every == 0 or rounds == game.rounds):
             results.add_results(Result(self.measures.keys(), game.parameters, [line]))
         return results
 

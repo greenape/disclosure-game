@@ -457,7 +457,7 @@ class Game(object):
     def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
-     measures_midwives=measures_midwives(), params=None, seed=None):
+     measures_midwives=measures_midwives(), params=None, num_appointments=12, seed=None):
         """ A multistage game played by two agents.
         """
         self.random = Random(seed)
@@ -472,6 +472,7 @@ class Game(object):
         self.rounds = rounds
         self.measures_women = measures_women
         self.measures_midwives = measures_midwives
+        self.num_appointments = num_appointments
         if params is None:
             self.parameters = OrderedDict()
         else:
@@ -590,7 +591,7 @@ class Game(object):
     def play_game(self, players):
         women, midwives = players
 
-        rounds = self.rounds
+        rounds = self.num_appointments
         birthed = []
         self.random.shuffle(women)
         while not self.all_played(women, rounds):
@@ -639,7 +640,7 @@ class CaseloadGame(Game):
 
     def play_game(self, players):
         women, midwives = players
-        rounds = self.rounds
+        rounds = self.num_appointments
         birthed = []
         #Assign women to midwives
         caseloads = {}
