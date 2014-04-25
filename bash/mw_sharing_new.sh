@@ -1,5 +1,5 @@
 #!/bin/bash -vx
-#PBS -l walltime=60:00:00
+#PBS -l walltime=30:00:00
 #PBS -l nodes=1:ppn=16
 #PBS -l pmem=1gb
 GAME[1]='-s SharingBayesianPayoffSignaller -r SharingBayesianPayoffResponder'
