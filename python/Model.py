@@ -477,7 +477,7 @@ class Game(object):
             self.parameters = OrderedDict()
         else:
             self.parameters = params
-
+        self.parameters['baby_payoff'] = baby_payoff
         if randomise_payoffs:
             self.random_payoffs()
         else:
