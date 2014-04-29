@@ -9,4 +9,4 @@ module load python
 #source /home/jg1g12/hpc/bin/activate
 dir=/scratch/jg1g12/${sig}_${resp}
 mkdir ${dir}
-{$python} Run.py -R 100 -s ${sig} -r ${resp} --pickled-arguments ../experiment_args/sensitivity_${PBS_ARRAYID}.args -f ${PBS_ARRAYID}_sensitivity -i 1000 -d ${dir} -g ${game} 
+${python} Run.py -R 100 -s ${sig} -r ${resp} --pickled-arguments ../experiment_args/sensitivity_${PBS_ARRAYID}.args -f ${PBS_ARRAYID}_sensitivity -i 1000 -d ${dir} -g ${game} 
