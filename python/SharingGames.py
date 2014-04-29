@@ -22,7 +22,7 @@ class CarryingInformationGame(CarryingReferralGame):
     is shared on each round. Sharing is controlled by the share_prob parameters which
     are the probability that any given memory is shared.
     """
-    def __init__(self, baby_payoff=2, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=1, harsh_high=2,
+    def __init__(self, baby_payoff=10, no_baby_payoff=2, mid_baby_payoff=1,referral_cost=9, harsh_high=2,
      harsh_mid=1, harsh_low=0, mid_high=1, mid_mid=0, mid_low=0, low_high=0,low_mid=0,low_low=0, randomise_payoffs=False,
      type_weights=[[10., 1., 1.], [1., 10., 1.], [1., 1., 10.]], rounds=100, measures_women=measures_women(),
      measures_midwives=measures_midwives(), params=None, mw_share_prob=0, mw_share_bias=-.99, women_share_prob=0, women_share_bias=0.99,
