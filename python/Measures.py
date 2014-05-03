@@ -495,7 +495,7 @@ def measures_midwives():
     #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
         measures['response_signal_%d' % i] = GroupResponse(signal=i)
-        measures['response_signal_0_type_%d' % i] = GroupResponse(midwife_type=i)
+        measures['response_signal_0_type_%d' % i] = GroupResponse(signal=0,midwife_type=i)
         #measures['signal_%d_frequency' % i] = SignalExperience(signal=i)
         #measures['type_%d_frequency' % i] = TypeExperience(player_type=i)
         #measures['type_%d_right_calls_upto' % i] = RightCallUpto(midwife_type=i)
