@@ -91,6 +91,7 @@ class LexicographicSignaller(BayesianSignaller):
             except KeyError:
                 # Must be an impossible payoff add it anyway?
                 self.payoff_count[self.signal_log[len(self.signal_log) - 1]][payoff] = weight
+            self.payoff_log.append(payoff)
         if response is not None:
             self.response_log.append(response)
         if midwife is not None:

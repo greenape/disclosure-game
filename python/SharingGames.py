@@ -292,7 +292,8 @@ class CaseloadSharingGame(CarryingInformationGame):
             for x in midwives:
                 x.finished += 1
             LOG.debug("Played.")
-            women_res = self.measures_women.dump(players, i, self, women_res)
+            women_for_measure = players + [item for sublist in caseloads.values() for item in sublist]
+            women_res = self.measures_women.dump(women_for_measure, i, self, women_res)
             mw_res = self.measures_midwives.dump(midwives, i, self, mw_res)
             #print("Wrote results.")
             for j in range(len(players)):

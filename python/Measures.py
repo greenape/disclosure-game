@@ -463,6 +463,33 @@ class GroupHonesty(Measure):
             return 0.
         return sum(map(self.measure_one, women)) / float(len(women))
 
+class NormalisedGroupHonesty(GroupHonesty):
+
+    def scale(self, n, low, high):
+        a = 0.
+        b = 1.
+        return (((b - a)*(n - low)) / (high - low) ) + a
+
+    """
+    Return the average normalised absolute distance of everybody's choice of signal
+    if they were to signal right now, from their own type.
+    """
+    def measure_one(self, woman):
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.do_signal(self.signal)
+        woman.signal_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[r] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            pass
+        dist = abs(r - woman.player_type)
+        if woman.player_type != 1:
+            diff = self.scale(diff, 0., 2.)
+        return 
+
 class SquaredGroupHonesty(GroupHonesty):
     """
     Return the average squared distance of everybody's choice of signal
@@ -481,11 +508,39 @@ class SquaredGroupHonesty(GroupHonesty):
             pass
         return (r - woman.player_type)**2
 
+class NormalisedSquaredGroupHonesty(GroupHonesty):
+    def scale(self, n, low, high, a=-1., b=1.):
+        return (((b - a)*(n - low)) / (high - low) ) + a
+
+    """
+    Return the average squared normalised distance of everybody's choice of signal
+    if they were to signal right now, from their own type.
+    Distances are normalised to between +-1, type 1s are left as is.
+    """
+    def measure_one(self, woman):
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.do_signal(self.signal)
+        woman.signal_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[r] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            pass
+        diff = (r - woman.player_type)
+        if woman.player_type == 0:
+            diff = self.scale(diff, 0., 2.)
+        elif woman.player_type == 2:
+            diff = self.scale(diff, -2., 0., 0.)
+        return diff**2
+
 def measures_women():
     measures = OrderedDict()
     measures['appointment'] = Appointment()
     #measures['finished'] = TypeFinished()
     measures["honesty"] = GroupHonesty()
+    measures["nom_sq_honesty"] = NormalisedSquaredGroupHonesty()
     #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
         #measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
