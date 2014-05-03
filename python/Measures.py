@@ -439,6 +439,10 @@ class GroupResponse(Measure):
         return sum(map(self.measure_one, women)) / float(len(women))
 
 class GroupHonesty(Measure):
+    """
+    Return the average absolute distance of everybody's choice of signal
+    if they were to signal right now, from their own type.
+    """
     def measure_one(self, woman):
         #print "Hashing by", hash(woman), "hashing", hash(signaller)
         r = woman.do_signal(self.signal)
@@ -458,6 +462,24 @@ class GroupHonesty(Measure):
         if len(women) == 0:
             return 0.
         return sum(map(self.measure_one, women)) / float(len(women))
+
+class SquaredGroupHonesty(GroupHonesty):
+    """
+    Return the average squared distance of everybody's choice of signal
+    if they were to signal right now, from their own type.
+    """
+    def measure_one(self, woman):
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.do_signal(self.signal)
+        woman.signal_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[r] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            pass
+        return (r - woman.player_type)**2
 
 def measures_women():
     measures = OrderedDict()
