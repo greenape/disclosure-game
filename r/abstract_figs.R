@@ -19,7 +19,7 @@ if(is.na(output_dir)) {
 	output_dir = "../figures/abstract"
 }
 
-load <- function(x, appointment=999) {
+load_sqlite <- function(x, appointment=999) {
     query = sprintf("select * from results where round=%d", appointment)
     dataset <- sqldf(query, dbname=x)
     params <- sqldf("select * from parameters", dbname=x)
@@ -121,7 +121,7 @@ make_figs <- function() {
 file = "../data/abstract/%d_abstract_women.db"
 print("V0.35")
 for(i in 1:10) {
-	df <- load(sprintf(file, i))
+	df <- load_sqlite(sprintf(file, i))
 	dir = "../figures/abstract"
 	if(df$women_0 > 0.8) {
     	dir = sprintf("%s/alspac", dir)
@@ -144,7 +144,7 @@ make_figs_new <- function() {
 	file = "~/abstract_women.db"
 	print("V0.35")
 	for(appn in start:end) {
-		df <- load(file, appn)
+		df <- load_sqlite(file, appn)
 		for(i in unique(df$hash)) {
 			d <- subset(df, df$hash == i)
 			dir = output_dir

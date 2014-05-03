@@ -180,8 +180,8 @@ signals_by_type <- function(dataset, type) {
     return(c)
 }
 
-load <- function(x, appointment=999) {
-    query = sprintf("select * from results where appointment>=%d", appointment)
+load_sqlite <- function(x, appointment=999, match_op=">=") {
+    query = sprintf("select * from results where appointment%s%d", match_op, appointment)
     dataset <- sqldf(query, dbname=x)
     params <- sqldf("select * from parameters", dbname=x)
     dataset <- merge(x=dataset, y=params, by.x="hash", by.y="hash", all.x=TRUE)

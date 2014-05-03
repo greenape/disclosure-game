@@ -1,6 +1,6 @@
 require(ggplot2)
 library(sqldf)
-files = c("/Users/jg1g12/Downloads/%d_women_proportions_women.db")
+files = c("/Users/jg1g12/Download_sqlites/%d_women_proportions_women.db")
 cols = "player_type, accrued_payoffs, referred, hash"
 for(x in files) {
 	df <- sqldf(sprintf("select %s from results", cols), dbname=sprintf(x, 1))
@@ -41,7 +41,7 @@ for(x in files) {
 	rm(df)
 }
 
-files = c("/Users/jg1g12/Downloads/1_women_sharing_women_%s.db", "/Users/jg1g12/Downloads/2_women_sharing_women_%s.db", "/Users/jg1g12/Downloads/3_women_sharing_women_%s.db")
+files = c("/Users/jg1g12/Download_sqlites/1_women_sharing_women_%s.db", "/Users/jg1g12/Download_sqlites/2_women_sharing_women_%s.db", "/Users/jg1g12/Download_sqlites/3_women_sharing_women_%s.db")
 cols = "player_type, accrued_payoffs, referred, hash"
 for(x in files) {
 	df <- sqldf(sprintf("select %s from results where num_rounds>0 OR referred=1", cols), dbname=sprintf(x, 1))

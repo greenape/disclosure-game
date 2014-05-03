@@ -2,10 +2,10 @@ require(ggplot2)
 require(sqldf)
 source("sigh_methods.R")
 
-#files = c("/Users/jg1g12/Downloads/1_women_proportions_women.db", "/Users/jg1g12/Downloads/2_women_proportions_women.db", "/Users/jg1g12/Downloads/3_women_proportions_women.db")
-files = c("/Users/jg1g12/Downloads/4_women_proportions_women.db")
+#files = c("/Users/jg1g12/Download_sqlites/1_women_proportions_women.db", "/Users/jg1g12/Download_sqlites/2_women_proportions_women.db", "/Users/jg1g12/Download_sqlites/3_women_proportions_women.db")
+files = c("/Users/jg1g12/Download_sqlites/4_women_proportions_women.db")
 for(x in files) {
-    df <- load(x)
+    df <- load_sqlite(x)
     ##df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
     #df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
     print("Merged.")
@@ -38,10 +38,10 @@ for(x in files) {
     rm(df)
 }
 
-#files = c("/Users/jg1g12/Downloads/1_mw_proportions_women.db", "/Users/jg1g12/Downloads/2_mw_proportions_women.db", "/Users/jg1g12/Downloads/3_mw_proportions_women.db", "/Users/jg1g12/Downloads/4_mw_proportions_women.db", "/Users/jg1g12/Downloads/5_mw_proportions_women.db", "/Users/jg1g12/Downloads/6_mw_proportions_women.db")
-files = c("/Users/jg1g12/Downloads/7_mw_proportions_women.db", "/Users/jg1g12/Downloads/8_mw_proportions_women.db")
+#files = c("/Users/jg1g12/Download_sqlites/1_mw_proportions_women.db", "/Users/jg1g12/Download_sqlites/2_mw_proportions_women.db", "/Users/jg1g12/Download_sqlites/3_mw_proportions_women.db", "/Users/jg1g12/Download_sqlites/4_mw_proportions_women.db", "/Users/jg1g12/Download_sqlites/5_mw_proportions_women.db", "/Users/jg1g12/Download_sqlites/6_mw_proportions_women.db")
+files = c("/Users/jg1g12/Download_sqlites/7_mw_proportions_women.db", "/Users/jg1g12/Download_sqlites/8_mw_proportions_women.db")
 for(x in files) {
-    df <- load(x)
+    df <- load_sqlite(x)
     ##df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
     #df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
     print("Merged.")
@@ -75,9 +75,9 @@ for(x in files) {
     rm(df)
 }
 
-files = c("/Users/jg1g12/Downloads/1_mw_sharing_women.db", "/Users/jg1g12/Downloads/2_mw_sharing_women.db", "/Users/jg1g12/Downloads/3_mw_sharing_women.db", "/Users/jg1g12/Downloads/4_mw_sharing_women.db", "/Users/jg1g12/Downloads/5_mw_sharing_women.db", "/Users/jg1g12/Downloads/6_mw_sharing_women.db")
+files = c("/Users/jg1g12/Download_sqlites/1_mw_sharing_women.db", "/Users/jg1g12/Download_sqlites/2_mw_sharing_women.db", "/Users/jg1g12/Download_sqlites/3_mw_sharing_women.db", "/Users/jg1g12/Download_sqlites/4_mw_sharing_women.db", "/Users/jg1g12/Download_sqlites/5_mw_sharing_women.db", "/Users/jg1g12/Download_sqlites/6_mw_sharing_women.db")
 for(x in files) {
-    df <- load(x)
+    df <- load_sqlite(x)
     ##df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
     #df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
     print("Merged.")
@@ -110,9 +110,9 @@ for(x in files) {
     rm(df)
 }
 
-files = c("/Users/jg1g12/Downloads/1_women_sharing_women.db", "/Users/jg1g12/Downloads/2_women_sharing_women.db", "/Users/jg1g12/Downloads/3_women_sharing_women.db", "/Users/jg1g12/Downloads/4_women_sharing_women.db", "/Users/jg1g12/Downloads/5_women_sharing_women.db", "/Users/jg1g12/Downloads/6_women_sharing_women.db")
+files = c("/Users/jg1g12/Download_sqlites/1_women_sharing_women.db", "/Users/jg1g12/Download_sqlites/2_women_sharing_women.db", "/Users/jg1g12/Download_sqlites/3_women_sharing_women.db", "/Users/jg1g12/Download_sqlites/4_women_sharing_women.db", "/Users/jg1g12/Download_sqlites/5_women_sharing_women.db", "/Users/jg1g12/Download_sqlites/6_women_sharing_women.db")
 for(x in files) {
-    df <- load(x)
+    df <- load_sqlite(x)
     ##df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
     #df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
     print("Merged.")

@@ -42,7 +42,7 @@ files = c("%s/sharing_mw.db", "%s/prospect_mw.db", "%s/payoff_mw.db", "%s/lexic_
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
-	df <- load(x, appn)
+	df <- load_sqlite(x, appn)
 	for(i in unique(interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder))) {
 		d <- subset(df, interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder) == i)
 		dir = output_dir
@@ -91,7 +91,7 @@ files = c("%s/sharing_w.db", "%s/prospect_w.db", "%s/payoff_w.db", "%s/lexic_w.d
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
-    df <- load(x)
+    df <- load_sqlite(x)
     ##df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
     #df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
     print("Merged.")
@@ -119,7 +119,7 @@ files = c("%s/w_payoff_mw.db", "%s/w_lexic_mw.db")
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
-    df <- load(x)
+    df <- load_sqlite(x)
     for(i in unique(interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder))) {
         d <- subset(df, interaction(df$game, df$decision_rule_signaller, df$decision_rule_responder) == i)
         dir = output_dir
@@ -165,7 +165,7 @@ files = c("%s/w_payoff_w.db", "%s/w_lexic_w.db")
 for(x in files) {
 	x <- sprintf(x, source_dir)
 	for(appn in start:end) {
-    df <- load(x)
+    df <- load_sqlite(x)
     ##df <- aggregate(df, by=list(df$women_1, df$women_2, df$game, df$decision_rule_signaller, df$decision_rule_responder, df$player_type), FUN=mean)
     #df$accrued_payoffs = (df$accrued_payoffs - min(df$accrued_payoffs)) / (max(df$accrued_payoffs) - min(df$accrued_payoffs))
     print("Merged.")

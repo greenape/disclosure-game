@@ -17,11 +17,11 @@ figures <- function(file_prefix) {
 
 }
 
-caseload_figures_10 <- function() {
-	print("Caseload figures.")
+caseload_sqlite_figures_10 <- function() {
+	print("Caseload_sqlite figures.")
 
-	results_file = "../results/caseload_low_prior__women.csv.gz"
-	params_file = "../results/caseload_low_prior__params.csv.gz"
+	results_file = "../results/caseload_sqlite_low_prior__women.csv.gz"
+	params_file = "../results/caseload_sqlite_low_prior__params.csv.gz"
 
 	df = read.csv(results_file, all=TRUE)
 	params = read.csv(params_file, all=TRUE)
@@ -31,7 +31,7 @@ caseload_figures_10 <- function() {
 		d <- subset(df, interaction(df$mw_0, df$mw_1, df$mw_2) == i)
 		for(h in unique(d$parameters)) {
 			c <- subset(d, d$parameters == h)
-			game = sprintf("bias_10/caseload/%s-%s", i, as.character(c$game)[1])
+			game = sprintf("bias_10/caseload_sqlite/%s-%s", i, as.character(c$game)[1])
 			target = directories(game, FALSE, as.character(c$decision_rule_signaller)[1])
 			finished = sprintf("%s/finished.png", target)
 			referred = sprintf("%s/referred.png", target)	
@@ -41,11 +41,11 @@ caseload_figures_10 <- function() {
 	}
 }
 
-caseload_figures_20 <- function() {
-	print("Caseload figures.")
+caseload_sqlite_figures_20 <- function() {
+	print("Caseload_sqlite figures.")
 
-	results_file = "../results/caseload_women.csv.gz"
-	params_file = "../results/caseload_params.csv.gz"
+	results_file = "../results/caseload_sqlite_women.csv.gz"
+	params_file = "../results/caseload_sqlite_params.csv.gz"
 
 	df = read.csv(results_file, all=TRUE)
 	params = read.csv(params_file, all=TRUE)
@@ -55,7 +55,7 @@ caseload_figures_20 <- function() {
 		d <- subset(df, interaction(df$mw_0, df$mw_1, df$mw_2) == i)
 		for(h in unique(d$parameters)) {
 			c <- subset(d, d$parameters == h)
-			game = sprintf("bias_20/caseload/%s-%s", i, as.character(c$game)[1])
+			game = sprintf("bias_20/caseload_sqlite/%s-%s", i, as.character(c$game)[1])
 			target = directories(game, FALSE, as.character(c$decision_rule_signaller)[1])
 			finished = sprintf("%s/finished.png", target)
 			referred = sprintf("%s/referred.png", target)	
