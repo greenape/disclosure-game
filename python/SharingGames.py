@@ -70,7 +70,7 @@ class CarryingInformationGame(CarryingReferralGame):
             map(self.play_round, players, midwives)
             for x in midwives:
                 x.finished += 1
-            women_res = self.measures_women.dump(players, i, self, women_res)
+            women_res = self.measures_women.dump(women + players, i, self, women_res)
             mw_res = self.measures_midwives.dump(midwives, i, self, mw_res)
             for woman in players:
                 if self.all_played([woman], self.num_appointments):

@@ -4,7 +4,7 @@ from Results import *
 import itertools
 
 class Measures(object):
-    def __init__(self, measures, dump_after=0, dump_every=100):
+    def __init__(self, measures, dump_after=0, dump_every=25):
         self.measures = measures
         self.dump_after = dump_after
         self.dump_every = dump_every
@@ -415,21 +415,67 @@ class AccruedPayoffs(Measure):
             return 0.
         return total / float(len(women))
 
+class GroupResponse(Measure):
+    def measure_one(self, woman):
+        signaller = type(woman)()
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.respond(self.signal, signaller)
+        woman.signal_log.pop()
+        woman.response_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[self.signal] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            raise
+        return r
+
+    def measure(self, roundnum, women, game):
+        if self.midwife_type is not None:
+            women = filter(lambda x: x.player_type == self.midwife_type, women)
+        if len(women) == 0:
+            return 0.
+        return sum(map(self.measure_one, women)) / float(len(women))
+
+class GroupHonesty(Measure):
+    def measure_one(self, woman):
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.do_signal(self.signal)
+        woman.signal_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[r] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            pass
+        return abs(r - woman.player_type)
+
+    def measure(self, roundnum, women, game):
+        if self.player_type is not None:
+            women = filter(lambda x: x.player_type == self.player_type, women)
+        if len(women) == 0:
+            return 0.
+        return sum(map(self.measure_one, women)) / float(len(women))
 
 def measures_women():
     measures = OrderedDict()
     measures['appointment'] = Appointment()
-    measures['finished'] = TypeFinished()
+    #measures['finished'] = TypeFinished()
+    measures["honesty"] = GroupHonesty()
     #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
-        measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
-        measures["type_%d_finished" % i] = TypeFinished(player_type=i)
+        #measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
+        #measures["type_%d_finished" % i] = TypeFinished(player_type=i)
         #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
-        measures['rounds_played_type_%d_upto' % i] = NumRoundsCumulative(player_type=i)
-        measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
-        #measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
+        #measures['rounds_played_type_%d_upto' % i] = NumRoundsCumulative(player_type=i)
+        #measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
+        measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
+        measures["honesty_type_%d" % i] = GroupHonesty(player_type=i)
         for j in range(3):
-            measures["type_%d_signal_%d" % (i, j)] = TypeSignalBreakdown(player_type=i, signal=j)
+            foo = 0
+            #measures["type_%d_signal_%d" % (i, j)] = TypeSignalBreakdown(player_type=i, signal=j)
             #measures["type_%d_mw_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, midwife_type=j)
             #measures["type_%d_sig_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, signal=j)
             #for k in range(3):
@@ -448,13 +494,15 @@ def measures_midwives():
     #measures['false_negatives'] = FalseNegative()
     #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
+        measures['response_signal_%d' % i] = GroupResponse(signal=i)
+        measures['response_signal_0_type_%d' % i] = GroupResponse(midwife_type=i)
         #measures['signal_%d_frequency' % i] = SignalExperience(signal=i)
         #measures['type_%d_frequency' % i] = TypeExperience(player_type=i)
-        measures['type_%d_right_calls_upto' % i] = RightCallUpto(midwife_type=i)
+        #measures['type_%d_right_calls_upto' % i] = RightCallUpto(midwife_type=i)
         #measures['type_%d_right_calls' % i] = RightCall(midwife_type=i)
-        measures['type_%d_false_positives_upto' % i] = FalsePositiveUpto(midwife_type=i)
+        #measures['type_%d_false_positives_upto' % i] = FalsePositiveUpto(midwife_type=i)
         #measures['type_%d_false_positives' % i] = FalsePositive(midwife_type=i)
-        measures['type_%d_false_negatives_upto' % i] = FalseNegativeUpto(midwife_type=i)
+        #measures['type_%d_false_negatives_upto' % i] = FalseNegativeUpto(midwife_type=i)
         #measures['type_%d_false_negatives' % i] = FalseNegative(midwife_type=i)
         #measures['type_%d_misses' % i] = TypedFalseNegativeUpto(player_type=i)
         #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
