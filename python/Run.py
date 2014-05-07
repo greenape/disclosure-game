@@ -234,6 +234,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     #for i in range(runs):
     i =  0
     while i < runs:
+        game.parameters['seed'] = i
         # Parity across different conditions but random between runs.
         random = Random(seeds[i])
         game.random = Random(seeds[i])
