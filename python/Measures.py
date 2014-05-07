@@ -423,6 +423,10 @@ class GroupResponse(Measure):
     def measure_one(self, woman):
         signaller = type(woman)()
         #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        try:
+            memory = woman.shareable
+        except:
+            raise
         r = woman.respond(self.signal, signaller)
         woman.signal_log.pop()
         woman.response_log.pop()
@@ -430,7 +434,7 @@ class GroupResponse(Measure):
         woman.signal_matches[self.signal] -= 1
         try:
             woman.signal_memory.pop(hash(signaller), None)
-            woman.shareable = None
+            woman.shareable = memory
         except:
             raise
         return r
