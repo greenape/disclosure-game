@@ -415,6 +415,10 @@ class AccruedPayoffs(Measure):
             return 0.
         return total / float(len(women))
 
+class GameSeed(Measure):
+    def measure(self, roundnum, women, game):
+        return game.seed
+
 class GroupResponse(Measure):
     def measure_one(self, woman):
         signaller = type(woman)()
@@ -537,6 +541,7 @@ class NormalisedSquaredGroupHonesty(GroupHonesty):
 
 def measures_women():
     measures = OrderedDict()
+    measures['game_seed'] = GameSeed()
     measures['appointment'] = Appointment()
     #measures['finished'] = TypeFinished()
     measures["honesty"] = GroupHonesty()
@@ -559,9 +564,11 @@ def measures_women():
             #    measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
     return Measures(measures, 0)
 
+
 ##@profile
 def measures_midwives():
     measures = OrderedDict()
+    measures['game_seed'] = GameSeed()
     measures['appointment'] = Appointment()
     measures['all_right_calls_upto'] = RightCallUpto()
     #measures['all_right_calls'] = RightCall()

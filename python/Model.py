@@ -460,6 +460,7 @@ class Game(object):
      measures_midwives=measures_midwives(), params=None, num_appointments=12, seed=None):
         """ A multistage game played by two agents.
         """
+        self.seed = seed
         self.random = Random(seed)
         self.signal_log = []
         self.act_log = []
