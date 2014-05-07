@@ -14,7 +14,7 @@ class Result(object):
         self.fields = fields
         self.param_fields = parameters.keys()
         self.param_fields.append("hash")
-        param_hash = hash(tuple(parameters.values()))
+        param_hash = "h%d" % hash(tuple(parameters.values()))
         self.parameters = {param_hash:parameters.values() + [param_hash]}
         for result in results:
             result.append(param_hash)
