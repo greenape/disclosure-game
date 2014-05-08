@@ -1,2 +1,15 @@
-#!/bin/bash
-python -m scoop ../python/HPCExperiments.py -R 10 -g Game CaseloadGame -s BayesianPayoffSignaller -r BayesianPayoffResponder  -n -f "../results/payoff_alspac_" -d $PWD -p 0.85 0.1 0.05
+#!/bin/bash -vx
+#PBS -l walltime=01:00:00
+#PBS -l nodes=2:ppn=16
+#PBS -l pmem=1gb
+
+cd disclosure-game/python
+ulimit -n 512
+module load python
+#source /home/jg1g12/hpc/bin/activate
+sig=SharingSignaller
+resp=SharingResponder
+game=CarryingInformationGame
+dir=/scratch/jg1g12/${sig}_${resp}
+mkdir ${dir}
+pypy/bin/pypy -m scoop ScoopTest.py -R 32 -s ${sig} -r ${resp} -f test -i 1000 -d ${dir} -g ${game} 

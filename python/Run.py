@@ -62,7 +62,7 @@ def arguments():
                    'CarryingInformationGame'],
                    dest="games")
     parser.add_argument('-s','--signallers', type=str, nargs='*',
-        help='A signaller type.', default=["BayesianSignaller"],
+        help='A signaller type.', default=["SharingSignaller"],
         choices=['BayesianSignaller', 'RecognitionSignaller',
         'ProspectTheorySignaller', 'LexicographicSignaller', 'BayesianPayoffSignaller',
         'PayoffProspectSignaller', 'SharingBayesianPayoffSignaller', 'SharingLexicographicSignaller',
@@ -70,7 +70,7 @@ def arguments():
         'RWSignaller'],
         dest="signallers")
     parser.add_argument('-r','--responders', type=str, nargs='*',
-        help='A responder type.', default=["BayesianResponder"],
+        help='A responder type.', default=["SharingResponder"],
         choices=['BayesianResponder', 'RecognitionResponder', 'ProspectTheoryResponder',
         'LexicographicResponder', 'BayesianPayoffResponder',
         'SharingBayesianPayoffResponder', 'SharingLexicographicResponder',

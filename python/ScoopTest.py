@@ -4,33 +4,28 @@ from ReferralGame import *
 from RecognitionGame import *
 from CarryingGame import *
 from RecognitionAgents import *
-from AmbiguityAgents import *
 from HeuristicAgents import *
 from PayoffAgents import *
 from SharingGames import *
-from Dolls import *
+from SharingAgents import *
 import multiprocessing
 from Measures import *
 import itertools
 from Experiments import *
 from scoop import futures
 import scoop
-from Run import play_game, decision_fn_compare, arguments, write, make_work, logger
+from Run import play_game, decision_fn_compare, arguments, main, version
+import time
+logger = scoop.logger
 
-def do_work(queueIn, queueOut):
-    """
-    Consume games, play them, then put their results in the output queue.
-    """
-    while True:
-        try:
-            number, config = queueIn.get()
-            logger.info("Running game %d." % number)
-            res = futures.submit(play_game, config)
-            del config
-            queueOut.put((number, res.result()))
-        except:
-            logger.info("Done.")
-            break
+def make_work(kwargs):
+    i = 1
+    while len(kwargs) > 0:
+        exps = decision_fn_compare(**kwargs.pop())
+        for exp in exps:
+            logger.info("Enqueing experiment for scoop %d" %  i)
+            i += 1
+            yield exp
 
 def experiment(file_name, game_fns=[Game, CaseloadGame], 
     agents=[(ProspectTheorySignaller, ProspectTheoryResponder), (BayesianSignaller, BayesianResponder)],
@@ -55,33 +50,28 @@ def kw_experiment(kwargs, file_name):
     """
     num_consumers = scoop.SIZE
     #Make tasks
-    jobs = multiprocessing.Queue(num_consumers)
-    results = multiprocessing.Queue()
-    producer = multiprocessing.Process(target = make_work, args = (jobs, kwargs, num_consumers))
-    producer.start()
-    calcProc = [multiprocessing.Process(target = do_work , args = (jobs, results)) for i in range(num_consumers))
-    writProc = multiprocessing.Process(target = write, args = (results, file_name))
-    writProc.start()
+    results = futures.map_as_completed(play_game, make_work(kwargs))
+    
+    for result in results:
+        write(result, file_name)
 
-    for p in calcProc:
-        p.start()
-    for p in calcProc:
-        try:
-            p.join()
-        except KeyboardInterrupt:
-            for p in calcProc:
-                jobs.put(None)
-            jobs.close()
-    results.put(None)
-    writProc.join()
-    while True:
-        if jobs.get() is None:
-            break
-    producer.join()
-
+def write(result, db_name):
+    try:
+        women_res, mw_res = result
+        logger.info("Writing game.")
+        women_res.write_db("%s_women" % db_name)
+        mw_res.write_db("%s_mw" % db_name)
+        del women_res
+        del mw_res
+    except sqlite3.OperationalError, e:
+        print e
+        raise
+    except:
+        raise
 
 def main():
     games, players, kwargs, runs, test, file_name = arguments()
+    logger.info("Version %f" % version)
     logger.info("Running %d game type%s, with %d player pair%s, and %d run%s of each." % (
         len(games), "s"[len(games)==1:], len(players), "s"[len(players)==1:], runs, "s"[runs==1:]))
     logger.info("Total simulations runs is %d" % (len(games) * len(players) * runs * len(kwargs)))
@@ -89,7 +79,9 @@ def main():
     if test:
         logger.info("This is a test of the emergency broadcast system. This is only a test.")
     else:
+        start = time.clock()
         experiment(file_name, games, players, kwargs=kwargs)
+        print "Ran in %f" % (time.clock() - start)
 
 if __name__ == "__main__":
     main()
