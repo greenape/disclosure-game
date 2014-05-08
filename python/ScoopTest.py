@@ -18,6 +18,32 @@ from Run import play_game, decision_fn_compare, arguments, main, version
 import time
 logger = scoop.logger
 
+
+def imap(function, iterable, chunksize):
+    results_generator = (scoop.futures.submit(function, i) for i in iterable)
+
+    results = []
+    for res in results_generator:  # active evaluation of item
+        results.append(res)
+
+        while len(results) >= chunksize:
+            r = scoop.futures.wait(results, return_when=scoop.futures.FIRST_COMPLETED)
+            results = list(r.not_done)
+            for d in r.done:
+                yield d.result()
+
+            if len(results) >= chunksize:
+                warnings.warn("Did not remove any element?")
+
+    # empty remaining
+    r = scoop.futures.wait(results, return_when=scoop.futures.ALL_COMPLETED)
+    for d in r.done:
+        yield d.result()
+
+    if len(r.not_done) > 0:
+        print (str(len(r.not_done)))
+        raise Exception("Not all done? Remaining:" + str(len(r.not_done)))
+
 def make_work(kwargs):
     i = 1
     while len(kwargs) > 0:
@@ -50,7 +76,7 @@ def kw_experiment(kwargs, file_name):
     """
     num_consumers = scoop.SIZE
     #Make tasks
-    results = futures.map_as_completed(play_game, make_work(kwargs))
+    results = imap(play_game, make_work(kwargs), num_consumers - 1)
     
     for result in results:
         write(result, file_name)
