@@ -30,6 +30,7 @@ def imap(function, iterable, chunksize):
             r = scoop.futures.wait(results, return_when=scoop.futures.FIRST_COMPLETED)
             results = list(r.not_done)
             for d in r.done:
+                d._delete() #This is bad, but seems to be the only way to not boondoggle memory
                 yield d.result()
 
             if len(results) >= chunksize:
