@@ -12,4 +12,4 @@ resp=SharingResponder
 game=CarryingInformationGame
 dir=/scratch/jg1g12/${sig}_${resp}
 mkdir ${dir}
-pypy/bin/pypy -m scoop ScoopTest.py -R 32 -s ${sig} -r ${resp} -f test -i 1000 -d ${dir} -g ${game} 
+/home/jg1g12/pypy/bin/pypy -m scoop ScoopTest.py -R 32 -s ${sig} -r ${resp} -f test -i 1000 -d ${dir} -g ${game} 
