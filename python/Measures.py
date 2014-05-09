@@ -471,6 +471,24 @@ class GroupHonesty(Measure):
             return 0.
         return sum(map(self.measure_one, women)) / float(len(women))
 
+class GroupSignal(GroupHonesty):
+    """
+    Return the average of everybody's choice of signal
+    if they were to signal right now.
+    """
+    def measure_one(self, woman):
+        #print "Hashing by", hash(woman), "hashing", hash(signaller)
+        r = woman.do_signal(self.signal)
+        woman.signal_log.pop()
+        woman.rounds -= 1
+        woman.signal_matches[r] -= 1
+        try:
+            woman.signal_memory.pop(hash(signaller), None)
+            woman.shareable = None
+        except:
+            pass
+        return r
+
 class NormalisedGroupHonesty(GroupHonesty):
 
     def scale(self, n, low, high):
@@ -550,6 +568,7 @@ def measures_women():
     #measures['finished'] = TypeFinished()
     measures["honesty"] = GroupHonesty()
     measures["nom_sq_honesty"] = NormalisedSquaredGroupHonesty()
+    measures["group_signal"] = GroupSignal()
     #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):
         #measures["type_%d_ref" % i] = TypeReferralBreakdown(player_type=i)
@@ -559,6 +578,7 @@ def measures_women():
         #measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
         measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
         measures["honesty_type_%d" % i] = GroupHonesty(player_type=i)
+        measures["group_signal_%d" % i] = GroupSignal(player_type=i)
         for j in range(3):
             foo = 0
             #measures["type_%d_signal_%d" % (i, j)] = TypeSignalBreakdown(player_type=i, signal=j)
