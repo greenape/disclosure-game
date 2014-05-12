@@ -50,7 +50,7 @@ def make_work(kwargs):
     while len(kwargs) > 0:
         exps = decision_fn_compare(**kwargs.pop())
         for exp in exps:
-            logger.info("Enqueing experiment for scoop %d" %  i)
+            logger.info("Enqueing experiment %d for scoop." %  i)
             i += 1
             yield exp
 
