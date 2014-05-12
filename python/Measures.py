@@ -443,7 +443,7 @@ class GroupResponse(Measure):
         if self.midwife_type is not None:
             women = filter(lambda x: x.player_type == self.midwife_type, women)
         if len(women) == 0:
-            return 0.
+            return "NA"
         return sum(map(self.measure_one, women)) / float(len(women))
 
 class GroupHonesty(Measure):
@@ -468,7 +468,7 @@ class GroupHonesty(Measure):
         if self.player_type is not None:
             women = filter(lambda x: x.player_type == self.player_type, women)
         if len(women) == 0:
-            return 0.
+            return "NA"
         return sum(map(self.measure_one, women)) / float(len(women))
 
 class GroupSignal(GroupHonesty):
@@ -489,32 +489,6 @@ class GroupSignal(GroupHonesty):
             pass
         return r
 
-class NormalisedGroupHonesty(GroupHonesty):
-
-    def scale(self, n, low, high):
-        a = 0.
-        b = 1.
-        return (((b - a)*(n - low)) / (high - low) ) + a
-
-    """
-    Return the average normalised absolute distance of everybody's choice of signal
-    if they were to signal right now, from their own type.
-    """
-    def measure_one(self, woman):
-        #print "Hashing by", hash(woman), "hashing", hash(signaller)
-        r = woman.do_signal(self.signal)
-        woman.signal_log.pop()
-        woman.rounds -= 1
-        woman.signal_matches[r] -= 1
-        try:
-            woman.signal_memory.pop(hash(signaller), None)
-            woman.shareable = None
-        except:
-            pass
-        dist = abs(r - woman.player_type)
-        if woman.player_type != 1:
-            diff = self.scale(diff, 0., 2.)
-        return 
 
 class SquaredGroupHonesty(GroupHonesty):
     """

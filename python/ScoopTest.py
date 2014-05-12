@@ -31,10 +31,15 @@ def imap(function, iterable, chunksize):
             results = list(r.not_done)
             for d in r.done:
                 d._delete() #This is bad, but seems to be the only way to not boondoggle memory
+                try:
+                    res = results_generator.next()
+                    results.append(res)
+                except StopIteration:
+                    pass
                 yield d.result()
 
             if len(results) >= chunksize:
-                warnings.warn("Did not remove any element?")
+                logger.debug("Did not remove any element?")
 
     # empty remaining
     r = scoop.futures.wait(results, return_when=scoop.futures.ALL_COMPLETED)

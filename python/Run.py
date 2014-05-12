@@ -334,7 +334,7 @@ def write(queue, db_name, kill_queue):
             mw_res.write_db("%s_mw" % db_name)
             del women_res
             del mw_res
-        except sqlite3.OperationalError, e:
+        except sqlite3.OperationalError as e:
             print e
             kill_queue.put(None)
             raise

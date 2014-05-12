@@ -1,5 +1,6 @@
 *.dot
 writing/
+
 *.csv.gz
 *.gz
 *.lyx
@@ -114,3 +115,4 @@ r/tmp.R
 *.js
 *.SyncPart
 *.SyncTemp
+python/cython/*

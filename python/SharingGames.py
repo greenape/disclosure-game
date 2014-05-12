@@ -102,7 +102,7 @@ class CarryingInformationGame(CarryingReferralGame):
             #Women
             try:
                 self.share_women(women, women_memories)
-            except e:
+            except Exception as e:
                 LOG.debug("Sharing to women failed.")
                 LOG.debug(e)
 
@@ -331,7 +331,7 @@ class CaseloadSharingGame(CarryingInformationGame):
             #Midwives
             try:
                 self.share_midwives(midwives)
-            except e:
+            except Exception as e:
                 LOG.debug("Sharing to midwives failed.")
                 LOG.debug(e)
 
