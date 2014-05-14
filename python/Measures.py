@@ -549,7 +549,7 @@ def measures_women():
         #measures["type_%d_finished" % i] = TypeFinished(player_type=i)
         #measures['accrued_payoffs_type_%d' % i] = AccruedPayoffs(player_type=i)
         #measures['rounds_played_type_%d_upto' % i] = NumRoundsCumulative(player_type=i)
-        #measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
+        measures['rounds_played_type_%d' % i] = NumRounds(player_type=i)
         measures['type_%d_frequency' % i] = TypeFrequency(player_type=i)
         measures["honesty_type_%d" % i] = GroupHonesty(player_type=i)
         measures["group_signal_%d" % i] = GroupSignal(player_type=i)
