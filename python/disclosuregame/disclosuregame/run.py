@@ -330,6 +330,7 @@ def write(queue, db_name, kill_queue):
     while True:
         try:
             number, res = queue.get()
+            print res
             women_res, mw_res = res
             logger.info("Writing game %d." % number)
             women_res.write_db("%s_women" % db_name)
@@ -342,6 +343,8 @@ def write(queue, db_name, kill_queue):
             raise
             break
         except:
+            kill_queue.put(None)
+            raise
             break
 
 
