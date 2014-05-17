@@ -1,4 +1,4 @@
-from Measures import *
+from measures import *
 
 class IndividualMeasures(Measures):
     take_at_end = False

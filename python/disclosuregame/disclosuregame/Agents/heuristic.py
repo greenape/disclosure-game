@@ -1,6 +1,7 @@
-from Model import *
-from RecognitionAgents import RecognitionResponder
-from SharingAgents import *
+from bayes import *
+from recognition import RecognitionResponder
+from sharing import *
+from disclosuregame.Util import random_expectations
 import operator
 from random import Random
 

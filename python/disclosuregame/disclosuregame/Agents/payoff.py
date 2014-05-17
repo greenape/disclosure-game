@@ -1,6 +1,6 @@
-from HeuristicAgents import *
-from RecognitionAgents import *
-from SharingAgents import *
+from heuristic import *
+from recognition import *
+from sharing import *
 
 class BayesianPayoffSignaller(LexicographicSignaller):
 

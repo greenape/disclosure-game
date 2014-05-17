@@ -1,5 +1,5 @@
-from Model import *
-from HeuristicAgents import weighted_random_choice
+from bayes import *
+from disclosuregame.Util import weighted_random_choice
 from random import Random
 
 def delta_v(alpha, beta, us, v):

@@ -1,4 +1,4 @@
-from Model import *
+from game import *
 
 class ReferralGame(Game):
         """

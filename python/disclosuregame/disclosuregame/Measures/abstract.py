@@ -1,4 +1,4 @@
-from Measures import *
+from measures import *
 
 class PopCount(Measure):
     def __init__(self, player_type=None, midwife_type=None, signal=None):

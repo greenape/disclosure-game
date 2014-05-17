@@ -1,5 +1,5 @@
-from RecognitionAgents import RecognitionResponder
-from Model import BayesianSignaller
+from recognition import RecognitionResponder
+from bayes import BayesianSignaller
 from copy import deepcopy
 
 class SharingResponder(RecognitionResponder):

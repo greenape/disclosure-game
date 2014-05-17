@@ -1,6 +1,6 @@
-import Model
-from Model import random_expectations
-from ReferralGame import *
+import game
+from disclosuregame.Util import random_expectations
+from referral import *
 import collections
 from random import Random
 try:
@@ -11,7 +11,7 @@ except:
     scoop_on = False
     pass
 
-class CarryingGame(Model.Game):
+class CarryingGame(game.Game):
     def __unicode__(self):
         return "carrying_%s" % super(CarryingGame, self).__unicode__()
 
@@ -101,7 +101,7 @@ class CarryingGame(Model.Game):
             scoop.logger.info("Worker %s completed a game." % (scoop.worker[0]))
         return women_res, mw_res
 
-class CaseloadCarryingGame(CarryingGame, Model.CaseloadGame):
+class CaseloadCarryingGame(CarryingGame, game.CaseloadGame):
     def __unicode__(self):
         return "caseload_carrying_%s" % super(CarryingGame, self).__unicode__()
 

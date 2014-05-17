@@ -1,5 +1,7 @@
-from CarryingGame import CarryingReferralGame
-from Model import measures_women, measures_midwives, random_expectations, Agent
+from carrying import CarryingReferralGame
+from disclosuregame.Measures import measures_midwives, measures_women
+from disclosuregame.Util import random_expectations 
+from disclosuregame.Agents.bayes import Agent
 from random import Random
 from math import copysign
 import operator

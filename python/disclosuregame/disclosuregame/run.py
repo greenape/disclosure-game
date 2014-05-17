@@ -1,18 +1,21 @@
-from Model import *
-from ProspectTheoryModel import *
-from ReferralGame import *
-from RecognitionGame import *
-from CarryingGame import *
-from RecognitionAgents import *
-#from AmbiguityAgents import *
-from HeuristicAgents import *
-from PayoffAgents import *
-from SharingGames import *
-from RLAgents import RWSignaller, RWResponder
-#from Dolls import *
+from Games.game import *
+from Games.referral import *
+from Games.recognition import *
+from Games.carrying import *
+from Games.sharing import *
+
+from Agents.cpt import *
+from Agents.recognition import *
+from Agents.heuristic import *
+from Agents.payoff import *
+from Agents.rl import *
+
 import multiprocessing
 from Measures import *
-from AbstractMeasures import *
+from Measures.abstract import *
+
+from experiments import *
+
 import itertools
 from collections import OrderedDict
 import argparse
@@ -20,7 +23,6 @@ from os.path import expanduser
 import cPickle
 import pickle
 import gzip
-from Experiments import *
 from copy import deepcopy
 import sqlite3
 import sys

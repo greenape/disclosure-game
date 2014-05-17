@@ -1,4 +1,4 @@
-from Model import *
+from bayes import *
 
 class RecognitionResponder(BayesianResponder):
     """

@@ -1,9 +1,10 @@
-import Model
+import bayes
 import math
-from PayoffAgents import *
-from RecognitionAgents import *
+from payoff import *
+from recognition import *
+from disclosuregame.Util import shuffled
 
-class ProspectTheorySignaller(Model.BayesianSignaller):
+class ProspectTheorySignaller(bayes.BayesianSignaller):
     """
     A responder which makes decision using cumulative prospect theory.
     """
@@ -98,7 +99,7 @@ class ProspectTheorySignaller(Model.BayesianSignaller):
         """
         super(ProspectTheorySignaller, self).do_signal(opponent)
         best = (self.random.randint(0, 2), -9999999)
-        for signal in Model.shuffled(self.signals, self.random):
+        for signal in shuffled(self.signals, self.random):
             act_risk = self.cpt_value(self.collect_prospects(signal))
             #self.risk_log[signal].append(act_risk)
             #self.risk_log_general[signal].append(act_risk)
@@ -128,7 +129,7 @@ class PayoffProspectSignaller(ProspectTheorySignaller, BayesianPayoffSignaller):
         prospects.reverse()
         return prospects
 
-class ProspectTheoryResponder(Model.BayesianResponder):
+class ProspectTheoryResponder(bayes.BayesianResponder):
     """
     A responder which makes decision using prospect theory.
     Reference may take value 0 (total losses so far), 1 (losses last round), or 3
@@ -221,7 +222,7 @@ class ProspectTheoryResponder(Model.BayesianResponder):
         super(ProspectTheoryResponder, self).respond(signal, opponent)
 
         best = (self.random.randint(0, 1), -9999999)
-        for response in Model.shuffled(self.responses, self.random):
+        for response in shuffled(self.responses, self.random):
             act_risk = self.cpt_value(self.collect_prospects(response, signal))
             if act_risk > best[1]:
                 best = (response, act_risk)
