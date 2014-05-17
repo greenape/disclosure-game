@@ -1,20 +1,25 @@
-from Model import *
-from ProspectTheoryModel import *
-from ReferralGame import *
-from RecognitionGame import *
-from CarryingGame import *
-from RecognitionAgents import *
-from HeuristicAgents import *
-from PayoffAgents import *
-from SharingGames import *
-from SharingAgents import *
+from disclosuregame.Games.game import *
+from disclosuregame.Games.referral import *
+from disclosuregame.Games.recognition import *
+from disclosuregame.Games.carrying import *
+from disclosuregame.Games.sharing import *
+
+from disclosuregame.Agents.cpt import *
+from disclosuregame.Agents.recognition import *
+from disclosuregame.Agents.heuristic import *
+from disclosuregame.Agents.payoff import *
+from disclosuregame.Agents.rl import *
+
+from disclosuregame.Measures import *
+from disclosuregame.Measures.abstract import *
+
+from disclosuregame.experiments import *
+
 import multiprocessing
-from Measures import *
 import itertools
-from Experiments import *
 from scoop import futures
 import scoop
-from Run import play_game, decision_fn_compare, arguments, main, version
+from run import play_game, decision_fn_compare, arguments, main, version
 import time
 logger = scoop.logger
 
