@@ -1,20 +1,21 @@
-from Games.game import *
-from Games.referral import *
-from Games.recognition import *
-from Games.carrying import *
-from Games.sharing import *
+from disclosuregame.Games.game import *
+from disclosuregame.Games.referral import *
+from disclosuregame.Games.recognition import *
+from disclosuregame.Games.carrying import *
+from disclosuregame.Games.sharing import *
 
-from Agents.cpt import *
-from Agents.recognition import *
-from Agents.heuristic import *
-from Agents.payoff import *
-from Agents.rl import *
+from disclosuregame.Agents.cpt import *
+from disclosuregame.Agents.recognition import *
+from disclosuregame.Agents.heuristic import *
+from disclosuregame.Agents.payoff import *
+from disclosuregame.Agents.rl import *
 
-import multiprocessing
-from Measures import *
-from Measures.abstract import *
+from disclosuregame.Measures import *
+from disclosuregame.Measures.abstract import *
 
-#from Dolls import *
+from disclosuregame.experiments import *
+
+
 from multiprocessing import Pool, Queue
 import multiprocessing
 import itertools
