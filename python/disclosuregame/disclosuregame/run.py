@@ -106,6 +106,7 @@ def arguments():
     parser.add_argument('--log-level', dest='log_level', type=str, choices=['debug',
         'info', 'warniing', 'error'], default='info', nargs="?")
     parser.add_argument('--log-file', dest='log_file', type=str, default='')
+    parser.add_argument('--tag', dest='tag', type=str, default='')
 
     args = parser.parse_args()
 
@@ -127,7 +128,7 @@ def arguments():
         players = list(itertools.product(map(eval, set(args.signallers)), map(eval, set(args.responders))))
     else:
         players = zip(map(eval, args.signallers), map(eval, args.responders))
-    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':False, 'file_name':file_name}
+    kwargs = {'runs':args.runs, 'rounds':args.rounds, 'nested':False, 'file_name':file_name, 'tag':args.tag}
     if args.women is not None:
         kwargs['women_weights'] = args.women
     #if args.indiv:
@@ -184,7 +185,7 @@ def make_players(constructor, num=100, weights=[1/3., 1/3., 1/3.], nested=False,
     return women
 
 def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game, rounds,
-    signaller_args, responder_args):
+    signaller_args, responder_args, tag):
     params = OrderedDict()
     params['game'] = str(game)
     params['decision_rule_responder'] = responder_rule
@@ -197,6 +198,7 @@ def params_dict(signaller_rule, responder_rule, mw_weights, women_weights, game,
     params['women_1'] = women_weights[1]
     params['women_2'] = women_weights[2]
     params['max_rounds'] = rounds
+    params['tag'] = tag
     for k, v in signaller_args.items():
         params['signaller_%s' % k] = v
     for k, v in responder_args.items():
@@ -212,7 +214,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     runs=1, game=None, rounds=100,
     mw_weights=[80/100., 15/100., 5/100.], women_weights=[1/3., 1/3., 1/3.], women_priors=None, seeds=None,
     women_modifier=None, measures_women=measures_women(), measures_midwives=measures_midwives(),
-    nested=False, mw_priors=None, file_name="", responder_args={}, signaller_args={}):
+    nested=False, mw_priors=None, file_name="", responder_args={}, signaller_args={}, tag=""):
 
     if game is None:
         game = Game()
@@ -224,7 +226,7 @@ def decision_fn_compare(signaller_fn=BayesianSignaller, responder_fn=BayesianRes
     game.signaller_args = signaller_args
     game.responder_args = responder_args
     params = params_dict(str(signaller_fn()), str(responder_fn()), mw_weights, women_weights, game, rounds,
-        signaller_args, responder_args)
+        signaller_args, responder_args, tag)
     for key, value in params.items():
         game.parameters[key] = value
     game.rounds = rounds
@@ -330,7 +332,7 @@ def write(queue, db_name, kill_queue):
     while True:
         try:
             number, res = queue.get()
-            print res
+            #print res
             women_res, mw_res = res
             logger.info("Writing game %d." % number)
             women_res.write_db("%s_women" % db_name)

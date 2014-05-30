@@ -560,7 +560,7 @@ def measures_women():
             #measures["type_%d_sig_%d_ref" % (i, j)] = TypeReferralBreakdown(player_type=i, signal=j)
             #for k in range(3):
             #    measures["type_%d_mw_%d_sig_%d" % (i, j, k)] = TypeReferralBreakdown(player_type=i, midwife_type=j, signal=k)
-    return Measures(measures, 0)
+    return Measures(measures, 0, 1)
 
 
 ##@profile

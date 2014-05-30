@@ -116,3 +116,4 @@ r/tmp.R
 *.SyncPart
 *.SyncTemp
 python/cython/*
+python/disclosuregame/disclosuregame/scooptest.Conflict.py
