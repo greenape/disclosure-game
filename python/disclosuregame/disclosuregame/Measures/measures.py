@@ -540,8 +540,8 @@ def measures_women():
     measures['game_seed'] = GameSeed()
     measures['appointment'] = Appointment()
     #measures['finished'] = TypeFinished()
-    measures["honesty"] = GroupHonesty()
-    measures["nom_sq_honesty"] = NormalisedSquaredGroupHonesty()
+    #measures["honesty"] = GroupHonesty()
+    #measures["nom_sq_honesty"] = NormalisedSquaredGroupHonesty()
     measures["group_signal"] = GroupSignal()
     #measures['accrued_payoffs'] = AccruedPayoffs()
     for i in range(3):

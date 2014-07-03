@@ -116,4 +116,10 @@ r/tmp.R
 *.SyncPart
 *.SyncTemp
 python/cython/*
-python/disclosuregame/disclosuregame/scooptest.Conflict.py
+*.Conflict.py
+
+data/sensitivity_bak/*
+*.xlsx
+fortran/*
+data/*
+figures/*

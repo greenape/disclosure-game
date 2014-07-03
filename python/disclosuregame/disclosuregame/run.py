@@ -323,6 +323,8 @@ def do_work(queueIn, queueOut, kill_queue):
             kill_queue.put(None)
             raise
             break
+        except TypeError:
+            break
         except:
             raise
             break
